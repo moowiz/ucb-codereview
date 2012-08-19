@@ -45,12 +45,23 @@ def bkup_if_exists(path):
         pass
 
 def create_table(path):
+    """
+    Call bkup_if_exists before this function.
+    Creates tables according to SCHEMA.
+
+    Args:
+        path: where the db should be.
+    """
     conn = sqlite3.connect(path)
     cursor = conn.cursor()
     for table, columns in SCHEMA.items():
+        # create list of "col_name col_type"
         columns = ["{0} {1}".format(col_name, col_type) \
                 for col_name, col_type in columns.items()]
+        # join the list with ","
         columns_str = ",".join(columns)
+        # now we can form the SQL string.
+        # again, this is NOT sql-injection safe, do not copy-paste
         cursor.execute("CREATE TABLE {0} ({1})".format(table, columns_str))
     conn.commit()
     conn.close()
