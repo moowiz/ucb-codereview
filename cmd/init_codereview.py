@@ -1,17 +1,20 @@
-import os
-import sqlite3
-
 """
 A file for creating the sqlite file with the appropriate schema.
 Needs to be run to initialize DB before code review tool can be used.
 
 WARNING:
-    Database manipulations in this file are prone to SQL injection. 
+    Database manipulations in this file are prone to SQL injection.
     It's fine in this case, since it does not take any user input.
     Do not use this code anywhere else without proper modification!
 """
 
-# A dictioarny repr of the schema. Mapping is 
+import os
+import sqlite3
+
+from utils import read_db_path
+
+
+# A dictioarny repr of the schema. Mapping is
 # { table_name : { column_name: column_type } }
 SCHEMA = {
         'upload': {
@@ -24,11 +27,6 @@ SCHEMA = {
             }
         }
 
-def read_db_path():
-    """
-    Reads the DB path out of the config file.
-    """
-    return "codereview_db.sqlite"
 
 def bkup_if_exists(path):
     """
@@ -43,6 +41,7 @@ def bkup_if_exists(path):
         os.rename(path, path+".bkp")
     except OSError:
         pass
+
 
 def create_table(path):
     """
@@ -66,7 +65,15 @@ def create_table(path):
     conn.commit()
     conn.close()
 
+
+def main():
+    """
+    The main function to run.
+    """
+    db_path = read_db_path()
+    bkup_if_exists(db_path)
+    create_table(db_path)
+
+
 if __name__ == "__main__":
-    path = read_db_path()
-    bkup_if_exists(path)
-    create_table(path)
+    main()
