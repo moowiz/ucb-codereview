@@ -51,10 +51,10 @@ class CodeReviewDatabase(object):
         if self.last_uploaded():
             # if an entry exists, then we need an UPDATE command
             update_last_upload_sql = "UPDATE upload SET last = ?"
-            self.cursor.execute(update_last_upload_sql, time_int)
+            self.cursor.execute(update_last_upload_sql, (time_int,))
             self.conn.commit()
         else:
             # if an entry exists, then we need an UPDATE command
             insert_last_upload_sql = "INSERT INTO upload VALUES (?)"
-            self.cursor.execute(insert_last_upload_sql, time_int)
+            self.cursor.execute(insert_last_upload_sql, (time_int,))
             self.conn.commit()
