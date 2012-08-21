@@ -8,14 +8,16 @@ WARNING:
     Do not use this code anywhere else without proper modification!
 """
 
+import sys
 import os     
 import os.path
 import sqlite3   
+from datetime import datetime
 
 from utils import read_db_path
 
 
-# A dictioarny repr of the schema. Mapping is
+# A dictionary repr of the schema. Mapping is
 # { table_name : { column_name: column_type } }
 SCHEMA = {
         'upload': {
@@ -42,10 +44,12 @@ def bkup_if_exists(path):
     Args:
         path: path of sqlite db
     """
-    now = datetime.now()
-    newpath = path + str(now)[now.index(' ') + 1:now.index('.')] + BACKUP_EXT
+    now = datetime.now() #-2012-08-21-2-45
+    date_str = now.strftime(".%Y-%m-%d-%H-%M")
+    newpath = path + date_str + BACKUP_EXT
     if os.path.exists(newpath):
-        raise RuntimeError("Tried to backup the database too fast!")
+        raise RuntimeError("Tried to backup the database too fast!") #not sure about this error message
+    print('path {}'.format(newpath))
     try:
         # throws OSError if does not exist or is not a file
         os.rename(path, newpath)
