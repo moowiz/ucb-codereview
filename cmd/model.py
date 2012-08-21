@@ -58,3 +58,8 @@ class CodeReviewDatabase(object):
             insert_last_upload_sql = "INSERT INTO upload VALUES (?)"
             self.cursor.execute(insert_last_upload_sql, (time_int,))
             self.conn.commit()
+            
+    def get_next_reviewer(self):
+        get_next_sql = "SELECT reviewer, MIN(assigned) FROM queue" #I don't know sql :(
+        reviewer = self.cursor.execute(get_next_sql) #change this!
+        return reviewer #maybe add some asserts?
