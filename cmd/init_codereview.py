@@ -8,8 +8,9 @@ WARNING:
     Do not use this code anywhere else without proper modification!
 """
 
-import os
-import sqlite3
+import os     
+import os.path
+import sqlite3   
 
 from utils import read_db_path
 
@@ -21,12 +22,17 @@ SCHEMA = {
             'last': 'INTEGER' # unix time of last upload
             },
         'roster': {
-            'partners': 'TEXT', # login, sorted lexicalgraphically if > 1
+            'partners': 'TEXT', # login, sorted lexicographically if > 1
             'assignment': 'TEXT', # assignment name, eg 'proj4'
             'issue': 'INTEGER' # issue number on rietveld
+            },
+        'queue': {
+            'reviewer': 'TEXT',
+            'assigned': 'INTEGER'
             }
         }
 
+BACKUP_EXT = ".bkp"
 
 def bkup_if_exists(path):
     """
@@ -36,9 +42,13 @@ def bkup_if_exists(path):
     Args:
         path: path of sqlite db
     """
+    now = datetime.now()
+    newpath = path + str(now)[now.index(' ') + 1:now.index('.')] + BACKUP_EXT
+    if os.path.exists(newpath):
+        raise RuntimeError("Tried to backup the database too fast!")
     try:
         # throws OSError if does not exist or is not a file
-        os.rename(path, path+".bkp")
+        os.rename(path, newpath)
     except OSError:
         pass
 
