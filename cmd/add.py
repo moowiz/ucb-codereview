@@ -44,6 +44,38 @@ def get_important_files(assign):
     """
     return [""]
 
+def get_gmail(login):
+    """
+    Returns the gmail account associated with this student for the code review system.
+    Not sure how to do this yet; we'll decide something in the first staff meeting
+    """
+    return "example@gmail.com"
+
+def upload(path_to_repo, gmail):
+    """
+    Calls the upload script with the needed arguments given the path to the repo and the
+    gmail account of the student.
+    Arguments we care about:
+    -e email of the person
+    -r reviewers
+    --cc people to cc
+    --private makes the issue private 
+    --send_mail sends an email to the reviewers (might want)
+    --send_patch sends an email but with the diff attached, possible thing to do
+    """
+    return
+
+def put_in_repo(login, assign):
+    original_path = os.getcwd()
+    tempdir = get_subm(login, assign)
+    path_to_repo = find_path(login, assign)
+    files_to_copy = get_important_files(assign)
+    for filename in files_to_copy:
+        shutil.copy(tempdir + filename, path_to_repo + filename)
+    os.chdir(original_path)
+    shutil.rmtree(tempdir)
+    return path_to_repo
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest submission for the given assignment to the code review system.")
     parser.add_argument('login', type=str,
@@ -51,11 +83,5 @@ if __name__ == "__main__":
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
     args = parser.parse_args()
-    original_path = os.getcwd()
-    tempdir = get_subm(args.login, args.assign)
-    path_to_repo = find_path(login, assign)
-    files_to_copy = get_important_files(assign)
-    for filename in files_to_copy:
-        shutil.copy(tempdir + filename, path_to_repo + filename)
-    os.chdir(original_path)
-    shutil.rmtree(tempdir)
+    path_to_repo = put_in_repo(args.login, args.assign)
+    upload(path_to_repo, get_gmail(args.login))
