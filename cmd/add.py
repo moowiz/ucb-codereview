@@ -62,6 +62,9 @@ def upload(path_to_repo, gmail):
     --private makes the issue private 
     --send_mail sends an email to the reviewers (might want)
     --send_patch sends an email but with the diff attached, possible thing to do
+    These args are documented in upload.py starting on line 490.
+    This method also needs to deal with assigning the correct people to this, which means
+    it has to probably get info from somewhere about the roster. 
     """
     return
 
