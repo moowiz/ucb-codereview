@@ -2,6 +2,7 @@
 """
 
 import os
+import utils
 
 def add(files, path=None):
     """
@@ -10,17 +11,13 @@ def add(files, path=None):
     If files is None, then you add everything in the given directory instead.
     """
     if not files:
-        files = ["*"]
+        files = ["-a"]
     if not path:
         path = os.getcwd()
     oldpath = os.getcwd()
     os.chdir(path)
-    command = "git add "
-    for file in files:
-        command += file + " "
-    res = os.system(command)
-    if res:
-        print("uh oh!")
+    command = "git add " + " ".join(files)
+    out = utils.run(command) 
     os.chdir(oldpath)
 
 def commit(message, path=None):
@@ -33,7 +30,5 @@ def commit(message, path=None):
     oldpath = os.getcwd()
     os.chdir(path)
     command = "git commit " + message
-    res = os.system(command)
-    if res:
-        print("uh oh!")
+    out = utils.run(command)
     os.chdir(oldpath)
