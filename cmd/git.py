@@ -20,6 +20,15 @@ def add(files, path=None):
     out = utils.run(command) 
     os.chdir(oldpath)
 
+def init(path=None):
+    if not path:
+        path = os.getcwd()
+    oldpath = os.getcwd()
+    os.chdir(path)
+    command = "git init"
+    out = utils.run(command) 
+    os.chdir(oldpath)
+
 def commit(message, path=None):
     """
     Commits with the given message in the git repo in the given path. 
