@@ -133,7 +133,6 @@ def copy_important_files(assign, start_dir, end_dir):
     for filename in files_to_copy:
         shutil.copy(start_dir + filename, end_dir + filename)
     os.chdir(original_path)
-    shutil.rmtree(tempdir)
 
 def put_in_repo(logins, assign):
     """
@@ -160,6 +159,7 @@ def put_in_repo(logins, assign):
     copy_important_files(assign, tempdir, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
+    shutil.rmtree(tempdir)
     return path_to_repo
 
 def add(logins, assign):
