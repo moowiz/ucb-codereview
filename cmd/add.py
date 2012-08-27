@@ -68,7 +68,7 @@ def get_gmails(logins):
     return ("stephenmartinis@gmail.com",)
 
 PYTHON_BIN = "python2.7"
-UPLOAD_SCRIPT = "~cs61a/code_review/61a-codereview/appengine/upload.py"
+UPLOAD_SCRIPT = os.path.expanduser("~cs61a/code_review/61a-codereview/appengine/upload.py")
 SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
