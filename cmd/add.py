@@ -12,6 +12,7 @@ import tempfile
 import shutil
 import utils
 import os
+import git
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
