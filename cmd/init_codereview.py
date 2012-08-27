@@ -88,7 +88,15 @@ def main():
     db_path = read_db_path()
     bkup_if_exists(db_path)
     create_table(db_path)
-
+    queries = ["INSERT INTO section_to_email (section, email) VALUES (201, 'moowiz2020@gmail.com')",
+               "INSERT INTO section_to_email (section, email) VALUES (201, 'sharad.vikram@gmail.com')", 
+               "INSERT INTO important_file (assignment, file) VALUES ('hw5', 'hw5.py')"]
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    for query in queries:
+        cursor.execute(query)
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
     main()
