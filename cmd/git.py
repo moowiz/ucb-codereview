@@ -11,7 +11,7 @@ def add(files, path=None):
     If files is None, then you add everything in the given directory instead.
     """
     if not files:
-        files = ["-a"]
+        files = ["-A"]
     if not path:
         path = os.getcwd()
     oldpath = os.getcwd()
