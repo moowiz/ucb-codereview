@@ -39,11 +39,12 @@ def find_path(login, assign):
     Finds the path to the given login's assignment git repository
     """
     path = REPO_DIR + "".join(logins) + "/" + assign + "/"
+    exists = False
     try:
         os.makedirs(path)
     except OSError:
-        pass
-    return path
+        exists = True
+    return path, exists
 
 def get_important_files(assign):
     """
@@ -108,28 +109,14 @@ def upload(path_to_repo, gmails, logins, assign):
     staff_gmails = tuple(map(lambda x: model.get_reviewers(x), get_sections(logins)))
     content = ""
     if not issue_num:
-        path_to_template = ASSIGN_DIR
-        if "hw" in assign:
-            path_to_template += "hw/"
-        else:
-            path_to_template += "proj/"
-        path_to_template += assign + "/"
-        if len(assign) == 3:
-            assign = assign[:2] + '0' + assign[-1]
-        if len(assign) == 5:
-            assign = assign[:4] + '0' + assign[-1]
-        if not os.path.exists(path_to_template):
-            raise Exception("Assignment path {} doesn't exist".format(path_to_template))
-        copy_important_files(assign, path_to_template, path_to_repo)
         cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", assign, '-r', *gmails, *staff_gmails, '-e', ROBOT_EMAIL)
         content = get_robot_pass()
     else:
-          cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+        cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', issue_num,
             '--rev', git.get_revision_hash(path_to_repo))
     out = utils.run(cmd, content)
-    # if not issue_num:
     line = ""
     for l in out:
         if l.startswith("Issue created:"):
@@ -153,8 +140,26 @@ def put_in_repo(logins, assign):
     Puts the login's assignment into their repo
     """
     tempdir = get_subm(logins, assign)
-    path_to_repo = find_path(logins, assign)
+    path_to_repo, exists = find_path(logins, assign)
+    if not exists:
+        path_to_template = ASSIGN_DIR
+        if "hw" in assign:
+            path_to_template += "hw/"
+        else:
+            path_to_template += "proj/"
+        path_to_template += assign + "/"
+        if len(assign) == 3:
+            assign = assign[:2] + '0' + assign[-1]
+        if len(assign) == 5:
+            assign = assign[:4] + '0' + assign[-1]
+        if not os.path.exists(path_to_template):
+            raise Exception("Assignment path {} doesn't exist".format(path_to_template))
+        copy_important_files(assign, path_to_template, path_to_repo)
+        git.add(None, path=path_to_repo)
+        git.commit("Initial commit", path=path_to_repo)
     copy_important_files(assign, tempdir, path_to_repo)
+    git.add(None, path=path_to_repo)
+    git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
     return path_to_repo
 
 def add(logins, assign):
