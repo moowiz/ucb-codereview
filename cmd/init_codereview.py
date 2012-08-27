@@ -12,9 +12,8 @@ import sys
 import os     
 import os.path
 import sqlite3   
-from datetime import datetime
 
-from utils import read_db_path
+from utils import read_db_path, get_timestamp_str
 
 
 # A dictionary repr of the schema. Mapping is
@@ -44,9 +43,7 @@ def bkup_if_exists(path):
     Args:
         path: path of sqlite db
     """
-    now = datetime.now() #-2012-08-21-2-45
-    date_str = now.strftime(".%Y-%m-%d-%H-%M")
-    newpath = path + date_str + BACKUP_EXT
+    newpath = path + "." + get_timestamp_str() + BACKUP_EXT
     if os.path.exists(newpath):
         raise RuntimeError("Tried to backup the database too fast!") #not sure about this error message
     print('path {}'.format(newpath))
