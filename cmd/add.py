@@ -44,15 +44,24 @@ def get_important_files(assign):
     """
     return [""]
 
-def get_gmail(login):
+def get_gmails(login):
     """
     Returns the gmail account associated with this student for the code review system.
     Not sure how to do this yet; we'll decide something in the first staff meeting
     """
     return "example@gmail.com"
 
-def upload(path_to_repo, gmail):
+PYTHON_BIN = "python2.6"
+UPLOAD_SCRIPT = "~cs61a/code_review/61a-codereview/appengine/upload.py"
+SERVER_NAME = "berkeley-61a.appspot.com"
+ROBOT_EMAIL = "cs61a.robot@gmail.com"
+
+def get_robot_pass():
+    return "robotototototot"
+
+def upload(path_to_repo, gmails, logins, assign):
     """
+    ~cs61a/code_review/repo/login/assign/
     Calls the upload script with the needed arguments given the path to the repo and the
     gmail account of the student.
     Arguments we care about:
@@ -62,13 +71,52 @@ def upload(path_to_repo, gmail):
     --private makes the issue private 
     --send_mail sends an email to the reviewers (might want)
     --send_patch sends an email but with the diff attached, possible thing to do
+    new version of the same issue
+    each issue is the same project
     These args are documented in upload.py starting on line 490.
     This method also needs to deal with assigning the correct people to this, which means
     it has to probably get info from somewhere about the roster. 
+    stuff we needed to enter
+    first time uploading
+    -s (server)
+    -t name of assignment 
+    -e email for login to uploading (robot)
+    -r reviewers (student TA reader other)
+
+    every other time:
+    issue number
+    revision
+    server
+    title: timestamp?
     """
-    return
+    issue_num = model.get_issue_number(logins, assign)
+    staff_gmails = model.get_staff_gmails(logins)
+    content = ""
+    if not issue_num:
+        cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+            "-t", assign, '-r', *gmails, *staff_gmails, '-e', ROBOT_EMAIL)
+        content = get_robot_pass()
+    else:
+          cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+            "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', issue_num,
+            '--rev', git.get_revision_hash(path_to_repo))
+    out = utils.run(cmd, content)
+    # if not issue_num:
+    line = ""
+    for l in out:
+        if l.startswith("Issue created:"):
+            line = l
+            break
+    if line:
+        line = line[line.rfind('/') + 1:].strip()
+        issue_num = int(line)
+        model.set_issue_number(logins, assign, issue_num)
 
 def put_in_repo(login, assign):
+    """
+    Puts the login's assignment into their repo
+    If this is their first submission for this assignment, this also 
+    """
     original_path = os.getcwd()
     tempdir = get_subm(login, assign)
     path_to_repo = find_path(login, assign)
@@ -77,10 +125,11 @@ def put_in_repo(login, assign):
         shutil.copy(tempdir + filename, path_to_repo + filename)
     os.chdir(original_path)
     shutil.rmtree(tempdir)
-    return path_to_repo
+    return path_to_repo, is_new_repo
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Adds the given login's latest submission for the given assignment to the code review system.")
+    parser = argparse.ArgumentParser(description="Adds the given login's latest \
+     submission for the given assignment to the code review system.")
     parser.add_argument('login', type=str,
                         help='the login to add')
     parser.add_argument('assign', type=str,

@@ -1,4 +1,5 @@
 from subprocess import PIPE, Popen
+from datetime import datetime
 
 def read_db_path():
     """
@@ -13,3 +14,7 @@ def run(cmd, content=""):
     if err is not None:
         raise err
     return out
+
+def get_timestamp_str():
+    now = datetime.now() #-2012-08-21-2-45
+    return now.strftime("%Y-%m-%d-%H-%M")

@@ -32,3 +32,10 @@ def commit(message, path=None):
     command = "git commit " + message
     out = utils.run(command)
     os.chdir(oldpath)
+
+def get_revision_hash(path_to_repo):
+    oldpath = os.getcwd()
+    os.chdir(path)
+    command = "git log --pretty=format %H"
+    out = utils.run(command)
+    return out[-1]
