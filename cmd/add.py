@@ -178,7 +178,7 @@ def put_in_repo(logins, assign):
         git.commit("Initial-commit", path=path_to_repo)
     copy_important_files(assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
-    git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
+    # git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
     shutil.rmtree(path_to_subm)
     return path_to_repo
 
