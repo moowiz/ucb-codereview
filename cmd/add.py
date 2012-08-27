@@ -146,7 +146,7 @@ def copy_important_files(assign, start_dir, end_dir):
     for filename in files_to_copy:
         shutil.copy(start_dir + filename, end_dir + filename)
     os.chdir(end_dir)
-    print("dir is now{}".format(os.system("ls")))
+    print("dir is now {}".format(os.system("ls")))
     os.chdir(original_path)
 
 def put_in_repo(logins, assign):
