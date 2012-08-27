@@ -106,30 +106,35 @@ def upload(path_to_repo, gmails, logins, assign):
     server
     title: timestamp?
     """
-    issue_num = model.get_issue_number(logins, assign)
-    def mextend(a, b):
-        a.extend(b)
-        return a
-    staff_gmails = reduce(mextend, map(lambda x: model.get_reviewers(x), get_sections(logins)), [])
-    content = ""
-    if not issue_num:
-        cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-            "-t", assign, '-r', " ".join(gmails), " ".join(staff_gmails), '-e', ROBOT_EMAIL))
-        content = get_robot_pass()
-    else:
-        cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-            "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', issue_num,
-            '--rev', git.get_revision_hash(path_to_repo)))
-    out = utils.run(cmd, content)
-    line = ""
-    for l in out:
-        if l.startswith("Issue created:"):
-            line = l
-            break
-    if line:
-        line = line[line.rfind('/') + 1:].strip()
-        issue_num = int(line)
-        model.set_issue_number(logins, assign, issue_num)
+    original_path = os.getcwd()
+    try:
+        os.chdir(path_to_repo)
+        issue_num = model.get_issue_number(logins, assign)
+        def mextend(a, b):
+            a.extend(b)
+            return a
+        staff_gmails = reduce(mextend, map(lambda x: model.get_reviewers(x), get_sections(logins)), [])
+        content = ""
+        if not issue_num:
+            cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+                "-t", assign, '-r', " ".join(gmails), " ".join(staff_gmails), '-e', ROBOT_EMAIL))
+            content = get_robot_pass()
+        else:
+            cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+                "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', issue_num,
+                '--rev', git.get_revision_hash(path_to_repo)))
+        out = utils.run(cmd, content)
+        line = ""
+        for l in out:
+            if l.startswith("Issue created:"):
+                line = l
+                break
+        if line:
+            line = line[line.rfind('/') + 1:].strip()
+            issue_num = int(line)
+            model.set_issue_number(logins, assign, issue_num)    
+    finally:
+        os.chdir(original_path)
 
 def copy_important_files(assign, start_dir, end_dir):
     original_path = os.getcwd()
