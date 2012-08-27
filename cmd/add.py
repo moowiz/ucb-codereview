@@ -40,12 +40,11 @@ def find_path(logins, assign):
     Finds the path to the given login's assignment git repository
     """
     path = REPO_DIR + "".join(logins) + "/" + assign + "/"
-    exists = False
     try:
         os.makedirs(path)
     except OSError:
-        exists = True
-    return path, exists
+        pass
+    return path
 
 def get_important_files(assign):
     """
@@ -140,8 +139,9 @@ def put_in_repo(logins, assign):
     Puts the login's assignment into their repo
     """
     tempdir = get_subm(logins, assign)
-    path_to_repo, exists = find_path(logins, assign)
-    if not exists:
+    path_to_repo = find_path(logins, assign)
+    issue_num = model.get_issue_number(logins, assign)
+    if not issue_num:
         path_to_template = ASSIGN_DIR
         if "hw" in assign:
             path_to_template += "hw/"
