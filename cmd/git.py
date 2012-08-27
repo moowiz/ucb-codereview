@@ -29,6 +29,8 @@ def init(path=None):
     out = utils.run(command) 
     os.chdir(oldpath)
 
+GIT_COMMIT_FILE_NAME = 'tmp_git_commit_file'
+
 def commit(message, path=None):
     """
     Commits with the given message in the git repo in the given path. 
@@ -38,8 +40,13 @@ def commit(message, path=None):
         path = os.getcwd()
     oldpath = os.getcwd()
     os.chdir(path)
-    command = "git commit -m " + '\"{}\"'.format(message)
+    tmp_file = open(GIT_COMMIT_FILE_NAME, 'w')
+    tmp_file.write(message)
+    tmp_file.flush()
+    tmp_file.close()
+    command = "git commit -F " + GIT_COMMIT_FILE_NAME
     out = utils.run(command)
+    os.remove(GIT_COMMIT_FILE_NAME)
     os.chdir(oldpath)
 
 def get_revision_hash(path_to_repo=None):    
