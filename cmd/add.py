@@ -28,12 +28,10 @@ def get_subm(logins, assign):
     """
     tempdir = tempfile.mkdtemp()
     os.chdir(tempdir)
-    try:
-        out = utils.run("get-subm " + logins[0] + " " + assign)
-        print 'hmmm'
-        print("out is {}".format(out))
-    except OSError as e:
-        print >> sys.stderr, str(e)
+    out = utils.run("get-subm " + logins[0] + " " + assign)
+    print 'hmmm'
+    print 'logins {} assign {}'.format(logins, assign)
+    print("out is {}".format(out))
     return tempdir + "/" #need the trailing slash for the copy command
 
 def find_path(logins, assign):
