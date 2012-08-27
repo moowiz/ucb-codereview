@@ -12,6 +12,7 @@ import sys
 import os     
 import os.path
 import sqlite3   
+import utils
 
 from utils import read_db_path, get_timestamp_str
 
