@@ -34,7 +34,7 @@ def get_subm(logins, assign):
         print >> sys.stderr, str(e)
     return tempdir + "/" #need the trailing slash for the copy command
 
-def find_path(login, assign):
+def find_path(logins, assign):
     """
     Finds the path to the given login's assignment git repository
     """
