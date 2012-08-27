@@ -19,6 +19,7 @@ model = CodeReviewDatabase(utils.read_db_path())
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 REPO_DIR = GRADING_DIR + "codereview/repo/"
+ASSIGN_DIR = HOME_DIR + "lib/"
 
 def get_subm(logins, assign):
     """
@@ -107,6 +108,19 @@ def upload(path_to_repo, gmails, logins, assign):
     staff_gmails = tuple(map(lambda x: model.get_reviewers(x), get_sections(logins)))
     content = ""
     if not issue_num:
+        path_to_template = ASSIGN_DIR
+        if "hw" in assign:
+            path_to_template += "hw/"
+        else:
+            path_to_template += "proj/"
+        path_to_template += assign + "/"
+        if len(assign) == 3:
+            assign = assign[:2] + '0' + assign[-1]
+        if len(assign) == 5:
+            assign = assign[:4] + '0' + assign[-1]
+        if not os.path.exists(path_to_template):
+            raise Exception("Assignment path {} doesn't exist".format(path_to_template))
+        copy_important_files(assign, path_to_template, path_to_repo)
         cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", assign, '-r', *gmails, *staff_gmails, '-e', ROBOT_EMAIL)
         content = get_robot_pass()
@@ -126,18 +140,21 @@ def upload(path_to_repo, gmails, logins, assign):
         issue_num = int(line)
         model.set_issue_number(logins, assign, issue_num)
 
+def copy_important_files(assign, start_dir, end_dir):
+    original_path = os.getcwd()
+    files_to_copy = get_important_files(assign)
+    for filename in files_to_copy:
+        shutil.copy(start_dir + filename, end_dir + filename)
+    os.chdir(original_path)
+    shutil.rmtree(tempdir)
+
 def put_in_repo(logins, assign):
     """
     Puts the login's assignment into their repo
     """
-    original_path = os.getcwd()
     tempdir = get_subm(logins, assign)
     path_to_repo = find_path(logins, assign)
-    files_to_copy = get_important_files(assign)
-    for filename in files_to_copy:
-        shutil.copy(tempdir + filename, path_to_repo + filename)
-    os.chdir(original_path)
-    shutil.rmtree(tempdir)
+    copy_important_files(assign, tempdir, path_to_repo)
     return path_to_repo
 
 def add(logins, assign):
