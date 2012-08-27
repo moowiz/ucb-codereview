@@ -173,6 +173,7 @@ def put_in_repo(logins, assign):
         path_to_template += assign + "/"
         if not os.path.exists(path_to_template):
             raise Exception("Assignment path {} doesn't exist".format(path_to_template))
+        copy_important_files(assign, path_to_template, path_to_repo)
         git.init(path=path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
@@ -180,7 +181,6 @@ def put_in_repo(logins, assign):
     git.add(None, path=path_to_repo)
     # git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
     shutil.rmtree(path_to_subm)
-    copy_important_files(assign, path_to_template, path_to_repo)
     files = glob.glob(path_to_repo + "*")
     for f in files:
         utils.chmod_own_grp(f)
