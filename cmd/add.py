@@ -34,6 +34,8 @@ def get_subm(logins, assign):
     files = glob.glob(TEMP_DIR + "*")
     for f in files:
         os.remove(f)
+    if not os.path.exists(tempdir):
+        os.makedirs(tempdir)
     os.chdir(tempdir)
     out = utils.run("get-subm " + assign + " " + logins[0])
     # print 'hmmm'
