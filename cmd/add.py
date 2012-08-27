@@ -147,11 +147,11 @@ def put_in_repo(logins, assign):
             path_to_template += "hw/"
         else:
             path_to_template += "proj/"
-        path_to_template += assign + "/"
         if len(assign) == 3:
             assign = assign[:2] + '0' + assign[-1]
         if len(assign) == 5:
             assign = assign[:4] + '0' + assign[-1]
+        path_to_template += assign + "/"
         if not os.path.exists(path_to_template):
             raise Exception("Assignment path {} doesn't exist".format(path_to_template))
         copy_important_files(assign, path_to_template, path_to_repo)
