@@ -13,11 +13,14 @@ import shutil
 import utils
 import os
 
+from model import CodeReviewDatabase
+model = CodeReviewDatabase(utils.read_db_path())
+
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 REPO_DIR = GRADING_DIR + "codereview/repo/"
 
-def get_subm(login, assign):
+def get_subm(logins, assign):
     """
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
@@ -25,7 +28,7 @@ def get_subm(login, assign):
     tempdir = tempfile.mkdtemp()
     os.chdir(tempdir)
     try:
-        utils.run("get-subm " + login + " " + assign)
+        utils.run("get-subm " + logins[0] + " " + assign)
     except OSError as e:
         print << sys.stderr, str(e)
     return tempdir + "/" #need the trailing slash for the copy command
@@ -34,7 +37,7 @@ def find_path(login, assign):
     """
     Finds the path to the given login's assignment git repository
     """
-    path = REPO_DIR + login + "/" + assign + "/"
+    path = REPO_DIR + "".join(logins) + "/" + assign + "/"
     try:
         os.makedirs(path)
     except OSError:
@@ -47,22 +50,28 @@ def get_important_files(assign):
     Do we need this function, or should we copy everything?
     Would involve either some looking at the params file, or looking at the DB
     """
-    return [""]
+    return model.get_important_file(assign)
 
-def get_gmails(login):
+def get_sections(logins):
     """
-    Returns the gmail account associated with this student for the code review system.
+    Returns the sections for logins
+    """
+    return (201,)
+
+def get_gmails(logins):
+    """
+    Returns the gmail accounts associated with these students for the code review system.
     Not sure how to do this yet; we'll decide something in the first staff meeting
     """
-    return "example@gmail.com"
+    return ("stephenmartinis@gmail.com",)
 
-PYTHON_BIN = "python2.6"
+PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = "~cs61a/code_review/61a-codereview/appengine/upload.py"
 SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
 def get_robot_pass():
-    return "robotototototot"
+    return "reviewdatcode"
 
 def upload(path_to_repo, gmails, logins, assign):
     """
@@ -95,7 +104,7 @@ def upload(path_to_repo, gmails, logins, assign):
     title: timestamp?
     """
     issue_num = model.get_issue_number(logins, assign)
-    staff_gmails = model.get_staff_gmails(logins)
+    staff_gmails = tuple(map(lambda x: model.get_reviewers(x), get_sections(logins)))
     content = ""
     if not issue_num:
         cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
@@ -117,13 +126,13 @@ def upload(path_to_repo, gmails, logins, assign):
         issue_num = int(line)
         model.set_issue_number(logins, assign, issue_num)
 
-def put_in_repo(login, assign):
+def put_in_repo(logins, assign):
     """
     Puts the login's assignment into their repo
     """
     original_path = os.getcwd()
-    tempdir = get_subm(login, assign)
-    path_to_repo = find_path(login, assign)
+    tempdir = get_subm(logins, assign)
+    path_to_repo = find_path(logins, assign)
     files_to_copy = get_important_files(assign)
     for filename in files_to_copy:
         shutil.copy(tempdir + filename, path_to_repo + filename)
@@ -131,16 +140,16 @@ def put_in_repo(login, assign):
     shutil.rmtree(tempdir)
     return path_to_repo
 
-def add(login, assign):
-    path_to_repo = put_in_repo(login, assign)
-    upload(path_to_repo, get_gmail(login))
+def add(logins, assign):
+    path_to_repo = put_in_repo(logins, assign)
+    upload(path_to_repo, get_gmails(logins), logins, assign)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
      submission for the given assignment to the code review system.")
-    parser.add_argument('login', type=str,
-                        help='the login to add')
+    parser.add_argument('logins', type=str,
+                        help='the login(s) to add')
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
     args = parser.parse_args()
-    add(args.login, args.assign)
+    add(args.logins, args.assign)
