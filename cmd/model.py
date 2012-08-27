@@ -62,12 +62,18 @@ class CodeReviewDatabase(object):
     def get_reviewers(self, section):
         sql = "SELEcT email FROM section_to_email WHERE section=?"
         reviewers = self.cursor.execute(sql, (section,))
-        return reviewers #maybe add some asserts?
+        temp = []
+        for row in reviewers.fetchall():
+          temp.append(row[0])
+        return temp #maybe add some asserts?
 
-    def get_reviewers(self, assignment):
+    def get_important_file(self, assignment):
         sql = "SELEcT file FROM important_file WHERE assignment=?"
         files = self.cursor.execute(sql, (assignment,))
-        return files #maybe add some asserts?
+        temp = []
+        for row in files.fetchall():
+          temp.append(row[0])
+        return temp #maybe add some asserts?
 
     def get_issue_number(self, students, assign):
         """
