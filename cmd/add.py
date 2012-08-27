@@ -114,10 +114,11 @@ def upload(path_to_repo, gmails, logins, assign):
             a.extend(b)
             return a
         staff_gmails = reduce(mextend, map(lambda x: model.get_reviewers(x), get_sections(logins)), [])
+        gmails.extend(staff_gmails)
         content = ""
         if not issue_num:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-                "-t", assign, '-r', " ".join(gmails), " ".join(staff_gmails), '-e', ROBOT_EMAIL))
+                "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL))
             content = get_robot_pass()
         else:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
