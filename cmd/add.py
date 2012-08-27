@@ -57,16 +57,16 @@ def get_important_files(assign):
 
 def get_sections(logins):
     """
-    Returns the sections for logins
+    Returns the sections for logins in a list
     """
-    return (201,)
+    return [201]
 
 def get_gmails(logins):
     """
-    Returns the gmail accounts associated with these students for the code review system.
+    Returns the gmail accounts (in a list) associated with these students for the code review system.
     Not sure how to do this yet; we'll decide something in the first staff meeting
     """
-    return ("stephenmartinis@gmail.com",)
+    return ["stephenmartinis@gmail.com"]
 
 PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
