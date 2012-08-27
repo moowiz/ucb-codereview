@@ -38,7 +38,7 @@ def commit(message, path=None):
         path = os.getcwd()
     oldpath = os.getcwd()
     os.chdir(path)
-    command = "git commit -m " + message
+    command = "git commit -m " + '\"{}\"'.format(message)
     out = utils.run(command)
     os.chdir(oldpath)
 
