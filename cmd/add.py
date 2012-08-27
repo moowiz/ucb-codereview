@@ -174,7 +174,9 @@ def put_in_repo(logins, assign):
     return path_to_repo
 
 def add(logins, assign):
+    original_path = os.getcwd()
     path_to_repo = put_in_repo(logins, assign)
+    os.chdir(original_path) #need this because somehow we end up in a bad place now...
     upload(path_to_repo, get_gmails(logins), logins, assign)
 
 if __name__ == "__main__":
