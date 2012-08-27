@@ -12,6 +12,7 @@ import tempfile
 import shutil
 import utils
 import os
+import glob
 import git
 
 from model import CodeReviewDatabase
@@ -22,13 +23,17 @@ GRADING_DIR = HOME_DIR + "grading/"
 CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
 REPO_DIR = CODE_REVIEW_DIR + "repo/"
 ASSIGN_DIR = HOME_DIR + "lib/"
+TEMP_DIR = HOME_DIR + "tmp/robot-tmp/"
 
 def get_subm(logins, assign):
     """
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
     """
-    tempdir = tempfile.mkdtemp()
+    tempdir = TEMP_DIR
+    files = glob.glob(TEMP_DIR + "*")
+    for f in files:
+        os.remove(f)
     os.chdir(tempdir)
     out = utils.run("get-subm " + assign + " " + logins[0])
     # print 'hmmm'
