@@ -10,6 +10,7 @@ def read_db_path():
 
 def run(cmd, content=""):
     """Run a shell command and pass content as stdin."""
+    print "running command {}".format(command)
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE)
     out, err = proc.communicate(input=content)
     if err is not None:
