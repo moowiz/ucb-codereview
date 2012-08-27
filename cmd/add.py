@@ -31,7 +31,7 @@ def get_subm(logins, assign):
     try:
         utils.run("get-subm " + logins[0] + " " + assign)
     except OSError as e:
-        print << sys.stderr, str(e)
+        print >> sys.stderr, str(e)
     return tempdir + "/" #need the trailing slash for the copy command
 
 def find_path(login, assign):
