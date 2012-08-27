@@ -24,7 +24,7 @@ def get_timestamp_str():
     return now.strftime("%Y-%m-%d-%H-%M")
 
 def get_staff_gid():
-    return grp.getgrname("cs61a-staff")[2]
+    return grp.getgrnam("cs61a-staff")[2]
 
 def get_master_user_id():
     return 20490
