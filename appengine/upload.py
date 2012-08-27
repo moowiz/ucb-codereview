@@ -421,7 +421,7 @@ class HttpRpcServer(AbstractRpcServer):
     super(HttpRpcServer, self)._Authenticate()
     if self.save_cookies:
       StatusUpdate("Saving authentication cookies to %s" % self.cookie_file)
-      self.cookie_jar.save()
+      self.cookie_jar.save(ignore_expires=True)
 
   def _GetOpener(self):
     """Returns an OpenerDirector that supports cookies and ignores redirects.

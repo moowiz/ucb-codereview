@@ -11,8 +11,9 @@ import sys
 import tempfile
 import shutil
 import utils
+import os
 
-HOME_DIR = '~cs61a/'
+HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 REPO_DIR = GRADING_DIR + "codereview/repo/"
 
