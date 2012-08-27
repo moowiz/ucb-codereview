@@ -14,7 +14,7 @@ import utils
 
 HOME_DIR = '~cs61a/'
 GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = GRADING_DIR + 'submissions/'
+REPO_DIR = GRADING_DIR + "codereview/repo/"
 
 def get_subm(login, assign):
     """
@@ -32,9 +32,13 @@ def get_subm(login, assign):
 def find_path(login, assign):
     """
     Finds the path to the given login's assignment git repository
-    Not sure how we're structuring this right now...
     """
-    return ""
+    path = REPO_DIR + login + "/" + assign + "/"
+    try:
+        os.makedirs(path)
+    except OSError:
+        pass
+    return path
 
 def get_important_files(assign):
     """
@@ -115,7 +119,6 @@ def upload(path_to_repo, gmails, logins, assign):
 def put_in_repo(login, assign):
     """
     Puts the login's assignment into their repo
-    If this is their first submission for this assignment, this also 
     """
     original_path = os.getcwd()
     tempdir = get_subm(login, assign)
@@ -125,7 +128,11 @@ def put_in_repo(login, assign):
         shutil.copy(tempdir + filename, path_to_repo + filename)
     os.chdir(original_path)
     shutil.rmtree(tempdir)
-    return path_to_repo, is_new_repo
+    return path_to_repo
+
+def add(login, assign):
+    path_to_repo = put_in_repo(login, assign)
+    upload(path_to_repo, get_gmail(login))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
@@ -135,5 +142,4 @@ if __name__ == "__main__":
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
     args = parser.parse_args()
-    path_to_repo = put_in_repo(args.login, args.assign)
-    upload(path_to_repo, get_gmail(args.login))
+    add(args.login, args.assign)

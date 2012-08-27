@@ -5,7 +5,7 @@ def read_db_path():
     """
     Reads the DB path out of the config file.
     """
-    return "codereview_db.sqlite"
+    return "~cs61a/grading/codereview/codereview_db.sqlite"
 
 def run(cmd, content=""):
     """Run a shell command and pass content as stdin."""
