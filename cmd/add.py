@@ -29,7 +29,9 @@ def get_subm(logins, assign):
     tempdir = tempfile.mkdtemp()
     os.chdir(tempdir)
     try:
-        utils.run("get-subm " + logins[0] + " " + assign)
+        out = utils.run("get-subm " + logins[0] + " " + assign)
+        print 'hmmm'
+        print("out is {}".format(out))
     except OSError as e:
         print >> sys.stderr, str(e)
     return tempdir + "/" #need the trailing slash for the copy command
@@ -168,10 +170,10 @@ def add(logins, assign):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
-     submission for the given assignment to the code review system.")
-    parser.add_argument('logins', type=str,
-                        help='the login(s) to add')
+     submission for the given assignment to the code review system.")    
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
+    parser.add_argument('logins', type=str, nargs='*',
+                        help='the login(s) to add')
     args = parser.parse_args()
     add(args.logins, args.assign)
