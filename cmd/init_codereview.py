@@ -83,14 +83,14 @@ def create_table(path):
 
 def main():
     """
-    The main function to run.
+    The main function to run. Populates the database with basic info. 
     """
     db_path = read_db_path()
     bkup_if_exists(db_path)
     create_table(db_path)
     queries = ["INSERT INTO section_to_email (section, email) VALUES (201, 'moowiz2020@gmail.com')",
                "INSERT INTO section_to_email (section, email) VALUES (201, 'sharad.vikram@gmail.com')", 
-               "INSERT INTO important_file (assignment, file) VALUES ('hw5', 'hw5.py')"]
+               "INSERT INTO important_file (assignment, file) VALUES ('hw05', 'hw5.py')"]
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     for query in queries:

@@ -156,7 +156,7 @@ def put_in_repo(logins, assign):
     """
     Puts the login's assignment into their repo
     """
-    tempdir = get_subm(logins, assign)
+    path_to_subm = get_subm(logins, assign)
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
@@ -165,7 +165,7 @@ def put_in_repo(logins, assign):
             path_to_template += "hw/"
         else:
             path_to_template += "proj/"
-        if len(assign) == 3:
+        if len(assign) == 3: #wonderful hackage
             assign = assign[:2] + '0' + assign[-1]
         if len(assign) == 5:
             assign = assign[:4] + '0' + assign[-1]
@@ -176,10 +176,10 @@ def put_in_repo(logins, assign):
         git.init(path=path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial-commit", path=path_to_repo)
-    copy_important_files(assign, tempdir, path_to_repo)
+    copy_important_files(assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
-    shutil.rmtree(tempdir)
+    shutil.rmtree(path_to_subm)
     return path_to_repo
 
 def add(logins, assign):
