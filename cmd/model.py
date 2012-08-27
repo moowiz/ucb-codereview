@@ -75,6 +75,10 @@ class CodeReviewDatabase(object):
           temp.append(row[0])
         return temp #maybe add some asserts?
 
+    @staticmethod    
+    def combine_students(students):
+        return "".join(sorted(students))
+
     def get_issue_number(self, students, assign):
         """
         Gets the issue number for the particular student & assignment
@@ -84,7 +88,7 @@ class CodeReviewDatabase(object):
                 eg. ("cs61a-ab",) or ("cs61a-ab", "cs61a-bc")
             assign: assignment name, eg. "proj1"
         """
-        partners = " ".join(sorted(students))
+        partners = CodeReviewDatabase.combine_students(students)
         get_issue_sql = "SELECT issue FROM roster " + \
                 "WHERE partners=? AND assignment=? LIMIT 1"
         res_cur = self.cursor.execute(get_issue_sql, (partners, assign))
@@ -108,7 +112,7 @@ class CodeReviewDatabase(object):
             assign: assignment name, eg. "proj1"
             issue_num: the issue number, this comes from upload.py
         """
-        partners = " ".join(sorted(students))
+        partners = CodeReviewDatabase.combine_students(students)
         set_issue_sql = "INSERT INTO roster (partners, assignment, issue)" + \
                 "VALUES (?, ?, ?)"
         self.cursor.execute(set_issue_sql, (partners, assign, issue_num))
