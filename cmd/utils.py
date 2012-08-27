@@ -2,6 +2,7 @@ from subprocess import PIPE, Popen
 from datetime import datetime
 import os
 import grp
+import stat
 
 def read_db_path():
     """
