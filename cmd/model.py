@@ -59,10 +59,15 @@ class CodeReviewDatabase(object):
             self.cursor.execute(insert_last_upload_sql, (time_int,))
             self.conn.commit()
             
-    def get_next_reviewer(self):
-        get_next_sql = "SELECT reviewer, MIN(assigned) FROM queue" #I don't know sql :(
-        reviewer = self.cursor.execute(get_next_sql) #change this!
-        return reviewer #maybe add some asserts?
+    def get_reviewers(self, section):
+        sql = "SELEcT email FROM section_to_email WHERE section=?"
+        reviewers = self.cursor.execute(sql, (section,))
+        return reviewers #maybe add some asserts?
+
+    def get_reviewers(self, assignment):
+        sql = "SELEcT file FROM important_file WHERE assignment=?"
+        files = self.cursor.execute(sql, (assignment,))
+        return files #maybe add some asserts?
 
     def get_issue_number(self, students, assign):
         """

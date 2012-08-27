@@ -27,9 +27,13 @@ SCHEMA = {
             'assignment': 'TEXT', # assignment name, eg 'proj4'
             'issue': 'INTEGER' # issue number on rietveld
             },
-        'queue': {
-            'reviewer': 'TEXT',
-            'assigned': 'INTEGER'
+        'section_to_email': {
+            'section': 'INTEGER', # section number for the staff number
+            'email': 'TEXT' # staff member email
+            },
+        'important_file': {
+            'assignment':'TEXT',
+            'file': 'TEXT'
             }
         }
 
