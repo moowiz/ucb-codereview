@@ -125,13 +125,15 @@ def upload(path_to_repo, gmails, logins, assign):
         content = ""
         if not issue_num:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-                "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL))
+                "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
+                '--rev', git.get_revision_hash(path_to_repo)))
             content = get_robot_pass()
         else:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', issue_num,
                 '--rev', git.get_revision_hash(path_to_repo)))
         out = utils.run(cmd, content)
+        print('got {} from the run'.format(out))
         line = ""
         for l in out:
             if l.startswith("Issue created:"):
@@ -179,7 +181,7 @@ def put_in_repo(logins, assign):
         git.commit("Initial commit", path=path_to_repo)
     copy_important_files(assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
-    # git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
+    git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
     shutil.rmtree(path_to_subm)
     files = glob.glob(path_to_repo + "*")
     for f in files:
