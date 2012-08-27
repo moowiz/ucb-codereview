@@ -157,7 +157,7 @@ def put_in_repo(logins, assign):
         copy_important_files(assign, path_to_template, path_to_repo)
         git.init(path=path_to_repo)
         git.add(None, path=path_to_repo)
-        git.commit('"Initial commit"', path=path_to_repo)
+        git.commit("\"Initial commit\"", path=path_to_repo)
     copy_important_files(assign, tempdir, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
