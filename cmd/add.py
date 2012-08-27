@@ -145,14 +145,10 @@ def upload(path_to_repo, gmails, logins, assign):
 def copy_important_files(assign, start_dir, end_dir):
     original_path = os.getcwd()
     files_to_copy = get_important_files(assign)
-    os.chdir(end_dir)
-    print("copying into dir {} with {}".format(end_dir, os.system("ls")))
-    os.chdir(original_path)
+    print("copying into dir {} with {}".format(end_dir, os.listdir(end_dir)))
     for filename in files_to_copy:
         shutil.copy(start_dir + filename, end_dir + filename)
-    os.chdir(end_dir)
-    print("dir is now {}".format(os.system("ls")))
-    os.chdir(original_path)
+    print("dir is now {}".format(os.listdir(end_dir)))
 
 def put_in_repo(logins, assign):
     """
