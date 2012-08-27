@@ -106,7 +106,10 @@ def upload(path_to_repo, gmails, logins, assign):
     title: timestamp?
     """
     issue_num = model.get_issue_number(logins, assign)
-    staff_gmails = map(lambda x: model.get_reviewers(x), get_sections(logins))
+    def mextend(a, b):
+        a.extend(b)
+        return a
+    staff_gmails = reduce(mextend, map(lambda x: model.get_reviewers(x), get_sections(logins)), [])
     content = ""
     if not issue_num:
         cmd = " ".join(PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
