@@ -82,7 +82,7 @@ def main(assign):
     gmails = get_gmails()
     sections = get_sections()
     partners = get_partners()
-    run_submit()
+    run_submit(assign)
 
 
 if __name__ == "__main__":
