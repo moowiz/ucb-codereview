@@ -12,7 +12,7 @@ model = CodeReviewDatabase(utils.read_db_path())
 
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = GRADING_DIR + "submission/"
+SUBMISSION_DIR = GRADING_DIR + "submissions/"
 
 def sweep(assign):
     if assign == "all":
@@ -26,7 +26,7 @@ def sweep(assign):
     logins = {}
     max = float("-inf")
     for directory in dirs:
-        subms = os.listdir(SUBMISSION_DIR + "/" + directory)
+        subms = os.listdir(SUBMISSION_DIR + directory)
         latest = model.last_uploaded()
         logins[directory] = []
         for name in subms:
