@@ -7,9 +7,9 @@ import utils
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
 
-#HOME_DIR = os.path.expanduser('~cs61a/')
-#GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = "../temp/"
+HOME_DIR = os.path.expanduser('~cs61a/')
+GRADING_DIR = HOME_DIR + "grading/"
+SUBMISSION_DIR = HOME_DIR + "submissions/"
 
 def mark():
     dirs = os.listdir(SUBMISSION_DIR)
