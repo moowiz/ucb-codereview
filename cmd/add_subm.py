@@ -193,7 +193,7 @@ if __name__ == "__main__":
      submission for the given assignment to the code review system.")    
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
-    parser.add_argument('login', type=str, nargs='*',
+    parser.add_argument('login', type=str,
                         help='the login to add')
     args = parser.parse_args()
     add(args.login, args.assign)
