@@ -56,4 +56,4 @@ def get_revision_hash(path_to_repo=None):
     os.chdir(path_to_repo)
     command = 'git log --pretty=format:%H'
     out = utils.run(command)
-    return out[-1]
+    return out.split()[-1]
