@@ -21,6 +21,7 @@ from utils import read_db_path, get_timestamp_str
 # { table_name : { column_name: column_type } }
 SCHEMA = {
         'upload': {
+            'assign': 'TEXT'  #the assignment for which we're looking for the last time
             'last': 'INTEGER' # unix time of last upload
             },
         'roster': {

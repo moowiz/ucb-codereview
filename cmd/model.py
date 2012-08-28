@@ -25,15 +25,15 @@ class CodeReviewDatabase(object):
         self.cursor.close()
         self.conn.close()
 
-    def last_uploaded(self):
+    def last_uploaded(self, assign):
         """
         Retrieve last upload time from database.
 
         Returns:
             Unix time in integer if exists, else None
         """
-        get_last_upload_sql = "SELECT last FROM upload LIMIT 1"
-        result = self.cursor.execute(get_last_upload_sql).fetchone()
+        get_last_upload_sql = "SELECT last FROM upload WHERE assign = ? LIMIT 1"
+        result = self.cursor.execute(get_last_upload_sq, (assign,)).fetchone()
         if result:
             # if not empty, then result should be tuple with 1 elem
             return result[0]
@@ -41,7 +41,7 @@ class CodeReviewDatabase(object):
             # this clause not really necessary
             return None
 
-    def set_last_uploaded(self, time_int):
+    def set_last_uploaded(self, time_int, assign):
         """
         Update the last upload time.
 
@@ -50,13 +50,13 @@ class CodeReviewDatabase(object):
         """
         if self.last_uploaded():
             # if an entry exists, then we need an UPDATE command
-            update_last_upload_sql = "UPDATE upload SET last = ?"
-            self.cursor.execute(update_last_upload_sql, (time_int,))
+            update_last_upload_sql = "UPDATE upload WHERE assign = ? SET last = ?"
+            self.cursor.execute(update_last_upload_sql, (assign, time_int))
             self.conn.commit()
         else:
             # we need to create a new entry
-            insert_last_upload_sql = "INSERT INTO upload VALUES (?)"
-            self.cursor.execute(insert_last_upload_sql, (time_int,))
+            insert_last_upload_sql = "INSERT INTO upload VALUES (?, ?)"
+            self.cursor.execute(insert_last_upload_sql, (assign, time_int))
             self.conn.commit()
             
     def get_reviewers(self, section):
