@@ -15,6 +15,7 @@ import os
 import glob
 import git
 import new_submit
+from functools import reduce
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
