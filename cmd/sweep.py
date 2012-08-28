@@ -50,7 +50,7 @@ def sweep(assign):
             splt = name.split(".")
             login = splt[0]
             timestamp = conv_timestamp(splt[1])
-            if (timestamp > latest):
+            if (timestamp >= latest):
                 logins[directory].append(login)
             if (timestamp > max):
                 max = timestamp
