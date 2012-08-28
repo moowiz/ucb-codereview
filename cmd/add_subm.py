@@ -14,6 +14,7 @@ import utils
 import os
 import glob
 import git
+import new_submit
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -26,7 +27,7 @@ REPO_DIR = CODE_REVIEW_DIR + "repo/"
 ASSIGN_DIR = HOME_DIR + "lib/"
 TEMP_DIR = HOME_DIR + "tmp/robot-tmp/"
 
-def get_subm(logins, assign):
+def get_subm(login, assign):
     """
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
@@ -38,7 +39,7 @@ def get_subm(logins, assign):
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
     os.chdir(tempdir)
-    out = utils.run("get-subm " + assign + " " + logins[0])
+    out = utils.run("get-subm " + assign + " " + login)
     # print 'hmmm'
     # print 'logins {} assign {}'.format(logins, assign)
     # print("out is {}".format(out))
@@ -61,20 +62,22 @@ def get_important_files(assign):
     Do we need this function, or should we copy everything?
     Would involve either some looking at the params file, or looking at the DB
     """
-    return model.get_important_file(assign)
+    assign_files = model.get_important_file(assign)
+    assign_files.extend(new_submit.important_files)
+    return assign_files
 
 def get_sections(logins):
     """
     Returns the sections for logins in a list
     """
-    return [201]
+    return open(new_submit.SECTIONS_FILE, 'r').read().split()
 
 def get_gmails(logins):
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
     Not sure how to do this yet; we'll decide something in the first staff meeting
     """
-    return ["stephenmartinis@gmail.com"]
+    return open(new_submit.GMAILS_FILE, 'r').read().split()
 
 PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
@@ -84,7 +87,7 @@ ROBOT_EMAIL = "cs61a.robot@gmail.com"
 def get_robot_pass():
     return "reviewdatcode"
 
-def upload(path_to_repo, gmails, logins, assign):
+def upload(path_to_repo, logins, assign):
     """
     ~cs61a/code_review/repo/login/assign/
     Calls the upload script with the needed arguments given the path to the repo and the
@@ -104,6 +107,7 @@ def upload(path_to_repo, gmails, logins, assign):
     original_path = os.getcwd()
     try:
         os.chdir(path_to_repo)
+        gmails = get_gmails(logins)
         issue_num = model.get_issue_number(logins, assign)
         def mextend(a, b):
             a.extend(b)
@@ -132,23 +136,28 @@ def upload(path_to_repo, gmails, logins, assign):
             print("New issue; adding to DB")
             line = line[line.rfind('/') + 1:].strip()
             issue_num = int(line)
-            model.set_issue_number(logins, assign, issue_num)    
+            model.set_issue_number(logins, assign, issue_num)  
+    except Exception as e:
+        print(e)  
     finally:
         os.chdir(original_path)
 
-def copy_important_files(assign, start_dir, end_dir):
+def copy_important_files(assign, start_dir, end_dir, template=False):
     original_path = os.getcwd()
     files_to_copy = get_important_files(assign)
+    if template:
+        files_to_copy = list(filter(lambda x: x not in new_submit.important_files, files_to_copy))
     # print("copying into dir {} with {}".format(end_dir, os.listdir(end_dir)))
     for filename in files_to_copy:
         shutil.copy(start_dir + filename, end_dir + filename)
     # print("dir is now {}".format(os.listdir(end_dir)))
 
-def put_in_repo(logins, assign):
+def put_in_repo(login, assign):
     """
     Puts the login's assignment into their repo
     """
-    path_to_subm = get_subm(logins, assign)
+    path_to_subm = get_subm(login, assign)
+    logins = open(new_submit.LOGINS_FILE, 'r').read().split('\n')
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
@@ -164,7 +173,7 @@ def put_in_repo(logins, assign):
         path_to_template += assign + "/"
         if not os.path.exists(path_to_template):
             raise Exception("Assignment path {} doesn't exist".format(path_to_template))
-        copy_important_files(assign, path_to_template, path_to_repo)
+        copy_important_files(assign, path_to_template, path_to_repo, template=True)
         git.init(path=path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
@@ -176,21 +185,20 @@ def put_in_repo(logins, assign):
     for f in files:
         utils.chmod_own_grp(f)
         utils.chown_staff_master(f)
-    return path_to_repo
+    return path_to_repo, logins
 
-def add(logins, assign):
+def add(login, assign):
     original_path = os.getcwd()
-    path_to_repo = put_in_repo(logins, assign)
+    path_to_repo, logins = put_in_repo(login, assign)
     os.chdir(original_path) #need this because somehow we end up in a bad place now...
-    upload(path_to_repo, get_gmails(logins), logins, assign)
-
+    upload(path_to_repo, logins, assign)
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
      submission for the given assignment to the code review system.")    
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
-    parser.add_argument('logins', type=str, nargs='*',
-                        help='the login(s) to add')
+    parser.add_argument('login', type=str,
+                        help='the login to add')
     args = parser.parse_args()
-    add(args.logins, args.assign)
+    add(args.login, args.assign)
