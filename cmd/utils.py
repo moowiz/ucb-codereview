@@ -8,8 +8,8 @@ def read_db_path():
     """
     Reads the DB path out of the config file.
     """
-    #return os.path.expanduser("~cs61a/grading/codereview/codereview_db.sqlite")
-    return os.path.expanduser("../codereview_db.sqlite")
+    return os.path.expanduser("~cs61a/grading/codereview/codereview_db.sqlite")
+    # for local testing #return os.path.expanduser("../codereview_db.sqlite")
 
 def run(cmd, content=""):
     """Run a shell command and pass content as stdin."""
