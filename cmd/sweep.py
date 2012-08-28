@@ -31,8 +31,9 @@ def conv_timestamp(time_str):
 
 def get_last_uploaded():
     latest = model.last_uploaded()
+    print("latest {}".format(latest))
     if not latest:
-        latest = get_small_time()
+        return get_small_time()
     return latest
 
 def sweep(assign):
