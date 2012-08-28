@@ -7,13 +7,17 @@ import os
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
+LOGINS_FILE = "MY.PARTNERS"
 
 def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     cmd = "submit " + assign
-    proc = subprocess.call(cmd.split())
+    proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate(input=".")
+    print("out {} err {}".format(out, err))
+        
 
 def my_prompt(initial_message, prompt, defaults_file):
     defaults = None
@@ -43,9 +47,12 @@ def my_prompt(initial_message, prompt, defaults_file):
         captured.extend(defaults)
     return captured
 
-def write_defaults(defaults, filename):
+def write_defaults(defaults, filename, string_to_join="\n"):
     out = open(filename, 'w')
-    out.write("\n".join(defaults))
+    string = string_to_join.join(defaults)
+    if not string[-1] == "\n":
+        string = string + "\n"
+    out.write(string)
     out.flush()
     out.close()
 
@@ -57,6 +64,14 @@ def get_gmails():
     write_defaults(gmails, GMAILS_FILE)
     return gmails
 
+def get_partners():
+    """
+    Prompts the user for their gmails, and stores the file in the GMAILS_FILE file
+    """
+    partners = my_prompt("Enter you and your partner's logins.", "Login", LOGINS_FILE)
+    write_defaults(partners, LOGINS_FILE, string_to_join=" ")
+    return partners
+
 def get_sections():
     sections = my_prompt("Enter you and your partner's section numbers.", "Section Number", SECTIONS_FILE)
     write_defaults(sections, SECTIONS_FILE)
@@ -65,7 +80,8 @@ def get_sections():
 def main(assign):
     gmails = get_gmails()
     sections = get_sections()
-    print("")
+    partners = get_partners()
+    run_submit()
 
 
 if __name__ == "__main__":
