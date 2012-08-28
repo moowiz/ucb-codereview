@@ -16,8 +16,8 @@ HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = GRADING_DIR + "submissions/"
 
-def get_small_datetime():
-    return 1000000
+def get_small_time():
+    return 1000
 
 def conv_timestamp(time_str):
     #format is 201208261827, return a date
@@ -33,7 +33,7 @@ def conv_timestamp(time_str):
 def get_last_uploaded():
     latest = model.last_uploaded()
     if not latest:
-        latest = get_small_datetime()
+        latest = get_small_time()
     return latest
 
 def sweep(assign):
@@ -44,7 +44,7 @@ def sweep(assign):
     latest = get_last_uploaded()
     print(latest)
     logins = {}
-    max = get_small_datetime()
+    max = get_small_time()
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
         latest = get_last_uploaded()
