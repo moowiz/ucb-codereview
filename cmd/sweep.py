@@ -29,9 +29,9 @@ def conv_timestamp(time_str):
     minute = int(time_str[10:])
     return calendar.timegm(datetime.datetime(year, month, day, hour=hour, minute=minute).timetuple())
 
-def get_last_uploaded():
-    latest = model.last_uploaded()
-    print("latest {}".format(latest))
+def get_last_uploaded(assign):
+    latest = model.last_uploaded(assign)
+    # print("latest {}".format(latest))
     if not latest:
         return get_small_time()
     return latest
@@ -41,7 +41,7 @@ def sweep(assign):
         dirs = os.listdir(SUBMISSION_DIR)    
     else:
         dirs = [assign]
-    latest = get_last_uploaded()
+    latest = get_last_uploaded(assign)
     print("time {} datetime{} ".format(latest, datetime.datetime.fromtimestamp(latest)))
     logins = {}
     max = get_small_time()
@@ -57,7 +57,7 @@ def sweep(assign):
             if (timestamp > max):
                 max = timestamp
       
-    model.set_last_uploaded(max)
+    model.set_last_uploaded(max, assign)
     return logins
 
 def main(assign, add):
