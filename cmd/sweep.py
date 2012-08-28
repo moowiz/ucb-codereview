@@ -14,20 +14,24 @@ HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = GRADING_DIR + "submissions/"
 
+def get_last_uploaded():
+    latest = model.last_uploaded()
+    if not latest:
+        latest = float("-inf")
+    return latest
+
 def sweep(assign):
     if assign == "all":
         dirs = os.listdir(SUBMISSION_DIR)    
     else:
         dirs = [assign]
-    latest = model.last_uploaded()
-    if not latest:
-        latest = float("-inf")
+    latest = get_last_uploaded()
     print(latest)
     logins = {}
     max = float("-inf")
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
-        latest = model.last_uploaded()
+        latest = get_last_uploaded()
         logins[directory] = []
         for name in subms:
             splt = name.split(".")
