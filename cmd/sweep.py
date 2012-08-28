@@ -45,7 +45,6 @@ def sweep(assign):
     max = get_small_time()
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
-        latest = get_last_uploaded()
         logins[directory] = []
         for name in subms:
             splt = name.split(".")
