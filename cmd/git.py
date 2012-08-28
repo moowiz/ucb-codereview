@@ -41,7 +41,7 @@ def commit(message, path=None):
     oldpath = os.getcwd()
     os.chdir(path)
     tmp_file = open(GIT_COMMIT_FILE_NAME, 'w')
-    tmp_file.write(message)1
+    tmp_file.write(message)
     tmp_file.flush()
     tmp_file.close()
     command = "git commit -F " + GIT_COMMIT_FILE_NAME
