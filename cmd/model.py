@@ -55,7 +55,7 @@ class CodeReviewDatabase(object):
             self.conn.commit()
         else:
             # we need to create a new entry
-            insert_last_upload_sql = "INSERT INTO upload VALUES (?, ?)"
+            insert_last_upload_sql = "INSERT INTO upload (assign, last) VALUES (?, ?)"
             self.cursor.execute(insert_last_upload_sql, (assign, time_int))
             self.conn.commit()
             
