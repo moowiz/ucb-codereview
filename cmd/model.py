@@ -50,7 +50,7 @@ class CodeReviewDatabase(object):
         """
         if self.last_uploaded(assign):
             # if an entry exists, then we need an UPDATE command
-            update_last_upload_sql = "UPDATE upload WHERE assign = ? SET last = ?"
+            update_last_upload_sql = "UPDATE upload SET last = ? WHERE assign = ?"
             self.cursor.execute(update_last_upload_sql, (assign, time_int))
             self.conn.commit()
         else:
