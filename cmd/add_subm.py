@@ -152,7 +152,7 @@ def put_in_repo(login, assign):
     Puts the login's assignment into their repo
     """
     path_to_subm = get_subm(login, assign)
-    logins = open(LOGINS_FILE, 'r').read().split('\n')
+    logins = open(new_submit.LOGINS_FILE, 'r').read().split('\n')
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
