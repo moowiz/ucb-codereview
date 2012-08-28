@@ -54,8 +54,7 @@ def sweep(assign):
                 logins[directory].append(login)
             if (timestamp > max):
                 max = timestamp
-      
-    model.set_last_uploaded(max, assign)
+        model.set_last_uploaded(max, assign)
     return logins
 
 def main(assign, add):
