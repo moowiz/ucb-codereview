@@ -21,8 +21,6 @@ def get_small_time():
 
 def conv_timestamp(time_str):
     #format is 201208261827, return a date
-    #          012345678901
-    # datetime.datetime
     year = int(time_str[:4])
     month = int(time_str[4:6])
     day = int(time_str[6:8])
@@ -42,7 +40,7 @@ def sweep(assign):
     else:
         dirs = [assign]
     latest = get_last_uploaded()
-    print(latest)
+    print(datetime.datetime.fromtimestamp(latest))
     logins = {}
     max = get_small_time()
     for directory in dirs:
