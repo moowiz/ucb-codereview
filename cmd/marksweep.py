@@ -8,9 +8,9 @@ import argparse
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
 
-#HOME_DIR = os.path.expanduser('~cs61a/')
-#GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = "../temp" #GRADING_DIR + "submission/"
+HOME_DIR = os.path.expanduser('~cs61a/')
+GRADING_DIR = HOME_DIR + "grading/"
+SUBMISSION_DIR = GRADING_DIR + "submission/"
 
 def sweep(assign):
     if assign == "all":
