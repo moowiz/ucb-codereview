@@ -29,7 +29,7 @@ def conv_timestamp(time_str):
 def get_last_uploaded():
     latest = model.last_uploaded()
     if not latest:
-        latest = datetime.datetime(2000, 01, 01)
+        latest = datetime.datetime(2000, 1, 1)
     return latest
 
 def sweep(assign):
