@@ -17,6 +17,7 @@ GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = GRADING_DIR + "submissions/"
 
 def get_small_time():
+    print("small")
     return 1000
 
 def conv_timestamp(time_str):
