@@ -58,7 +58,7 @@ if __name__ == "__main__":
         assuming the correct files are in the given directory.")    
     parser.add_argument('assign', type=str,
                         help='the assignment to submit, or "all" for all assignments')
-    parser.add_argument("-a", "--add" action="store_true",
+    parser.add_argument("-a", "--add", action="store_true",
                     help="runs add.py on all inputs")
     args = parser.parse_args()
     main(args.assign, args.add)
