@@ -7,6 +7,7 @@ import argparse
 import add_subm
 import sys
 import datetime
+import calendar
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -14,6 +15,9 @@ model = CodeReviewDatabase(utils.read_db_path())
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = GRADING_DIR + "submissions/"
+
+def get_small_datetime():
+    return 1000000
 
 def conv_timestamp(time_str):
     #format is 201208261827, return a date
@@ -24,12 +28,12 @@ def conv_timestamp(time_str):
     day = int(time_str[6:8])
     hour = int(time_str[8:10])
     minute = int(time_str[10:])
-    return datetime.datetime(year, month, day, hour=hour, minute=minute)
+    return calendar.timegm(datetime.datetime(year, month, day, hour=hour, minute=minute).timetuple())
 
 def get_last_uploaded():
     latest = model.last_uploaded()
     if not latest:
-        latest = datetime.datetime(2000, 1, 1)
+        latest = get_small_datetime()
     return latest
 
 def sweep(assign):
@@ -40,7 +44,7 @@ def sweep(assign):
     latest = get_last_uploaded()
     print(latest)
     logins = {}
-    max = float("-inf")
+    max = get_small_datetime()
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
         latest = get_last_uploaded()
