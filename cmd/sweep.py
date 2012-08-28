@@ -6,6 +6,7 @@ import utils
 import argparse
 import add_subm
 import sys
+from datetime import datetime
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -13,6 +14,17 @@ model = CodeReviewDatabase(utils.read_db_path())
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = GRADING_DIR + "submissions/"
+
+def conv_timestamp(time_str):
+    #format is 201208261827, return a date
+    #          012345678901
+    # datetime.datetime
+    year = int(time_str[:4])
+    month = int(time_str[4:6])
+    day = int(time_str[6:8])
+    hour = int(time_str[8:10])
+    minute = int(time_str[10:])
+    return datetime.datetime(year, month, day, hour=hour, minute=minute)
 
 def get_last_uploaded():
     latest = model.last_uploaded()
@@ -36,7 +48,7 @@ def sweep(assign):
         for name in subms:
             splt = name.split(".")
             login = splt[0]
-            timestamp = int(splt[1])
+            timestamp = conv_timestamp(splt[1])
             if (timestamp > latest):
                 logins[directory].append(login)
             if (timestamp > max):
