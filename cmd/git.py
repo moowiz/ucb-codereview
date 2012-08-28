@@ -41,7 +41,7 @@ def commit(message, path=None):
     oldpath = os.getcwd()
     os.chdir(path)
     tmp_file = open(GIT_COMMIT_FILE_NAME, 'w')
-    tmp_file.write(message)
+    tmp_file.write(message)1
     tmp_file.flush()
     tmp_file.close()
     command = "git commit -F " + GIT_COMMIT_FILE_NAME
@@ -56,4 +56,7 @@ def get_revision_hash(path_to_repo=None):
     os.chdir(path_to_repo)
     command = 'git log --pretty=format:%H'
     out = utils.run(command)
-    return str(out.split()[1]) #diff from the revision before (last thing they submitted)
+    rval = out.split()[1] #diff from the revision before (last thing they submitted)
+    if type(rval) not is str:
+        rval = str(rval)
+    return rval 
