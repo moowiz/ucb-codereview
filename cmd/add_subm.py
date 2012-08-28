@@ -87,7 +87,7 @@ ROBOT_EMAIL = "cs61a.robot@gmail.com"
 def get_robot_pass():
     return "reviewdatcode"
 
-def upload(path_to_repo, gmails, logins, assign):
+def upload(path_to_repo, logins, assign):
     """
     ~cs61a/code_review/repo/login/assign/
     Calls the upload script with the needed arguments given the path to the repo and the
@@ -107,6 +107,7 @@ def upload(path_to_repo, gmails, logins, assign):
     original_path = os.getcwd()
     try:
         os.chdir(path_to_repo)
+        gmails = get_gmails(logins)
         issue_num = model.get_issue_number(logins, assign)
         def mextend(a, b):
             a.extend(b)
@@ -135,7 +136,9 @@ def upload(path_to_repo, gmails, logins, assign):
             print("New issue; adding to DB")
             line = line[line.rfind('/') + 1:].strip()
             issue_num = int(line)
-            model.set_issue_number(logins, assign, issue_num)    
+            model.set_issue_number(logins, assign, issue_num)  
+    except Exception as e:
+        print(e)  
     finally:
         os.chdir(original_path)
 
@@ -188,7 +191,7 @@ def add(login, assign):
     original_path = os.getcwd()
     path_to_repo, logins = put_in_repo(login, assign)
     os.chdir(original_path) #need this because somehow we end up in a bad place now...
-    upload(path_to_repo, get_gmails(logins), logins, assign)
+    upload(path_to_repo, logins, assign)
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
