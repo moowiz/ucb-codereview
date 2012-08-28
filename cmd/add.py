@@ -89,7 +89,6 @@ def upload(path_to_repo, gmails, logins, assign):
     Calls the upload script with the needed arguments given the path to the repo and the
     gmail account of the student.
     Arguments we care about:
-    -e email of the person
     -r reviewers
     --cc people to cc
     --private makes the issue private 
@@ -100,18 +99,6 @@ def upload(path_to_repo, gmails, logins, assign):
     These args are documented in upload.py starting on line 490.
     This method also needs to deal with assigning the correct people to this, which means
     it has to probably get info from somewhere about the roster. 
-    stuff we needed to enter
-    first time uploading
-    -s (server)
-    -t name of assignment 
-    -e email for login to uploading (robot)
-    -r reviewers (student TA reader other)
-
-    every other time:
-    issue number
-    revision
-    server
-    title: timestamp?
     """
     original_path = os.getcwd()
     try:
@@ -127,12 +114,12 @@ def upload(path_to_repo, gmails, logins, assign):
         if not issue_num:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
-                '--rev', hash_str))
+                '--rev', hash_str, '--private'))
             content = get_robot_pass()
         else:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
-                '--rev', hash_str))
+                '--rev', hash_str, '--private'))
         out = utils.run(cmd, content)
         print('got {} from the run'.format(out))
         line = ""
