@@ -41,7 +41,7 @@ def sweep(assign):
     else:
         dirs = [assign]
     latest = get_last_uploaded()
-    print(datetime.datetime.fromtimestamp(latest))
+    print("time {} datetime{} ".format(latest, datetime.datetime.fromtimestamp(latest)))
     logins = {}
     max = get_small_time()
     for directory in dirs:
