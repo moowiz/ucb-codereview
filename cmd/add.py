@@ -131,7 +131,7 @@ def upload(path_to_repo, gmails, logins, assign):
             content = get_robot_pass()
         else:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-                "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', issue_num,
+                "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
                 '--rev', hash_str))
         out = utils.run(cmd, content)
         print('got {} from the run'.format(out))
