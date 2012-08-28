@@ -6,7 +6,7 @@ import utils
 import argparse
 import add_subm
 import sys
-from datetime import datetime
+import datetime
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
