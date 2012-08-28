@@ -135,7 +135,7 @@ def upload(path_to_repo, gmails, logins, assign):
         out = utils.run(cmd, content)
         print('got {} from the run'.format(out))
         line = ""
-        for l in out:
+        for l in out.split():
             if l.startswith("Issue created:"):
                 line = l
                 break
