@@ -69,13 +69,13 @@ def get_partners():
     """
     Prompts the user for their gmails, and stores the file in the GMAILS_FILE file
     """
-    partners = my_prompt("Enter you and your partner's logins.", "Login", __LOGINS_FILE)
-    write_defaults(partners, __LOGINS_FILE, string_to_join=" ")
+    partners = my_prompt("Enter you and your partner's logins.", "Login", LOGINS_FILE)
+    write_defaults(partners, LOGINS_FILE, string_to_join=" ")
     return partners
 
 def get_sections():
-    sections = my_prompt("Enter you and your partner's section numbers.", "Section Number", __SECTIONS_FILE)
-    write_defaults(sections, __SECTIONS_FILE)
+    sections = my_prompt("Enter you and your partner's section numbers.", "Section Number", SECTIONS_FILE)
+    write_defaults(sections, SECTIONS_FILE)
     return sections
 
 def main(assign):
