@@ -3,7 +3,7 @@ import sqlite3
 import utils
 
 if __name__ == "__main__":
-    conn = sqlite3.connect(utils.read_db_path)
+    conn = sqlite3.connect(utils.read_db_path())
     cursor = conn.cursor()
     while True:
         query = input()
