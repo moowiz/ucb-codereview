@@ -20,6 +20,7 @@ model = CodeReviewDatabase(utils.read_db_path())
 
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
+SUBMISSION_DIR = HOME_DIR + "submissions/"
 CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
 REPO_DIR = CODE_REVIEW_DIR + "repo/"
 ASSIGN_DIR = HOME_DIR + "lib/"
@@ -196,6 +197,7 @@ def add(logins, assign):
     os.chdir(original_path) #need this because somehow we end up in a bad place now...
     upload(path_to_repo, get_gmails(logins), logins, assign)
 
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
      submission for the given assignment to the code review system.")    
