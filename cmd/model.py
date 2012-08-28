@@ -48,7 +48,7 @@ class CodeReviewDatabase(object):
         Args:
             time_int: integer repr. unix time
         """
-        if self.last_uploaded():
+        if self.last_uploaded(assign):
             # if an entry exists, then we need an UPDATE command
             update_last_upload_sql = "UPDATE upload WHERE assign = ? SET last = ?"
             self.cursor.execute(update_last_upload_sql, (assign, time_int))
