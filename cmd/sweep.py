@@ -17,7 +17,6 @@ GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = GRADING_DIR + "submissions/"
 
 def get_small_time():
-    print("small")
     return 1000
 
 def conv_timestamp(time_str):
@@ -41,12 +40,11 @@ def sweep(assign):
         dirs = os.listdir(SUBMISSION_DIR)    
     else:
         dirs = [assign]
-    latest = get_last_uploaded(assign)
-    print("time {} datetime{} ".format(latest, datetime.datetime.fromtimestamp(latest)))
     logins = {}
     max = get_small_time()
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
+        latest = get_last_uploaded(directory)
         logins[directory] = []
         for name in subms:
             splt = name.split(".")
