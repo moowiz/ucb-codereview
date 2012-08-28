@@ -8,37 +8,40 @@ import argparse
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
 
-HOME_DIR = os.path.expanduser('~cs61a/')
-GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = HOME_DIR + "submissions/"
+#HOME_DIR = os.path.expanduser('~cs61a/')
+#GRADING_DIR = HOME_DIR + "grading/"
+SUBMISSION_DIR = "../temp" #GRADING_DIR + "submission/"
 
-def mark():
-    dirs = os.listdir(SUBMISSION_DIR)
-    latest = float("-inf")
-    for name in dirs:
-        splt = name.split(".")
-        login = splt[0]
-        timestamp = int(splt[1])
-        if (timestamp > latest):
-            latest = timestamp
-    print("latest",latest)
-    model.set_last_uploaded(latest)
-    
-def sweep():
-    dirs = os.listdir(SUBMISSION_DIR)
+def sweep(assign):
+    if assign == "all":
+        dirs = os.listdir(SUBMISSION_DIR)    
+    else:
+        dirs = [assign]
     latest = model.last_uploaded()
-    logins = []
-    for name in dirs:
-        splt = name.split(".")
-        login = splt[0]
-        timestamp = int(splt[1])
-        if (timestamp > latest):
-            logins.append(login)
-    return logins        
+    if not latest:
+      latest = float("-inf")
+    print(latest)
+    max = float("-inf")
+    for directory in dirs:
+      subms = os.listdir(SUBMISSION_DIR+"/"+directory)
+      latest = model.last_uploaded()
+      logins = []
+      for name in subms:
+          splt = name.split(".")
+          login = splt[0]
+          timestamp = int(splt[1])
+          if (timestamp > latest):
+              logins.append(login)
+          if (timestamp > max):
+              max = timestamp
+      
+    model.set_last_uploaded(max)
+    return logins
+
+
 
 def main(assign):
-    logins = sweep()
-    mark()
+    logins = sweep(assign)
     print(logins)  
 
 if __name__ == "__main__":

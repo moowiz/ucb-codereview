@@ -98,8 +98,8 @@ def main():
         cursor.execute(query)
     conn.commit()
     conn.close()
-    utils.chown_staff_master(db_path)
-    utils.chmod_own_grp(db_path)
+    #utils.chown_staff_master(db_path)
+    #utils.chmod_own_grp(db_path)
 
 if __name__ == "__main__":
     main()
