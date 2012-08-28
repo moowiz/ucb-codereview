@@ -3,6 +3,7 @@
 """
 import os
 import utils
+import argparse
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -33,11 +34,17 @@ def sweep():
         timestamp = int(splt[1])
         if (timestamp > latest):
             logins.append(login)
-    return logins
+    return logins        
 
-             
-
-if __name__ == "__main__":
+def main(assign):
     logins = sweep()
     mark()
-    print(logins)
+    print(logins)  
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Submits the assignment, \
+        assuming the correct files are in the given directory.")    
+    parser.add_argument('assign', type=str,
+                        help='the assignment to submit')
+    args = parser.parse_args()
+    main(args.assign)
