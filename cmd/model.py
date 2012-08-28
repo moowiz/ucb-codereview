@@ -33,7 +33,7 @@ class CodeReviewDatabase(object):
             Unix time in integer if exists, else None
         """
         get_last_upload_sql = "SELECT last FROM upload WHERE assign = ? LIMIT 1"
-        result = self.cursor.execute(get_last_upload_sq, (assign,)).fetchone()
+        result = self.cursor.execute(get_last_upload_sql, (assign,)).fetchone()
         if result:
             # if not empty, then result should be tuple with 1 elem
             return result[0]
