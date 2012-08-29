@@ -50,8 +50,9 @@ def run_submit(assign):
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     while True:
         print('read {}'.format(read_question(proc.stderr)))        
-        print('read {}'.format(read_question(proc.stdout)))
+        # print('read {}'.format(read_question(proc.stdout)))
         proc.stdin.write(bs('no\n'))
+        proc.stdin.flush()
         
 
 def my_prompt(initial_message, prompt, defaults_file):
