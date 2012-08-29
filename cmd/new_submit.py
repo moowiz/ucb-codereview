@@ -49,7 +49,8 @@ def run_submit(assign):
     reader = open('.temp', 'r')
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     while True:
-        print('read {}'.format(read_question(proc.stderr)))
+        print('read {}'.format(read_question(proc.stderr)))        
+        print('read {}'.format(read_question(proc.stdout)))
         proc.stdin.write(bs('no\n'))
         
 
