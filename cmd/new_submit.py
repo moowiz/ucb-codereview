@@ -27,16 +27,13 @@ def run_submit(assign):
     cmd = "submit " + assign
     temp_file = open('.temp', 'w')
     reader = open('.temp', 'r')
-    my_in = io.StringIO()
-    class Temp:
-        def read():
-            print('reading')
-            return bs("no\n")
-    proc = Popen(cmd.split(), stdin=Temp(), stdout=temp_file, stderr=temp_file)
+    proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    print('read {}'.format(proc.stdout.readline()))
     temp_file.flush()
     print(reader.read())
     print('aaaaaa')
-    proc.communicate(input=bs('no\n'))
+    out, err = proc.communicate(input=bs('no\n'))
+    print('initial out {} initial err {}'.format(out, err))
     temp_file.flush()
     print("read {}".format(reader.read()))
     print('aaaaaa')
