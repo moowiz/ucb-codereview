@@ -57,6 +57,6 @@ def get_revision_hash(path_to_repo=None):
     command = 'git log --pretty=format:%H'
     out = utils.run(command)
     rval = out.split()[1] #diff from the revision before (last thing they submitted)
-    if type(rval) != str:
-        rval = str(rval)
+    if type(rval) == bytes:
+        rval = rval.decode("utf-8")
     return rval 
