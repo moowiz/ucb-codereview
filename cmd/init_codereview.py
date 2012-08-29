@@ -136,7 +136,7 @@ def main():
     create_table(db_path)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    for k,v in SECTION_TO_STAFF.item():
+    for k,v in SECTION_TO_STAFF.items():
         cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
     conn.commit()
     conn.close()
