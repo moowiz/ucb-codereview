@@ -33,6 +33,7 @@ def get_subm(login, assign):
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
     """
+    print('Unpacking submission...')
     tempdir = TEMP_DIR
     files = glob.glob(TEMP_DIR + "*")
     for f in files:
@@ -40,10 +41,11 @@ def get_subm(login, assign):
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
     os.chdir(tempdir)
-    out = utils.run("get-subm " + assign + " " + login)
+    out, err = utils.run("get-subm " + assign + " " + login)
     # print 'hmmm'
     # print 'logins {} assign {}'.format(logins, assign)
     # print("out is {}".format(out))
+    print("Done unpacking.")
     return tempdir + "/" #need the trailing slash for the copy command
 
 def find_path(logins, assign):
