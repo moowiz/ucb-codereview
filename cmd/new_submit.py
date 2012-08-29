@@ -34,7 +34,7 @@ def run_submit(assign):
         char = get_char(stream)
         s = char
         while True:
-            if s.endswith("[yes/no] ") or s[-1] == "\n":
+            if s.endswith("/no]") or s[-1] == "\n":
                 break
             s += get_char(stream)            
         return s
@@ -50,7 +50,7 @@ def run_submit(assign):
     special = False
     while True:
         line = read_line(proc.stderr)
-        # print('read {}'.format(line))        
+        print('read {}'.format(line))        
         if "Submission complete." in line:
             print(line)
             break
