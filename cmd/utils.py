@@ -18,6 +18,7 @@ def run(cmd, content=""):
     # print "cwd {}".format(os.getcwd())
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     print("before")
+    content = bytes(content, "utf-8")
     out, err = proc.communicate(input=content)
     err = err.decode("utf-8")
     if err:
