@@ -33,7 +33,7 @@
   <table id="queues" style="clear:both;">
     <tr align="left">
       <th colspan="2"></th>
-      <th>Unified diffs</th>
+      <th>File name</th>
       <th>Side-by-side diffs</th>
       <th>Delta from patch set</th>
       <th colspan="3">Stats</th>
@@ -47,7 +47,7 @@
         <td style="white-space: nowrap">{%if patch.status%}{{patch.status}}{%endif%}</td>
         <td>
           <a class="noul"
-             href="{%url codereview.views.patch issue.key.id,patchset.key.id,patch.key.id%}">
+             href="{%url codereview.views.diff issue.key.id,patchset.key.id,patch.filename%}">
             {{patch.filename}}
           </a>
         </td>
