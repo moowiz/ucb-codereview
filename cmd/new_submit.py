@@ -28,7 +28,7 @@ def run_submit(assign):
             c = get_char(stream)
             s += c
         return s
-    def read_question(stream):
+    def read_line(stream):
         char = get_char(stream)
         s = char
         while True:
@@ -44,15 +44,26 @@ def run_submit(assign):
                 return s
             s += get_char(stream)            
         return s
+    def write_out(stream, thing):
+        if type(thing) != bytes:
+            thing = bs(thing)
+        print("writing {} to {}".format(stream, thing))
+        stream.write(thing)
+        stream.flush()
     cmd = "submit " + assign
-    temp_file = open('.temp', 'w')
-    reader = open('.temp', 'r')
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    sin = proc.stdin
     while True:
-        print('read {}'.format(read_question(proc.stderr)))        
-        # print('read {}'.format(read_question(proc.stdout)))
-        proc.stdin.write(bs('no\n'))
-        proc.stdin.flush()
+        line = read_line(proc.stderr)
+        print('read {}'.format(line))        
+        if "Submission complete." in line:
+            break
+        for f in important_files:
+            if f in line:
+                write_out(sin, "yes\n")
+                continue
+        print(line)
+        write_out(sin, sys.stdin.readline())
         
 
 def my_prompt(initial_message, prompt, defaults_file):
