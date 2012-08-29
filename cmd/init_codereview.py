@@ -39,6 +39,49 @@ SCHEMA = {
             }
         }
 
+SECTION_TO_STAFF = {
+    "01" : "Varun Pai",
+    "02" : "Stephen Martinis",
+    "03" : "Allen Nguyen", "03" : "Sharad Vikram",
+    "04" : "Albert Wu",
+    "11" : "Julia Oh",
+    "12" : "Hamilton Nguyen",
+    "13" : "Keegan Mann",
+    "14" : "Andrew Nguyen",
+    "15" : "Varun Pai",
+    "16" : "Albert Wu",
+    "17" : "Julia Oh",
+    "18" : "Hamilton Nguyen",
+    "19" : "Stephen Martinis",
+    "20" : "Shu Zhong",
+    "21" : "Steven Tang",
+    "22" : "Andrew Nguyen",
+    "23" : "Joy Jeng",
+    "24" : "Phillip Carpenter",
+    "25" : "Joy Jeng",
+    "26" : "Shu Zhong",
+    "27" : "Phillip Carpenter",
+    "28" : "Allen Nguyen",
+    "28" : "Sharad Vikram"
+}
+
+STAFF_TO_EMAIL = {
+        "Andrew Nguyen" : "andrew.thienlan.nguyen@gmail.com",
+        "Joy Jeng" : "joyyjeng@gmail.com",
+        "Albert Wu" : "albert12132@gmail.com",
+        "Phillip Carpenter" : "pcarpenter1010@gmail.com",
+        "Julia Oh" : "juliahhh.oh@gmail.com",
+        "Hamilton Nguyen" : "hamilton09nguyen@gmail.com",
+        "Varun Pai" : "varunpai12@gmail.com",
+        "Steven Tang" : "steventang24@gmail.com",
+        "Akihiro Matsukawa" : "akihiro.matsukawa@gmail.com",
+        "Allen Nguyen" : "nguyenallen42@gmail.com",
+        "Shu Zhong" : "kramerfatman@gmail.com",
+        "Keegan Mann" : "keeganmann@gmail.com",
+        "Stephen Martinis" : "moowiz2020@gmail.com",
+        "Sharad Vikram" : "sharad.vikram@gmail.com"
+}
+
 BACKUP_EXT = ".bkp"
 
 def bkup_if_exists(path):
@@ -87,18 +130,19 @@ def main():
     """
     The main function to run. Populates the database with basic info. 
     """
-    db_path = read_db_path()
-    bkup_if_exists(db_path)
+    query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
+    db_path = "../code.sqlite" #read_db_path()
+    #bkup_if_exists(db_path)
     create_table(db_path)
-    queries = ["INSERT INTO section_to_email (section, email) VALUES (201, 'moowiz2020@gmail.com')",
-               "INSERT INTO section_to_email (section, email) VALUES (201, 'sharad.vikram@gmail.com')", 
-               "INSERT INTO important_file (assignment, file) VALUES ('hw05', 'hw5.py')"]
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    for query in queries:
-        cursor.execute(query)
+    for k,v in SECTION_TO_STAFF.iteritems():
+        cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
     conn.commit()
     conn.close()
+    """
+    queries = ["INSERT INTO important_file (assignment, file) VALUES ('hw05', 'hw5.py')"]
+    """
     utils.chown_staff_master(db_path)
     utils.chmod_own_grp(db_path)
 
