@@ -17,17 +17,16 @@ def run_submit(assign):
     # print "cwd {}".format(os.getcwd())
     bs = lambda x: bytes(x, "utf-8")
     dec = lambda x: x.decode('utf-8')
-    def read_until_newline(stream):
+    def get_char(stream):
         got = stream.read(1)
         print('got {}'.format(got))
-        s = dec(got)
-        count = 1
-        while count < 5:
-            print(s)
-            got = stream.read(1)
-            print('got {}'.format(got))
-            s = dec(got)
-            count += 1
+        return dec(got)
+    def read_until_newline(stream):
+        char = get_char(stream)
+        s = char
+        while s != "\n":
+            char = get_char(stream)
+            s += char            
         return s
     cmd = "submit " + assign
     temp_file = open('.temp', 'w')
