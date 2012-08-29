@@ -652,7 +652,7 @@ def GetRpcServer(server, email=None, host_override=None, save_cookies=True,
     if password is not None:
       print "Using password from system keyring."
     else:
-      password = getpass.getpass("Password for %s: " % local_email)
+      password = getpass.getpass("Password for %s: " % local_email, stream=sys.stdout)
       if keyring:
         answer = raw_input("Store password in system keyring?(y/N) ").strip()
         if answer == "y":
