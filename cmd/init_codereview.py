@@ -132,7 +132,7 @@ def create_table(path):
     conn.commit()
     conn.close()
 
-def init_data():
+def init_data(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     for k,v in SECTION_TO_STAFF.items():
@@ -167,7 +167,7 @@ def main():
     db_path = read_db_path()
     backup_path = bkup_if_exists(db_path)
     create_table(db_path)
-    init_data()
+    init_data(db_path)
     import_old_data(db_path, backup_path)
     utils.chown_staff_master(db_path)
     utils.chmod_own_grp(db_path)
