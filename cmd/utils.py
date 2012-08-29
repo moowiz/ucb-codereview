@@ -15,10 +15,12 @@ def run(cmd, content=""):
     """Run a shell command and pass content as stdin."""
     print("running command {}".format(cmd))
     # print "cwd {}".format(os.getcwd())
-    proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE)
-    out, err = proc.communicate(input=content)
-    if err is not None:
-        raise err
+    proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    print("before")
+    out, err = proc.communicate(input=sys.stdin)
+    err = decode(err, "utf-8")
+    if err:
+        print("ERROR in run: {}".format(err))
     return out
 
 def get_timestamp_str():
