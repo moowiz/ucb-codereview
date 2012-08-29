@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE
 import argparse
 import os
 import io
+import re
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
@@ -15,15 +16,12 @@ def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
-    bs = lambda x: bytes(x, "utf-8")
-    dec = lambda x: x.decode('utf-8')
+    decode = lambda x: x.decode('utf-8')
     def get_char(stream):
         got = stream.read(1)
-        # print('got {}'.format(got))
-        return dec(got)
+        return decode(got)
     def goto_newline(stream):
-        s = ""
-        c = ""
+        s, c = "", ""
         while c != "\n":
             c = get_char(stream)
             s += c
@@ -40,8 +38,7 @@ def run_submit(assign):
         return s
     def write_out(stream, thing):
         if type(thing) != bytes:
-            thing = bs(thing)
-        # print("writing {} to {}".format(stream, thing))
+            thing = bytes(x, "utf-8")(thing)
         stream.write(thing)
         stream.flush()
     cmd = "submit " + assign
@@ -50,7 +47,6 @@ def run_submit(assign):
     special = False
     while True:
         line = read_line(proc.stderr)
-        print('read {}'.format(line))        
         if "Copying submission of assignment" in line:
             print(line)
             break
@@ -73,9 +69,8 @@ def run_submit(assign):
             elif read:
                 write_out(sin, sys.stdin.readline())
     proc.wait()
-    print(dec(proc.stderr.read()))
+    print(decode(proc.stderr.read()))
         
-
 def my_prompt(initial_message, prompt, defaults_file):
     defaults = None
     if os.path.exists(defaults_file):
@@ -119,6 +114,12 @@ def get_gmails():
     """
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", GMAILS_FILE)
     write_defaults(gmails, GMAILS_FILE)
+    regex = r'^[A-Za-z0-9]+@(berkeley.edu|gmail.com)$'
+    for address in gmails:
+        if not re.match(regex, address):
+            print("{} is an invalid email address. Please enter either a gmail email\
+             address or a berkeley email address that has access to bmail and/or bcal.".format(address), file=sys.stderr)
+            sys.exit(1)
     return gmails
 
 def get_partners():
