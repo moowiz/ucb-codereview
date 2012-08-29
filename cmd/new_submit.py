@@ -28,18 +28,15 @@ def run_submit(assign):
             c = get_char(stream)
             s += c
         return s
+    def ignore_line(line):
+        return "Looking for files to turn in...." in line or "Submitting " in line
     def read_line(stream):
         char = get_char(stream)
         s = char
         while True:
             if s.endswith("[yes/no] "):
                 break
-            if s.endswith("turn in..."):
-                print('first')
-                s += goto_newline(stream)
-                return s
-            if s.startswith("Submitting"):
-                print('second')
+            if ignore_line(s):
                 s += goto_newline(stream)
                 return s
             s += get_char(stream)            
@@ -57,6 +54,7 @@ def run_submit(assign):
         line = read_line(proc.stderr)
         print('read {}'.format(line))        
         if "Submission complete." in line:
+            print(line)
             break
         flag = True
         for f in important_files:
