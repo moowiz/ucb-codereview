@@ -65,7 +65,8 @@ def main(assign, add):
             for k, v in logins.items():
                 for login in v:
                     add_subm.add(login, k) 
-        except Exception:
+        except Exception as e:
+            print("Exception {}".format(e))
             return
         for k, v in maxes.items():
             model.set_last_uploaded(v, k)
