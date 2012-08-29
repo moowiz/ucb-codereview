@@ -32,7 +32,7 @@ def run_submit(assign):
         char = get_char(stream)
         s = char
         while True:
-            if not s.endswith("[yes/no] "):
+            if s.endswith("[yes/no] "):
                 break
             if s.endswith("turn in..."):
                 print('first')
