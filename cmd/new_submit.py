@@ -4,6 +4,7 @@ import sys
 import subprocess
 import argparse
 import os
+import io
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
@@ -15,12 +16,13 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     cmd = "submit " + assign
-    subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out_sio, err_sio = io.StringIO(), io.StringIO()
+    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=out_sio, stderr=err_sio)
     count = 0
     while count < 7:
+        print('out {} err {}'.format(out_sio.getvalue(), err_sio.getvalue()))
         to_send = sys.stdin.readline()
-        out, err = proc.communicate(to_send)
-        print('out {} err {}'.format(out, err))
+        proc.communicate(to_send)
         count += 1
     # proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     # out, err = proc.communicate(input=".")
