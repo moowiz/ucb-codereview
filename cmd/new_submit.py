@@ -19,50 +19,38 @@ def run_submit(assign):
     dec = lambda x: x.decode('utf-8')
     def get_char(stream):
         got = stream.read(1)
-        print('got {}'.format(got))
+        # print('got {}'.format(got))
         return dec(got)
-    def read_until_newline(stream):
+    def goto_newline(stream):
+        s = ""
+        c = ""
+        while c != "\n":
+            c = get_char(stream)
+            s += c
+        return s
+    def read_question(stream):
         char = get_char(stream)
         s = char
-        while s != "\n":
-            char = get_char(stream)
-            s += char            
+        while True:
+            if not s.endswith("[yes/no] "):
+                break
+            if s.endswith("turn in..."):
+                print('first')
+                s += goto_newline(stream)
+                return s
+            if s.startswith("Submitting"):
+                print('second')
+                s += goto_newline(stream)
+                return s
+            s += get_char(stream)            
         return s
     cmd = "submit " + assign
     temp_file = open('.temp', 'w')
     reader = open('.temp', 'r')
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    proc.stdin.write(bs('no\n'))
-    proc.stderr.flush()
-    print('read {}'.format(read_until_newline(proc.stderr)))
-    temp_file.flush()
-    print(reader.read())
-    print('aaaaaa')
-    out, err = proc.communicate(input=bs('no\n'))
-    print('initial out {} initial err {}'.format(out, err))
-    temp_file.flush()
-    print("read {}".format(reader.read()))
-    print('aaaaaa')
-    print('initial out {} initial err {}'.format(out, err))
-    to_write = proc.stdin
-    to_write.write(bs('no\n'))
-    read_until_newline(proc.stdout)    
-    read_until_newline(proc.stderr)
-    print(proc.stdout)
-    print(proc.stderr)
-    # print(proc.stdout.read())
-    # print(proc.stderr.read())
-    out, err = proc.communicate()
-    print('initial out {} initial err {}'.format(out, err))
-    count = 0
-    while count < 7:
-        print('out {} err {}'.format(out_sio.getvalue(), err_sio.getvalue()))
-        to_send = sys.stdin.readline()
-        proc.communicate(to_send)
-        count += 1
-    # proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    # out, err = proc.communicate(input=".")
-    # print("out {} err {}".format(out, err))
+    while True:
+        print('read {}'.format(read_question(proc.stderr)))
+        proc.stdin.write(bs('no\n'))
         
 
 def my_prompt(initial_message, prompt, defaults_file):
