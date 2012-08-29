@@ -30,7 +30,7 @@ def run_submit(assign):
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     proc.stdin.write(bs('no\n'))
     proc.stderr.flush()
-    print('read {}'.format(proc.stderr.readline()))
+    print('read {}'.format(proc.stderr.read(1)))
     temp_file.flush()
     print(reader.read())
     print('aaaaaa')
