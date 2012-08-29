@@ -42,6 +42,7 @@ def sweep(assign):
         dirs = [assign]
     logins = {}
     max = get_small_time()
+    maxes = {}
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
         latest = get_last_uploaded(directory)
@@ -54,15 +55,20 @@ def sweep(assign):
                 logins[directory].append(login)
             if (timestamp > max):
                 max = timestamp
-        model.set_last_uploaded(max, directory)
+        maxes[directory] = max
     return logins
 
 def main(assign, add):
     logins = sweep(assign)
     if add:
-        for k, v in logins.items():
-            for login in v:
-                add_subm.add([login], k) 
+        try:
+            for k, v in logins.items():
+                for login in v:
+                    add_subm.add(login, k) 
+        except Exception:
+            return
+        for k, v in maxes.items():
+            model.set_last_uploaded(v, k)
     else:
         print(logins)  
 
