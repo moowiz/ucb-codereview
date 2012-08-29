@@ -42,6 +42,8 @@ def get_subm(login, assign):
         os.makedirs(tempdir)
     os.chdir(tempdir)
     out, err = utils.run("get-subm " + assign + " " + login)
+    if err:
+        print("ERROR: {}".format(err))
     # print 'hmmm'
     # print 'logins {} assign {}'.format(logins, assign)
     # print("out is {}".format(out))
