@@ -23,6 +23,7 @@ def run(cmd, content=""):
     err = err.decode("utf-8")
     if err:
         print("ERROR in run: {}".format(err))
+    out = out.decode("utf-8")
     return out
 
 def get_timestamp_str():
