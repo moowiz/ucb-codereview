@@ -142,7 +142,7 @@ def upload(path_to_repo, logins, assign):
             issue_num = int(line)
             model.set_issue_number(logins, assign, issue_num)  
     except Exception as e:
-        print(e)  
+        raise e 
     finally:
         os.chdir(original_path)
 

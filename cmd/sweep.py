@@ -67,6 +67,7 @@ def main(assign, add):
                     add_subm.add(login, k) 
         except Exception as e:
             print("Exception {}".format(e))
+            raise e
             return
         for k, v in maxes.items():
             model.set_last_uploaded(v, k)
