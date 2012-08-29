@@ -131,8 +131,8 @@ def main():
     The main function to run. Populates the database with basic info. 
     """
     query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
-    db_path = "../code.sqlite" #read_db_path()
-    #bkup_if_exists(db_path)
+    db_path = read_db_path()
+    bkup_if_exists(db_path)
     create_table(db_path)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -140,9 +140,6 @@ def main():
         cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
     conn.commit()
     conn.close()
-    """
-    queries = ["INSERT INTO important_file (assignment, file) VALUES ('hw05', 'hw5.py')"]
-    """
     utils.chown_staff_master(db_path)
     utils.chmod_own_grp(db_path)
 
