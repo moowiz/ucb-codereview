@@ -17,7 +17,9 @@ def run_submit(assign):
     # print "cwd {}".format(os.getcwd())
     bs = lambda x: bytes(x, "utf-8")
     def read_until_newline(stream):
-        s = bs(stream.read(1))
+        got = stream.read(1)
+        print('got {}'.format(got))
+        s = bs(got)
         count = 1
         while count < 5:
             print(s)
@@ -32,7 +34,7 @@ def run_submit(assign):
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     proc.stdin.write(bs('no\n'))
     proc.stderr.flush()
-    print('read {}'.format(read_until_newline(proc.stderr))
+    print('read {}'.format(read_until_newline(proc.stderr)))
     temp_file.flush()
     print(reader.read())
     print('aaaaaa')
