@@ -26,6 +26,8 @@ def run_submit(assign):
         return s
     cmd = "submit " + assign
     proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate(bs('no\n'))
+    print('initial out {} initial err {}'.format(out, err))
     to_write = proc.stdin
     to_write.write(bs('no\n'))
     read_until_newline(proc.stdout)    
