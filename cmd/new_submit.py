@@ -47,7 +47,7 @@ def run_submit(assign):
     cmd = "submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
-    special_line = False
+    special = False
     while True:
         line = read_line(proc.stderr)
         print('read {}'.format(line))        
