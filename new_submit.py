@@ -15,7 +15,7 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     cmd = "submit " + assign
-    subprocess.Popen(cmd, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+    subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     count = 0
     while count < 7:
         to_send = sys.stdin.readline()
