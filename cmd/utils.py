@@ -21,10 +21,8 @@ def run(cmd, content=""):
     content = bytes(content, "utf-8")
     out, err = proc.communicate(input=content)
     err = err.decode("utf-8")
-    if err:
-        print("ERROR in run: {}".format(err))
     out = out.decode("utf-8")
-    return out
+    return out, err
 
 def get_timestamp_str():
     now = datetime.now() #-2012-08-21-2-45

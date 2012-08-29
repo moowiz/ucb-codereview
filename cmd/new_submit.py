@@ -6,16 +6,31 @@ import argparse
 import os
 import io
 import re
+import model
+import utils
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
+model = CodeReviewDatabase(utils.read_db_path())
+
 def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
+    print("Looking for files to turn in....")
+    files = os.listdir(os.getcwd())
+    imp_files = model.get_important_file(assign)
+    for imp_f in imp_files:
+        if imp_f not in files:
+            print("ERROR: missing a required file {}".format(imp_f))
+            model.close()
+            sys.exit(1)
+        else:
+            print("Submitting {}.".format(imp_f))
+    model.close()
     decode = lambda x: x.decode('utf-8')
     def get_char(stream):
         got = stream.read(1)
@@ -121,7 +136,7 @@ def get_gmails():
     """
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", GMAILS_FILE)
     write_defaults(gmails, GMAILS_FILE)
-    regex = r'^[A-Za-z0-9]+@(berkeley.edu|gmail.com)$'
+    regex = r'^[A-Za-z0-9\.\_\%]+@(berkeley.edu|gmail.com)$'
     for address in gmails:
         if not re.match(regex, address):
             print("{} is an invalid email address. Please enter either a gmail email\
