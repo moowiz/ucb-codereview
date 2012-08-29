@@ -16,8 +16,10 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     cmd = "submit " + assign
-    out_sio, err_sio = io.StringIO(), io.StringIO()
-    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=out_sio, stderr=err_sio)
+    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    initial_out = proc.stdout.getvalue()
+    initial_err = proc.stderr.getvalue()
+    print('initial_out {} initial_err {}'.format(initial_out, initial_err))
     count = 0
     while count < 7:
         print('out {} err {}'.format(out_sio.getvalue(), err_sio.getvalue()))
