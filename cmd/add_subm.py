@@ -159,7 +159,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     # print("dir is now {}".format(os.listdir(end_dir)))
 
 def git_init(path):
-    git.init(path=path_to_repo)
+    git.init(path=path)
     original_path = os.getcwd()
     os.chdir(path)
     gitignore = open('.gitignore', 'w')
