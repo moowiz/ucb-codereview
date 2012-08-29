@@ -64,9 +64,10 @@ def run_submit(assign):
         if print_it:
             if "You must turn in " in line:
                 print(line, end="")
-                print(proc.stderr.read(), end="")
+                print(decode(proc.stderr.read()), end="")
                 return
-            print(line, end="")
+            if not ignore_line(line):
+                print(line, end="")
             sys.stdout.flush()
             if "The files you have submitted are" in line:
                 special = True
