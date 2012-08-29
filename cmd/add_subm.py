@@ -181,10 +181,7 @@ def put_in_repo(login, assign):
             path_to_template += "hw/"
         else:
             path_to_template += "proj/"
-        if len(assign) == 3: #wonderful hackage
-            assign = assign[:2] + '0' + assign[-1]
-        if len(assign) == 5:
-            assign = assign[:4] + '0' + assign[-1]
+        assign = utils.clean_assign(assign)
         path_to_template += assign + "/"
         if not os.path.exists(path_to_template):
             raise Exception("Assignment path {} doesn't exist".format(path_to_template))
