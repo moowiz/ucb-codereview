@@ -21,7 +21,9 @@ def run_submit(assign):
         count = 1
         while count < 5:
             print(s)
-            s = bs(stream.read(1))
+            got = stream.read(1)
+            print('got {}'.format(got))
+            s = bs(got)
             count += 1
         return s
     cmd = "submit " + assign
