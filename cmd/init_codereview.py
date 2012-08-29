@@ -82,6 +82,12 @@ STAFF_TO_EMAIL = {
         "Sharad Vikram" : "sharad.vikram@gmail.com"
 }
 
+IMPORTANT_FILES = {
+    "hw01" : "hw1.py",
+    "hw02" : "hw2.py",
+    "hw05" : "hw5.py"
+}
+
 BACKUP_EXT = ".bkp"
 
 def bkup_if_exists(path):
@@ -138,6 +144,9 @@ def main():
     cursor = conn.cursor()
     for k,v in SECTION_TO_STAFF.items():
         cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
+    query = "INSERT INTO important_file (assignment, file) VALUES (?, ?)"
+    for k, v in IMPORTANT_FILES.items():
+        cursor.execute(query, (k, v))
     conn.commit()
     conn.close()
     utils.chown_staff_master(db_path)

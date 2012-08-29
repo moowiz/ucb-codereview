@@ -99,7 +99,7 @@ def my_prompt(initial_message, prompt, defaults_file):
     print(initial_message)
     msg = "Enter '.' to stop."
     if defaults:
-        msg += "Hit enter to use the remaining defaults."
+        msg += " Hit enter to use the remaining defaults."
     print(msg)
     captured = []
     while True:
