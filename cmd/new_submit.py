@@ -16,10 +16,20 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     bs = lambda x: bytes(x, "utf-8")
+    def read_until_newline(stream):
+        s = bs(stream.read(1))
+        count = 1
+        while count < 5:
+            print(s)
+            s = bs(stream.read(1))
+            count += 1
+        return s
     cmd = "submit " + assign
     proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     to_write = proc.stdin
     to_write.write(bs('no\n'))
+    read_until_newline(proc.stdout)    
+    read_until_newline(proc.stderr)
     print(proc.stdout)
     print(proc.stderr)
     # print(proc.stdout.read())
