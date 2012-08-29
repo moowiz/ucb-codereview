@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 import grp
 import stat
+import sys
 
 def read_db_path():
     """
@@ -17,7 +18,7 @@ def run(cmd, content=""):
     # print "cwd {}".format(os.getcwd())
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     print("before")
-    out, err = proc.communicate(input=sys.stdin)
+    out, err = proc.communicate(input=content)
     err = decode(err, "utf-8")
     if err:
         print("ERROR in run: {}".format(err))
