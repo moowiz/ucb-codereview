@@ -30,16 +30,13 @@ def run_submit(assign):
         return s
     def ignore_line(line):
         return "Looking for files to turn in...." in line or "Submitting " in line\
-                or "The files you have submitted are:" in line
+                or "The files you have submitted are" in line
     def read_line(stream):
         char = get_char(stream)
         s = char
         while True:
-            if s.endswith("[yes/no] ") or s[-1] == "\n":
+            if s[-1] == "\n":
                 break
-            if ignore_line(s):
-                s += goto_newline(stream)
-                return s
             s += get_char(stream)            
         return s
     def write_out(stream, thing):
