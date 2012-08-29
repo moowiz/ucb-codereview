@@ -27,9 +27,10 @@ def run_submit(assign):
     cmd = "submit " + assign
     temp_file = open('.temp', 'w')
     reader = open('.temp', 'r')
-    proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)\
+    proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     proc.stdin.write(bs('no\n'))
-    print('read {}'.format(proc.stdout.readline()))
+    proc.stderr.flush()
+    print('read {}'.format(proc.stderr.readline()))
     temp_file.flush()
     print(reader.read())
     print('aaaaaa')
