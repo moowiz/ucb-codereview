@@ -60,8 +60,6 @@ def sweep(assign):
 def main(assign, add):
     logins = sweep(assign)
     if add:
-        print('yay')
-        sys.exit(0)
         for k, v in logins.items():
             for login in v:
                 add_subm.add([login], k) 
