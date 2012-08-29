@@ -41,7 +41,7 @@ def run_submit(assign):
     def write_out(stream, thing):
         if type(thing) != bytes:
             thing = bs(thing)
-        print("writing {} to {}".format(stream, thing))
+        # print("writing {} to {}".format(stream, thing))
         stream.write(thing)
         stream.flush()
     cmd = "submit " + assign
@@ -50,23 +50,25 @@ def run_submit(assign):
     special = False
     while True:
         line = read_line(proc.stderr)
-        print('read {}'.format(line))        
+        # print('read {}'.format(line))        
         if "Submission complete." in line:
             print(line)
             break
-        flag = True
+        print_it = True
+        read = not ignore_line(line)
         if not special:
             for f in important_files:
                 if f in line:
                     write_out(sin, "yes\n")
-                    flag = False
+                    print_it = False
         else:
-            line = " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split())))
-        if flag:
-            print(line)
+            line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
+            read = False
+        if print_it:
+            print(line, end="")
             if "The files you have submitted are" in line:
                 special = True
-            elif not ignore_line(line):
+            elif read:
                 write_out(sin, sys.stdin.readline())
         
 
