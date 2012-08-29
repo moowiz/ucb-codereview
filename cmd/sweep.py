@@ -56,10 +56,10 @@ def sweep(assign):
             if (timestamp > max):
                 max = timestamp
         maxes[directory] = max
-    return logins
+    return logins, maxes
 
 def main(assign, add):
-    logins = sweep(assign)
+    logins, maxes = sweep(assign)
     if add:
         try:
             for k, v in logins.items():

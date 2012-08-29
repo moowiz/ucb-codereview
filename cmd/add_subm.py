@@ -158,6 +158,15 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
         shutil.copy(start_dir + filename, end_dir + filename)
     # print("dir is now {}".format(os.listdir(end_dir)))
 
+def git_init(path):
+    git.init(path=path_to_repo)
+    original_path = os.getcwd()
+    os.chdir(path)
+    gitignore = open('.gitignore', 'w')
+    gitignore.write("MY.*")
+    gitignore.flush()
+    gitignore.close()
+
 def put_in_repo(login, assign):
     """
     Puts the login's assignment into their repo
@@ -180,7 +189,7 @@ def put_in_repo(login, assign):
         if not os.path.exists(path_to_template):
             raise Exception("Assignment path {} doesn't exist".format(path_to_template))
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
-        git.init(path=path_to_repo)
+        git_init(path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
     copy_important_files(assign, path_to_subm, path_to_repo)
