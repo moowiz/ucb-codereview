@@ -50,8 +50,8 @@ def run_submit(assign):
     special = False
     while True:
         line = read_line(proc.stderr)
-        print('read {}'.format(line))        
-        if "Submission complete." in line:
+        # print('read {}'.format(line))        
+        if "Copying submission of assignment" in line:
             print(line)
             break
         print_it = True
@@ -64,12 +64,16 @@ def run_submit(assign):
         else:
             line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
             read = False
+            special = False
         if print_it:
             print(line, end="")
             if "The files you have submitted are" in line:
                 special = True
             elif read:
                 write_out(sin, sys.stdin.readline())
+    print('waiting')
+    proc.wait()
+    print('done waiting')
         
 
 def my_prompt(initial_message, prompt, defaults_file):
