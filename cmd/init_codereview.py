@@ -134,7 +134,8 @@ def create_table(path):
 
 def init_data(db_path):
     conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    cursor = conn.cursor()    
+    query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
     for k,v in SECTION_TO_STAFF.items():
         cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
     query = "INSERT INTO important_file (assignment, file) VALUES (?, ?)"
@@ -163,7 +164,6 @@ def main():
     """
     The main function to run. Populates the database with basic info. 
     """
-    query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
     db_path = read_db_path()
     backup_path = bkup_if_exists(db_path)
     create_table(db_path)
