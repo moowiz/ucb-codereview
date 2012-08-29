@@ -14,7 +14,7 @@ SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
-model = CodeReviewDatabase(utils.read_db_path())
+model = model.CodeReviewDatabase(utils.read_db_path())
 
 def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
@@ -136,7 +136,7 @@ def get_gmails():
     """
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", GMAILS_FILE)
     write_defaults(gmails, GMAILS_FILE)
-    regex = r'^[A-Za-z0-9\.\_\%]+@(berkeley.edu|gmail.com)$'
+    regex = r'^[A-Za-z0-9\.\_\%\+]+@(berkeley.edu|gmail.com)$'
     for address in gmails:
         if not re.match(regex, address):
             print("{} is an invalid email address. Please enter either a gmail email\
