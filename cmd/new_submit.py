@@ -15,7 +15,13 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     cmd = "submit " + assign
-    subprocess.call(cmd.split(), stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+    subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    count = 0
+    while count < 7:
+        to_send = sys.stdin.readline()
+        out, err = proc.communicate(to_send)
+        print('out {} err {}'.format(out, err))
+        count += 1
     # proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     # out, err = proc.communicate(input=".")
     # print("out {} err {}".format(out, err))
@@ -83,8 +89,7 @@ def main(assign):
     gmails = get_gmails()
     sections = get_sections()
     partners = get_partners()
-    run_submit(assign)
-
+    run_submit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
