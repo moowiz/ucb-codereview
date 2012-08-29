@@ -23,7 +23,6 @@ def run_submit(assign):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
     imp_files = model.get_important_file(utils.clean_assign(assign))
-    print("imp_files {} files {}".format(imp_files, files))
     for imp_f in imp_files:
         if imp_f not in files:
             print("ERROR: missing a required file {}".format(imp_f))
