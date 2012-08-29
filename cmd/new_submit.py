@@ -58,12 +58,14 @@ def run_submit(assign):
         print('read {}'.format(line))        
         if "Submission complete." in line:
             break
+        flag = True
         for f in important_files:
             if f in line:
                 write_out(sin, "yes\n")
-                continue
-        print(line)
-        write_out(sin, sys.stdin.readline())
+                flag = False
+        if flag:
+            print(line)
+            write_out(sin, sys.stdin.readline())
         
 
 def my_prompt(initial_message, prompt, defaults_file):
