@@ -16,49 +16,53 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     bs = lambda x: bytes(x, "utf-8")
-    def read_until_newline(stream):
-        s = bs(stream.read(1))
-        count = 1
-        while count < 5:
-            print(s)
-            s = bs(stream.read(1))
-            count += 1
+    dec = lambda x: x.decode('utf-8')
+    def get_char(stream):
+        got = stream.read(1)
+        # print('got {}'.format(got))
+        return dec(got)
+    def goto_newline(stream):
+        s = ""
+        c = ""
+        while c != "\n":
+            c = get_char(stream)
+            s += c
         return s
+    def ignore_line(line):
+        return "Looking for files to turn in...." in line or "Submitting " in line\
+                or "The files you have submitted are" in line
+    def read_line(stream):
+        char = get_char(stream)
+        s = char
+        while True:
+            if s.endswith("[yes/no] ") or s[-1] == "\n":
+                break
+            s += get_char(stream)            
+        return s
+    def write_out(stream, thing):
+        if type(thing) != bytes:
+            thing = bs(thing)
+        print("writing {} to {}".format(stream, thing))
+        stream.write(thing)
+        stream.flush()
     cmd = "submit " + assign
-    temp_file = open('.temp', 'w')
-    reader = open('.temp', 'r')
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    proc.stdin.write(bs('no\n'))
-    proc.stderr.flush()
-    print('read {}'.format(proc.stderr.readline()))
-    temp_file.flush()
-    print(reader.read())
-    print('aaaaaa')
-    out, err = proc.communicate(input=bs('no\n'))
-    print('initial out {} initial err {}'.format(out, err))
-    temp_file.flush()
-    print("read {}".format(reader.read()))
-    print('aaaaaa')
-    print('initial out {} initial err {}'.format(out, err))
-    to_write = proc.stdin
-    to_write.write(bs('no\n'))
-    read_until_newline(proc.stdout)    
-    read_until_newline(proc.stderr)
-    print(proc.stdout)
-    print(proc.stderr)
-    # print(proc.stdout.read())
-    # print(proc.stderr.read())
-    out, err = proc.communicate()
-    print('initial out {} initial err {}'.format(out, err))
-    count = 0
-    while count < 7:
-        print('out {} err {}'.format(out_sio.getvalue(), err_sio.getvalue()))
-        to_send = sys.stdin.readline()
-        proc.communicate(to_send)
-        count += 1
-    # proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    # out, err = proc.communicate(input=".")
-    # print("out {} err {}".format(out, err))
+    sin = proc.stdin
+    while True:
+        line = read_line(proc.stderr)
+        print('read {}'.format(line))        
+        if "Submission complete." in line:
+            print(line)
+            break
+        flag = True
+        for f in important_files:
+            if f in line:
+                write_out(sin, "yes\n")
+                flag = False
+        if flag:
+            print(line)
+            if no ignore_line(line):
+                write_out(sin, sys.stdin.readline())
         
 
 def my_prompt(initial_message, prompt, defaults_file):
