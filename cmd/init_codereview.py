@@ -105,8 +105,9 @@ def bkup_if_exists(path):
     try:
         # throws OSError if does not exist or is not a file
         os.rename(path, newpath)
+        return newpath
     except OSError:
-        pass
+        return None
 
 
 def create_table(path):
@@ -131,15 +132,7 @@ def create_table(path):
     conn.commit()
     conn.close()
 
-
-def main():
-    """
-    The main function to run. Populates the database with basic info. 
-    """
-    query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
-    db_path = read_db_path()
-    bkup_if_exists(db_path)
-    create_table(db_path)
+def init_data():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     for k,v in SECTION_TO_STAFF.items():
@@ -149,6 +142,33 @@ def main():
         cursor.execute(query, (k, v))
     conn.commit()
     conn.close()
+
+def import_old_data(db_path, path_to_backup):
+    """
+    Imports data from the backed up DB into the new one.
+    For now, we just want the latest times. 
+    """
+    if not path_to_backup:
+        return
+    new, old = sqlite3.connect(db_path), sqlite3.connect(path_to_backup)
+    new_cursor, old_cursor = new.cursor(), old.cursor()
+    all_uploads = old_cursor.execute("SELECT assign, last FROM upload").fetchall()
+    insert_query = "INSERT INTO upload (assign, last) VALUES (?, ?)"
+    for row in all_uploads:
+        new_cursor.execute(insert_query, row)
+    new.close()
+    old.close()
+
+def main():
+    """
+    The main function to run. Populates the database with basic info. 
+    """
+    query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
+    db_path = read_db_path()
+    backup_path = bkup_if_exists(db_path)
+    create_table(db_path)
+    init_data()
+    import_old_data(db_path, backup_path)
     utils.chown_staff_master(db_path)
     utils.chmod_own_grp(db_path)
 
