@@ -68,6 +68,8 @@ def run_submit(assign):
                 return
             if not ignore_line(line):
                 print(line, end="")
+            else:
+                print('ignoring {}'.format(line))
             sys.stdout.flush()
             if "The files you have submitted are" in line:
                 special = True
