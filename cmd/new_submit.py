@@ -67,12 +67,14 @@ def run_submit(assign):
             special = False
         if print_it:
             print(line, end="")
+            sys.stdout.flush()
             if "The files you have submitted are" in line:
                 special = True
             elif read:
                 write_out(sin, sys.stdin.readline())
     print('waiting')
     proc.wait()
+    print("rest is {}".format(proc.stderr.read()))
     print('done waiting')
         
 
