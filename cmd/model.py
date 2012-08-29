@@ -68,6 +68,7 @@ class CodeReviewDatabase(object):
         return temp #maybe add some asserts?
 
     def get_important_file(self, assignment):
+        print("query {}".format(assignment))
         sql = "SELEcT file FROM important_file WHERE assignment=?"
         files = self.cursor.execute(sql, (assignment,))
         temp = []
