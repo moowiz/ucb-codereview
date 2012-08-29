@@ -30,7 +30,6 @@ def run_submit(assign):
         return s
     def ignore_line(line):
         return "Looking for files to turn in...." in line or "Submitting " in line\
-                or "The files you have submitted are" in line
     def read_line(stream):
         char = get_char(stream)
         s = char
@@ -48,6 +47,7 @@ def run_submit(assign):
     cmd = "submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
+    special_line = False
     while True:
         line = read_line(proc.stderr)
         print('read {}'.format(line))        
@@ -55,13 +55,18 @@ def run_submit(assign):
             print(line)
             break
         flag = True
-        for f in important_files:
-            if f in line:
-                write_out(sin, "yes\n")
-                flag = False
+        if not special:
+            for f in important_files:
+                if f in line:
+                    write_out(sin, "yes\n")
+                    flag = False
+        else:
+            line = " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split())))
         if flag:
             print(line)
-            if no ignore_line(line):
+            if "The files you have submitted are" in line:
+                special = True
+            elif not ignore_line(line):
                 write_out(sin, sys.stdin.readline())
         
 
