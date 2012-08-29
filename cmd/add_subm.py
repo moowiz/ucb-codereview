@@ -128,8 +128,9 @@ def upload(path_to_repo, logins, assign):
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
                 '--rev', hash_str, '--private'))
+        print("Uploading...")
         out = utils.run(cmd, content)
-        print('got {} from the run'.format(out))
+        print("Done uploading")
         line = ""
         for l in out.split('\n'):
             if l.startswith("Issue created"):
