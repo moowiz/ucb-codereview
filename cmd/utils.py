@@ -19,7 +19,7 @@ def run(cmd, content=""):
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     print("before")
     out, err = proc.communicate(input=content)
-    err = decode(err, "utf-8")
+    err = err.decode("utf-8")
     if err:
         print("ERROR in run: {}".format(err))
     return out
