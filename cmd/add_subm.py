@@ -129,7 +129,7 @@ def upload(path_to_repo, logins, assign):
                 "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
                 '--rev', hash_str, '--private'))
         print("Uploading...")
-        out = utils.run(cmd, content)
+        out, err = utils.run(cmd, content)
         print("Done uploading")
         line = ""
         for l in out.split('\n'):
