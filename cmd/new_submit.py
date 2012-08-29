@@ -16,7 +16,7 @@ def run_submit(assign):
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
     cmd = "submit " + assign
-    proc = subprocess.Popen(cmd.split(), stdin=sys.stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     to_write = proc.stdin
     to_write.write('no\n')
     print(proc.stdout.read())
