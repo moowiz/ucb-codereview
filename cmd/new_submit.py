@@ -61,7 +61,8 @@ def run_submit(assign):
                 flag = False
         if flag:
             print(line)
-            write_out(sin, sys.stdin.readline())
+            if no ignore_line(line):
+                write_out(sin, sys.stdin.readline())
         
 
 def my_prompt(initial_message, prompt, defaults_file):
