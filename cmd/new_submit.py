@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
-import subprocess
+from subprocess import Popen, PIPE
 import argparse
 import os
 import io
@@ -25,8 +25,13 @@ def run_submit(assign):
             count += 1
         return s
     cmd = "submit " + assign
-    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate(input=bs('no\n'))
+    temp_file = open('.temp', 'w')
+    reader = open('.temp', 'r')
+    proc = Popen(cmd.split(), stdin=PIPE, stdout=temp_file, stderr=temp_file)
+    proc.communicate(input=bs('no\n'))
+    temp_file.flush()
+    print(reader.read())
+    print('aaaaaa')
     print('initial out {} initial err {}'.format(out, err))
     to_write = proc.stdin
     to_write.write(bs('no\n'))
