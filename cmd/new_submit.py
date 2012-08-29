@@ -38,7 +38,7 @@ def run_submit(assign):
         return s
     def write_out(stream, thing):
         if type(thing) != bytes:
-            thing = bytes(x, "utf-8")(thing)
+            thing = bytes(thing, "utf-8")
         stream.write(thing)
         stream.flush()
     cmd = "submit " + assign
@@ -62,6 +62,10 @@ def run_submit(assign):
             read = False
             special = False
         if print_it:
+            if "You must turn in " in line:
+                print(line, end="")
+                print(proc.stderr.read(), end="")
+                return
             print(line, end="")
             sys.stdout.flush()
             if "The files you have submitted are" in line:
