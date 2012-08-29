@@ -17,11 +17,11 @@ def run_submit(assign):
     # print "cwd {}".format(os.getcwd())
     bs = lambda x: bytes(x, "utf-8")
     cmd = "submit " + assign
-    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=sys.stdout, stderr=sys.stderr)
     to_write = proc.stdin
     to_write.write(bs('no\n'))
-    print(proc.stdout.read())
-    print(proc.stderr.read())
+    # print(proc.stdout.read())
+    # print(proc.stderr.read())
     out, err = proc.communicate()
     print('initial out {} initial err {}'.format(out, err))
     count = 0
