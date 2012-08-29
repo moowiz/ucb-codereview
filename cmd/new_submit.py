@@ -23,6 +23,7 @@ def run_submit(assign):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
     imp_files = model.get_important_file(assign)
+    print("imp_files {} files {}".format(imp_files, files))
     for imp_f in imp_files:
         if imp_f not in files:
             print("ERROR: missing a required file {}".format(imp_f))
@@ -83,22 +84,23 @@ def run_submit(assign):
                 return
             if not ignore_line(line):
                 print(line, end="")
-            else:
-                print('ignoring {}'.format(line))
             sys.stdout.flush()
             if "The files you have submitted are" in line:
                 special = True
             elif read:
                 write_out(sin, sys.stdin.readline())
     proc.wait()
-    print(decode(proc.stderr.read()))
+    print(decode(proc.stderr.read()), end="")
         
 def my_prompt(initial_message, prompt, defaults_file):
     defaults = None
     if os.path.exists(defaults_file):
         defaults = open(defaults_file, 'r').read().split()
     print(initial_message)
-    print("Enter '.' to stop. Hit enter to use the remaining defaults.")
+    msg = "Enter '.' to stop."
+    if defaults:
+        msg += "Hit enter to use the remaining defaults."
+    print(msg)
     captured = []
     while True:
         output = prompt
@@ -146,14 +148,14 @@ def get_gmails():
 
 def get_partners():
     """
-    Prompts the user for their gmails, and stores the file in the GMAILS_FILE file
+    Prompts the user for their logins, and stores the file in the LOGINS_FILE file
     """
-    partners = my_prompt("Enter you and your partner's logins.", "Login", LOGINS_FILE)
+    partners = my_prompt("Enter you and your partner's full logins.", "Login", LOGINS_FILE)
     write_defaults(partners, LOGINS_FILE, string_to_join=" ")
     return partners
 
 def get_sections():
-    sections = my_prompt("Enter you and your partner's section numbers.", "Section Number", SECTIONS_FILE)
+    sections = my_prompt("Enter the last 2 digits of you and your partner's section numbers.", "Section Number", SECTIONS_FILE)
     write_defaults(sections, SECTIONS_FILE)
     return sections
 
