@@ -50,7 +50,7 @@ def run_submit(assign):
     special = False
     while True:
         line = read_line(proc.stderr)
-        # print('read {}'.format(line))        
+        print('read {}'.format(line))        
         if "Copying submission of assignment" in line:
             print(line)
             break
@@ -72,10 +72,8 @@ def run_submit(assign):
                 special = True
             elif read:
                 write_out(sin, sys.stdin.readline())
-    print('waiting')
     proc.wait()
-    print("rest is {}".format(proc.stderr.read()))
-    print('done waiting')
+    print(dec(proc.stderr.read()))
         
 
 def my_prompt(initial_message, prompt, defaults_file):
