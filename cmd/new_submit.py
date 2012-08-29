@@ -15,10 +15,11 @@ def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
+    bs = lambda x: bytes(x, "utf-8")
     cmd = "submit " + assign
     proc = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     to_write = proc.stdin
-    to_write.write('no\n')
+    to_write.write(bs('no\n'))
     print(proc.stdout.read())
     print(proc.stderr.read())
     out, err = proc.communicate()
