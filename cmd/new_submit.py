@@ -29,7 +29,7 @@ def run_submit(assign):
             s += c
         return s
     def ignore_line(line):
-        return "Looking for files to turn in...." in line or "Submitting " in line\
+        return "Looking for files to turn in...." in line or "Submitting " in line
     def read_line(stream):
         char = get_char(stream)
         s = char
