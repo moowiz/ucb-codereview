@@ -35,7 +35,7 @@ def run_submit(assign):
         char = get_char(stream)
         s = char
         while True:
-            if s[-1] == "\n":
+            if s.endswith("[yes/no] ") or s[-1] == "\n":
                 break
             s += get_char(stream)            
         return s
