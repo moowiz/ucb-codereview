@@ -139,9 +139,9 @@ def upload(path_to_repo, logins, assign):
                 line = l
                 break
         if line:
-            print("New issue; adding to DB")
             line = line[line.rfind('/') + 1:].strip()
             issue_num = int(line)
+            print("New issue {}; adding to DB".format(issue_num))
             model.set_issue_number(logins, assign, issue_num)  
     except Exception as e:
         raise e 
