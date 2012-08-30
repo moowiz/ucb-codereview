@@ -176,7 +176,7 @@ def main():
     init_data(db_path)
     import_old_data(db_path, backup_path)
     utils.chown_staff_master(db_path)
-    utils.chmod_own_grp(db_path)
+    utils.chmod_own_grp_other_read(db_path)
 
 if __name__ == "__main__":
     main()

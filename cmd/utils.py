@@ -42,6 +42,9 @@ def get_master_user_id():
 def chmod_own_grp(path):
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP) 
 
+def chmod_own_grp_other_read(path):
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH) 
+
 def chown_staff_master(path):
     os.chown(path, get_master_user_id(), get_staff_gid())
 
