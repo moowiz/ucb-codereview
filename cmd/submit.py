@@ -122,6 +122,7 @@ def my_prompt(initial_message, prompt, defaults_file):
             sys.stdout.flush()
             break
         if len(value) < 3 and '.' in value:
+            defaults = None
             break
         if defaults:
             defaults.pop(0)
