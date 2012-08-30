@@ -61,7 +61,7 @@ def get_revision_hash(path_to_repo=None):
     if len(out) == 1:
         rval = out[0]
     else:
-        rval = out.split()[1] #diff from the revision before (last thing they submitted)
+        rval = out[1] #diff from the revision before (last thing they submitted)
     if type(rval) == bytes:
         rval = rval.decode("utf-8")
     return rval 
