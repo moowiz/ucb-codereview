@@ -186,7 +186,10 @@ def put_in_repo(login, assign):
         assign = utils.clean_assign(assign)
         path_to_template += assign + "/"
         if not os.path.exists(path_to_template):
-            raise Exception("Assignment path {} doesn't exist".format(path_to_template))
+            dumb_template = open(path_to_template, 'w')
+            dumb_template.write("You were not given a template for this assignment.\n")
+            dumb_template.flush()
+            dumb_template.close()
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
         git.add(None, path=path_to_repo)
