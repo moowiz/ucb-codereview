@@ -138,7 +138,7 @@ def my_prompt(initial_message, prompt, defaults_file):
 def write_defaults(defaults, filename, string_to_join="\n"):
     out = open(filename, 'w')
     string = string_to_join.join(defaults)
-    if not string[-1] == "\n":
+    if string and not string[-1] == "\n":
         string = string + "\n"
     out.write(string)
     out.flush()
