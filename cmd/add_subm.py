@@ -26,7 +26,7 @@ SUBMISSION_DIR = HOME_DIR + "submissions/"
 CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
 REPO_DIR = CODE_REVIEW_DIR + "repo/"
 ASSIGN_DIR = HOME_DIR + "lib/"
-TEMP_DIR = HOME_DIR + "tmp/robot-tmp/"
+TEMP_DIR = HOME_DIR + "tmp/robot-temp/tmp/"
 
 def get_subm(login, assign):
     """
