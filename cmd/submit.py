@@ -6,15 +6,24 @@ import argparse
 import os
 import io
 import re
-import model
 import utils
+import sqlite3
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
-model = model.CodeReviewDatabase(utils.read_db_path())
+def get_important_files(assign):    
+    conn = sqlite3.connect(utils.read_db_path())
+    cursor = conn.cursor()
+    sql = "SELECT file FROM important_file WHERE assignment=?"
+    files = cursor.execute(sql, (assignment,))
+    temp = []
+    for row in files.fetchall():
+        temp.append(row[0])
+    conn.close()
+    return temp
 
 def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
@@ -56,7 +65,7 @@ def run_submit(assign):
             thing = bytes(thing, "utf-8")
         stream.write(thing)
         stream.flush()
-    cmd = "/share/b/grading/bin/submit " + assign
+    cmd = "submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
     special = False
@@ -159,6 +168,10 @@ def get_sections():
     return sections
 
 def main(assign):
+    files = get_important_files(assign)
+    if not files:
+        print("ERROR. Trying to submit for an assignment that doesn't exist!", file=sys.stderr)
+        sys.exit(1)
     gmails = get_gmails()
     sections = get_sections()
     partners = get_partners()
