@@ -155,10 +155,8 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     files_to_copy = get_important_files(assign)
     if template:
         files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
-    # print("copying into dir {} with {}".format(end_dir, os.listdir(end_dir)))
     for filename in files_to_copy:
         shutil.copy(start_dir + filename, end_dir + filename)
-    # print("dir is now {}".format(os.listdir(end_dir)))
 
 def git_init(path):
     git.init(path=path)

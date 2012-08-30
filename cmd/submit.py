@@ -89,6 +89,10 @@ def run_submit(assign):
                 print(line, end="")
                 print(decode(proc.stderr.read()), end="")
                 return
+            if "perl: warning" in line:
+                print("ERROR: \"{}\". Please talk to a TA".format(line))
+                proc.stderr.read()
+                return
             if not ignore_line(line):
                 print(line, end="")
             sys.stdout.flush()
@@ -130,7 +134,7 @@ def my_prompt(initial_message, prompt, defaults_file):
     if defaults:
         captured.extend(defaults)
     return captured
-
+    
 def write_defaults(defaults, filename, string_to_join="\n"):
     out = open(filename, 'w')
     string = string_to_join.join(defaults)
