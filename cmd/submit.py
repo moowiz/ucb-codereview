@@ -38,7 +38,6 @@ def run_submit(assign):
             sys.exit(1)
         else:
             print("Submitting {}.".format(imp_f))
-    model.close()
     decode = lambda x: x.decode('utf-8')
     def get_char(stream):
         got = stream.read(1)
