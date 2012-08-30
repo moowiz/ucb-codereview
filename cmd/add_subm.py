@@ -42,8 +42,8 @@ def get_subm(login, assign):
         os.makedirs(tempdir)
     os.chdir(tempdir)
     out, err = utils.run("get-subm " + assign + " " + login)
-    if err:
-        print("ERROR: {}".format(err))
+    # if err:
+        # print("ERROR: {}".format(err))
     # print 'hmmm'
     # print 'logins {} assign {}'.format(logins, assign)
     # print("out is {}".format(out))
@@ -141,6 +141,7 @@ def upload(path_to_repo, logins, assign):
         if line:
             line = line[line.rfind('/') + 1:].strip()
             issue_num = int(line)
+            print("line was {}".format(line))
             print("New issue {}; adding to DB".format(issue_num))
             model.set_issue_number(logins, assign, issue_num)  
     except Exception as e:
