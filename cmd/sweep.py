@@ -46,13 +46,13 @@ def sweep(assign):
     for directory in dirs:
         subms = os.listdir(SUBMISSION_DIR + directory)
         latest = get_last_uploaded(directory)
-        logins[directory] = []
+        logins[directory] = set()
         for name in subms:
             splt = name.split(".")
             login = splt[0]
             timestamp = conv_timestamp(splt[1])
             if (timestamp >= latest):
-                logins[directory].append(login)
+                logins[directory].add(login)
             if (timestamp > max):
                 max = timestamp
         maxes[directory] = max
