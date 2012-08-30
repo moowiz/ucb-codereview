@@ -90,6 +90,9 @@ SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
 def get_robot_pass():
+    """
+    We shouldn't ever call this....
+    """
     return "reviewdatcode"
 
 def upload(path_to_repo, logins, assign):
@@ -119,19 +122,17 @@ def upload(path_to_repo, logins, assign):
             return a
         staff_gmails = reduce(mextend, map(lambda x: model.get_reviewers(x), get_sections(logins)), [])
         gmails.extend(staff_gmails)
-        content = ""
         hash_str = git.get_revision_hash(path_to_repo)
         if not issue_num:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
                 '--rev', hash_str, '--private'))
-            content = get_robot_pass()
         else:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
                 '--rev', hash_str, '--private'))
         print("Uploading...")
-        out, err = utils.run(cmd, content)
+        out, err = utils.run(cmd)
         print("Done uploading")
         line = ""
         for l in out.split('\n'):
