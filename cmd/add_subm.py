@@ -120,8 +120,11 @@ def upload(path_to_repo, logins, assign):
         def mextend(a, b):
             a.extend(b)
             return a
-        staff_gmails = reduce(mextend, map(lambda x: model.get_reviewers(x), get_sections(logins)), [])
-        gmails.extend(staff_gmails)
+        sections = get_sections(logins)
+        reviewers = set()
+        for section in sections:
+            reviewers.update(set(model.get_reviewers(section)))
+        gmails.extend(list(reviewers))
         hash_str = git.get_revision_hash(path_to_repo)
         if not issue_num:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
