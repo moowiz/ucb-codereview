@@ -59,6 +59,7 @@ def sweep(assign):
     return logins, maxes
 
 def main(assign, add):
+    utils.check_master_user()
     logins, maxes = sweep(assign)
     if add:
         try:

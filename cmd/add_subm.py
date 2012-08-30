@@ -200,6 +200,7 @@ def put_in_repo(login, assign):
     return path_to_repo, logins
 
 def add(login, assign):
+    utils.check_master_user()
     original_path = os.getcwd()
     path_to_repo, logins = put_in_repo(login, assign)
     os.chdir(original_path) #need this because somehow we end up in a bad place now...
