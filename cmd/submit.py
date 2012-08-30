@@ -18,7 +18,7 @@ def get_important_files(assign):
     conn = sqlite3.connect(utils.read_db_path())
     cursor = conn.cursor()
     sql = "SELECT file FROM important_file WHERE assignment=?"
-    files = cursor.execute(sql, (assignment,))
+    files = cursor.execute(sql, (assign,))
     temp = []
     for row in files.fetchall():
         temp.append(row[0])
