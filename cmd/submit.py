@@ -56,7 +56,7 @@ def run_submit(assign):
             thing = bytes(thing, "utf-8")
         stream.write(thing)
         stream.flush()
-    cmd = "submit " + assign
+    cmd = "/share/b/grading/bin/submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
     special = False

@@ -14,7 +14,7 @@ import utils
 import os
 import glob
 import git
-import new_submit
+import submit
 from functools import reduce
 
 from model import CodeReviewDatabase
@@ -68,21 +68,21 @@ def get_important_files(assign):
     Would involve either some looking at the params file, or looking at the DB
     """
     assign_files = model.get_important_file(assign)
-    assign_files.extend(new_submit.important_files)
+    assign_files.extend(submit.important_files)
     return assign_files
 
 def get_sections(logins):
     """
     Returns the sections for logins in a list
     """
-    return open(new_submit.SECTIONS_FILE, 'r').read().split()
+    return open(submit.SECTIONS_FILE, 'r').read().split()
 
 def get_gmails(logins):
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
     Not sure how to do this yet; we'll decide something in the first staff meeting
     """
-    return open(new_submit.GMAILS_FILE, 'r').read().split()
+    return open(submit.GMAILS_FILE, 'r').read().split()
 
 PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
@@ -152,7 +152,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     original_path = os.getcwd()
     files_to_copy = get_important_files(assign)
     if template:
-        files_to_copy = list(filter(lambda x: x not in new_submit.important_files, files_to_copy))
+        files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
     # print("copying into dir {} with {}".format(end_dir, os.listdir(end_dir)))
     for filename in files_to_copy:
         shutil.copy(start_dir + filename, end_dir + filename)
@@ -172,7 +172,7 @@ def put_in_repo(login, assign):
     Puts the login's assignment into their repo
     """
     path_to_subm = get_subm(login, assign)
-    logins = open(new_submit.LOGINS_FILE, 'r').read().split('\n')
+    logins = open(submit.LOGINS_FILE, 'r').read().split('\n')
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
