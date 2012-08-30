@@ -54,6 +54,13 @@ def get_revision_hash(path_to_repo=None):
         path_to_repo = os.getcwd()
     oldpath = os.getcwd()
     os.chdir(path_to_repo)
-    command = 'git log --pretty=format:"%H""'
-    out = utils.run(command)
-    return out[-1]
+    command = 'git log --pretty=format:%H'
+    out = utils.run(command)[0]
+    out = out.split()
+    if len(out) == 1:
+        rval = out[0]
+    else:
+        rval = out[1] #diff from the revision before (last thing they submitted)
+    if type(rval) == bytes:
+        rval = rval.decode("utf-8")
+    return rval 

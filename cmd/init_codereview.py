@@ -141,9 +141,14 @@ def init_data(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()    
     query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
+<<<<<<< HEAD
     for key,value in SECTION_TO_STAFF.items():
 	for k,v in value:
 	    cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
+=======
+    for k,v in SECTION_TO_STAFF.items():
+        cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
+>>>>>>> 0011e6b7711459c05028902800a378a5e2f644cc
     query = "INSERT INTO important_file (assignment, file) VALUES (?, ?)"
     for k, v in IMPORTANT_FILES.items():
         cursor.execute(query, (k, v))
