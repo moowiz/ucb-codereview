@@ -168,7 +168,7 @@ def get_sections():
     return sections
 
 def main(assign):
-    files = get_important_files(assign)
+    files = get_important_files(utils.clean_assign(assign))
     if not files:
         print("ERROR. Trying to submit for an assignment that doesn't exist!", file=sys.stderr)
         sys.exit(1)
