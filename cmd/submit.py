@@ -50,7 +50,7 @@ def run_submit(assign):
         return s
     def ignore_line(line):
         return "Looking for files to turn in...." in line or "Submitting " in line \
-                or "Skipping directory" in line
+                or "Skipping directory" in line or "Skipping file " in line
     def read_line(stream):
         char = get_char(stream)
         s = char
