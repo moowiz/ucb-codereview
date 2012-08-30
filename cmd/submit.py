@@ -31,11 +31,10 @@ def run_submit(assign):
     # print "cwd {}".format(os.getcwd())
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
-    imp_files = model.get_important_file(utils.clean_assign(assign))
+    imp_files = get_important_files(utils.clean_assign(assign))
     for imp_f in imp_files:
         if imp_f not in files:
             print("ERROR: missing a required file {}".format(imp_f))
-            model.close()
             sys.exit(1)
         else:
             print("Submitting {}.".format(imp_f))
