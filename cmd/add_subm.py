@@ -23,6 +23,9 @@ model = CodeReviewDatabase(utils.read_db_path())
 class SubmissionException(Exception):
     pass
 
+class UploadException(Exception):
+    pass
+
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = HOME_DIR + "submissions/"
@@ -142,6 +145,8 @@ def upload(path_to_repo, logins, assign):
                 '--rev', hash_str, '--private'))
         print("Uploading...")
         out, err = utils.run(cmd)
+        if "Unhandled exception" in err:
+            raise UploadException(str(err))
         print("Done uploading")
         line = ""
         for l in out.split('\n'):
@@ -248,8 +253,12 @@ def add(login, assign):
         raise e
     except SubmissionException as e:
         print(str(e))
-        os.chdir(original_path)
         return
+    except UploadException as e:
+        print("Error while uploading: {}".format(str(e)))
+        return
+    finally:
+        os.chdir(original_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
