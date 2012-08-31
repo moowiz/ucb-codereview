@@ -164,7 +164,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     if template:
         files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
         for file in files_to_copy:
-            dumb_template = open(path_to_template + file, 'w')
+            dumb_template = open(start_dir + file, 'w')
             dumb_template.write("You were not given a template for this assignment.\n")
             dumb_template.flush()
             dumb_template.close()
