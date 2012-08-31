@@ -168,6 +168,9 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
             dumb_template.write("You were not given a template for this assignment.\n")
             dumb_template.flush()
             dumb_template.close()
+        if os.path.exists(end_dir):
+            print("Removing files in {} because template".format(end_dir))
+            shutil.rmtree(end_dir)
     for filename in files_to_copy:
         if os.path.isdir(start_dir+filename):
             raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
@@ -199,6 +202,7 @@ def put_in_repo(login, assign):
         assign = utils.clean_assign(assign)
         path_to_template += assign + "/"
         git_init(path_to_repo)
+        copy_important_files(assign, path_to_template, path_to_repo, template=True)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
     else: #we want to check that we didnt mess up, and there is actually something here
