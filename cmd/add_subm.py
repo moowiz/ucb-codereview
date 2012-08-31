@@ -145,7 +145,6 @@ def upload(path_to_repo, logins, assign):
         if line:
             line = line[line.rfind('/') + 1:].strip()
             issue_num = int(line)
-            print("line was {}".format(line))
             print("New issue {}; adding to DB".format(issue_num))
             model.set_issue_number(logins, assign, issue_num)  
     except Exception as e:
@@ -208,9 +207,15 @@ def add(login, assign):
     print("Adding {} for {}".format(assign, login))
     utils.check_master_user()
     original_path = os.getcwd()
-    path_to_repo, logins = put_in_repo(login, assign)
-    os.chdir(original_path) #need this because somehow we end up in a bad place now...
-    upload(path_to_repo, logins, assign)
+    try:
+        path_to_repo, logins = put_in_repo(login, assign)
+        os.chdir(original_path) #need this because somehow we end up in a bad place now...
+        upload(path_to_repo, logins, assign)
+    except IOError as e:
+        if "No such file " in str(e):
+            print("ERROR: Couldn't find the logins file. Ignoring login...", file=sys.stderr)
+            sys.exit(1)
+        raise e
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
