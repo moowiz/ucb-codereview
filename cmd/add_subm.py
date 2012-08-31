@@ -214,6 +214,7 @@ def add(login, assign):
     except IOError as e:
         if "No such file " in str(e):
             print("ERROR: Couldn't find a file {}. Ignoring login...".format(str(e)), file=sys.stderr)
+            os.chdir(original_path)
             return
         raise e
 
