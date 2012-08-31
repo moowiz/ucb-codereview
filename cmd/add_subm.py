@@ -20,6 +20,9 @@ from functools import reduce
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
 
+class SubmissionException(Exception)
+    pass
+
 HOME_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = HOME_DIR + "grading/"
 SUBMISSION_DIR = HOME_DIR + "submissions/"
@@ -163,6 +166,8 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
             dumb_template.flush()
             dumb_template.close()
     for filename in files_to_copy:
+        if os.path.isdir(start_dir+filename):
+            raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
         shutil.copy(start_dir + filename, end_dir + filename)
 
 def git_init(path):
@@ -217,6 +222,10 @@ def add(login, assign):
             os.chdir(original_path)
             return
         raise e
+    except SubmissionException as e:
+        print(str(e))
+        os.chdir(original_path)
+        return
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
