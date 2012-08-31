@@ -174,7 +174,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
                 if os.path.isdir(f):
                     shutil.rmtree(end_dir)
                 else:
-                    os.remove(f)
+                    os.remove(end_dir + f)
             if not os.path.exists(end_dir):
                 os.mkdir(end_dir)
         for file in files_to_copy:
