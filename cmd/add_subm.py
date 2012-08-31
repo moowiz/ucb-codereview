@@ -171,8 +171,8 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
                     break
                 else:
                     f = files[0]
-                if os.path.isdir(f):
-                    shutil.rmtree(end_dir)
+                if os.path.isdir(end_dir + f):
+                    shutil.rmtree(end_dir + f)
                 else:
                     os.remove(end_dir + f)
             if not os.path.exists(end_dir):
