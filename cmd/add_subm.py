@@ -163,14 +163,14 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     files_to_copy = get_important_files(assign)
     if template:
         files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
+        if os.path.exists(end_dir):
+            print("Removing files in {} because template.".format(end_dir))
+            shutil.rmtree(end_dir)
         for file in files_to_copy:
             dumb_template = open(start_dir + file, 'w')
             dumb_template.write("You were not given a template for this assignment.\n")
             dumb_template.flush()
             dumb_template.close()
-        if os.path.exists(end_dir):
-            print("Removing files in {} because template.".format(end_dir))
-            shutil.rmtree(end_dir)
     for filename in files_to_copy:
         if os.path.isdir(start_dir+filename):
             raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
