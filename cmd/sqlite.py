@@ -9,4 +9,6 @@ if __name__ == "__main__":
         query = input()
         if "quit" in query and len(query) < 6:
             sys.exit(0)
-        print(cursor.execute(query).fetchall())
+        res = cursor.execute(query)
+        print(res.fetchall())
+        conn.commit()
