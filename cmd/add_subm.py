@@ -20,7 +20,7 @@ from functools import reduce
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
 
-class SubmissionException(Exception)
+class SubmissionException(Exception):
     pass
 
 HOME_DIR = os.path.expanduser('~cs61a/')
