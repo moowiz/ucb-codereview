@@ -114,7 +114,6 @@ def bkup_if_exists(path):
     except OSError:
         return None
 
-
 def create_table(path):
     """
     Call bkup_if_exists before this function.
@@ -172,11 +171,15 @@ def main():
     """
     db_path = read_db_path()
     backup_path = bkup_if_exists(db_path)
-    create_table(db_path)
-    init_data(db_path)
-    import_old_data(db_path, backup_path)
-    utils.chown_staff_master(db_path)
-    utils.chmod_own_grp_other_read(db_path)
+    try:
+        create_table(db_path)
+        init_data(db_path)
+        import_old_data(db_path, backup_path)
+        utils.chown_staff_master(db_path)
+        utils.chmod_own_grp_other_read(db_path)
+    except Exception as e:
+        print("ERROR: {} encountered while initing new database. Restoring old database.".format(e))
+        shutil.move(backup_path, db_path)
 
 if __name__ == "__main__":
     main()
