@@ -40,7 +40,10 @@ def get_subm(login, assign):
     tempdir = TEMP_DIR
     files = glob.glob(TEMP_DIR + "*")
     for f in files:
-        os.remove(f)
+        if os.path.isdir(f):
+            shutil.rmtree(f)
+        else:
+            os.remove(f)
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
     os.chdir(tempdir)
