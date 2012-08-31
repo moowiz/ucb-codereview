@@ -169,7 +169,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
             dumb_template.flush()
             dumb_template.close()
         if os.path.exists(end_dir):
-            print("Removing files in {} because template".format(end_dir))
+            print("Removing files in {} because template.".format(end_dir))
             shutil.rmtree(end_dir)
     for filename in files_to_copy:
         if os.path.isdir(start_dir+filename):
