@@ -212,8 +212,8 @@ def put_in_repo(login, assign):
             path_to_template += "proj/"
         assign = utils.clean_assign(assign)
         path_to_template += assign + "/"
-        git_init(path_to_repo)
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
+        git_init(path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
     else: #we want to check that we didnt mess up, and there is actually something here
