@@ -165,11 +165,18 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
         files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
         if os.path.exists(end_dir):
             print("Removing files in {} because template.".format(end_dir))
-            for f in os.listdir(end_dir):
+            while os.path.exists(end_dir):
+                files = os.listdir(end_dir)
+                if not files:
+                    break
+                else:
+                    f = files[0]
                 if os.path.isdir(f):
                     shutil.rmtree(end_dir)
                 else:
                     os.remove(f)
+            if not os.path.exists(end_dir):
+                os.mkdir(end_dir)
         for file in files_to_copy:
             dumb_template = open(start_dir + file, 'w')
             dumb_template.write("You were not given a template for this assignment.\n")
