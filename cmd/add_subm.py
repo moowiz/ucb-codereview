@@ -165,7 +165,11 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
         files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
         if os.path.exists(end_dir):
             print("Removing files in {} because template.".format(end_dir))
-            shutil.rmtree(end_dir)
+            for f in os.listdir(end_dir):
+                if os.path.isdir(f):
+                    shutil.rmtree(end_dir)
+                else:
+                    os.remove(f)
         for file in files_to_copy:
             dumb_template = open(start_dir + file, 'w')
             dumb_template.write("You were not given a template for this assignment.\n")
@@ -231,7 +235,7 @@ def add(login, assign):
         upload(path_to_repo, logins, assign)
     except IOError as e:
         if "No such file " in str(e):
-            print("ERROR: Couldn't find a file {}. Ignoring login...".format(str(e)), file=sys.stderr)
+            print("ERROR:{}. Ignoring...".format(str(e)), file=sys.stderr)
             os.chdir(original_path)
             return
         raise e
