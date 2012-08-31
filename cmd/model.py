@@ -156,5 +156,5 @@ class CodeReviewDatabase(object):
     def remove_issue_number(self, students, assign, issue_num):
         partners = CodeReviewDatabase.combine_students(students)
         delete_sql = "DELETE FROM roster WHERE partners = ? AND assignment = ? AND issue=?"
-        self.cursor.execute(delete_sql, (students, assign, issue_num))
+        self.cursor.execute(delete_sql, (partners, assign, issue_num))
         self.conn.commit()
