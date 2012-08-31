@@ -1,7 +1,7 @@
 """
 Data model API for the database.
 """
-
+import os
 import sqlite3
 
 PARAMS_FILE = os.path.expanduser("~cs61a/grading/params")
