@@ -213,10 +213,10 @@ def add(login, assign):
         upload(path_to_repo, logins, assign)
     except IOError as e:
         if "No such file " in str(e):
-            print("ERROR: Couldn't find the logins file. Ignoring login...", file=sys.stderr)
+            print("ERROR: Couldn't find a file {}. Ignoring login...".format(str(e)), file=sys.stderr)
             sys.exit(1)
         raise e
-    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
      submission for the given assignment to the code review system.")    
