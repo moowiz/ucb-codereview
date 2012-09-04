@@ -84,7 +84,14 @@ def get_sections(logins):
     """
     Returns the sections for logins in a list
     """
-    return open(submit.SECTIONS_FILE, 'r').read().split()
+    file = open(submit.SECTIONS_FILE, 'r')
+    text = file.read().split()
+    rval = []
+    for line in text:
+        if len(line) == 3:
+            line = line[1:]
+    file.close()
+    return rval
 
 def get_gmails(logins):
     """
@@ -126,8 +133,7 @@ def upload(path_to_repo, logins, assign):
         os.chdir(path_to_repo)
         gmails = get_gmails(logins)
         if len(gmails) == 0:
-            print("Student had no gmails. Exiting...", file = sys.stderr)
-            sys.exit(1)
+            raise UploadException("Student had no gmails. Not uploading.")
         issue_num = model.get_issue_number(logins, assign)
         def mextend(a, b):
             a.extend(b)
