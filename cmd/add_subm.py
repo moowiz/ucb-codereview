@@ -90,6 +90,7 @@ def get_sections(logins):
     for line in text:
         if len(line) == 3:
             line = line[1:]
+        rval.append(line)
     file.close()
     return rval
 
