@@ -207,6 +207,8 @@ def put_in_repo(login, assign):
     """
     path_to_subm = get_subm(login, assign)
     logins = open(submit.LOGINS_FILE, 'r').read().split('\n')
+    if len(logins) == 0:
+        logins = [login]
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
