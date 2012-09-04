@@ -125,6 +125,9 @@ def upload(path_to_repo, logins, assign):
     try:
         os.chdir(path_to_repo)
         gmails = get_gmails(logins)
+        if len(gmails) == 0:
+            print("Student had no gmails. Exiting...", file = sys.stderr)
+            sys.exit(1)
         issue_num = model.get_issue_number(logins, assign)
         def mextend(a, b):
             a.extend(b)
