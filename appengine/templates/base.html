@@ -182,7 +182,7 @@ var publish_link = "{%url codereview.views.publish issue.key.id%}";
 <b>{{user.email}} ({%nickname user True%})</b>
 |
 {%if must_choose_nickname%}
-<span style="color:red">Please choose your nickname with</span>{%endif%}
+<span style="color:red">Please fill in your login information with </span>{%endif%}
 <a class="novisit" href="{%url codereview.views.settings%}">Settings</a>
 |
 {%endif%}
@@ -190,9 +190,6 @@ var publish_link = "{%url codereview.views.publish issue.key.id%}";
 <a class="novisit" target="_blank" href="/_ah/admin">Admin</a>
 |
 {%endif%}
-<a class="novisit" target="_blank"
-   href="http://code.google.com/p/rietveld/wiki/CodeReviewHelp">Help</a>
-|
 {%if user%}
 <a class="novisit" href="{{sign_out}}">Sign out</a>
 {% else %}
