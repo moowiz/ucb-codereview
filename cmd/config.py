@@ -14,7 +14,7 @@ _PARAMS_FILE = _GRADING_DIR + "params"
 class ConfigException(Exception):
     pass
 
-def get_imp_file(assignment):
+def get_imp_files(assignment):
     if len(assignment) == 4 and assignment[2] != "1":
         assignment = assignment[:2] + assignment[-1]
     if len(assignment) == 6 and assignment[4] != "1":
