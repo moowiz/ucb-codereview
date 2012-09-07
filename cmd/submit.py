@@ -81,7 +81,7 @@ def run_submit(assign):
     sin = proc.stdin
     special = False
     while True:
-        line = read_line(proc.stderr)
+        line = read_line()
         if "Copying submission of assignment" in line:
             print(line)
             break
