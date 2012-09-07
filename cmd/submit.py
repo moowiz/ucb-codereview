@@ -57,6 +57,9 @@ def run_submit(assign):
         char = get_char(proc.stderr)
         s = char
         while True:
+            if s.startswith("Login: "):
+                handle_login()
+                return read_line()
             if s.endswith("/no]") or s[-1] == "\n":
                 break
             s += get_char(proc.stderr)            
