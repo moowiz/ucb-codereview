@@ -44,7 +44,6 @@ def get_imp_file(assignment):
                 files.append(args[i][1:-1])
         break
     files = list(map(lambda x: x.replace("\n\n", '').replace("\n", "").replace("'", ""), files))
-    print("files is {}".format(files))
     if not files:
         raise ConfigException("Couldn't find {} in the params file".format(assignment))
     return files

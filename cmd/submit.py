@@ -193,4 +193,4 @@ if __name__ == "__main__":
     try:
         main(args.assign)
     except KeyboardInterrupt:
-        return
+        pass
