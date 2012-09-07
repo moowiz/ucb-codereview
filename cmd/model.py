@@ -77,7 +77,7 @@ class CodeReviewDatabase(object):
             lines = f.read().split("\n")
             f.close()
             ind = 0
-            for line, i in enumerate(lines):
+            for i, line in enumerate(lines):
                 if line.startswith("assign"):
                     ind = i
                     break
