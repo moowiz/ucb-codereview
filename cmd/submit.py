@@ -190,4 +190,7 @@ if __name__ == "__main__":
     parser.add_argument('assign', type=str,
                         help='the assignment to submit')
     args = parser.parse_args()
-    main(args.assign)
+    try:
+        main(args.assign)
+    except KeyboardInterrupt:
+        return
