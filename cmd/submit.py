@@ -27,7 +27,7 @@ def get_important_files(assign):
     # return temp
     return get_imp_file(assign)
 
-def run_submit(assign):
+def run_submit(assign, partners):
     """Runs submit. Basic, slightly dumb version."""
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
@@ -195,7 +195,7 @@ def main(assign):
     gmails = get_gmails()
     sections = get_sections()
     partners = get_partners()
-    run_submit(assign)
+    run_submit(assign, partners)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
