@@ -14,7 +14,7 @@ class ConfigException(Exception):
 
 class Config:
     def __init__(self):
-       pass _
+       pass 
 
     def get_imp_file(self, assignment):
         f = open(_PARAMS_FILE, 'r')
