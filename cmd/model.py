@@ -70,15 +70,14 @@ class CodeReviewDatabase(object):
         return temp #maybe add some asserts?
 
     def get_important_file(self, assignment):
-        """
-        if assignment == "hw02":
-            assignment = "hw2"
-        if assignment == "hw2":
+        if assignment == "hw05":
+            assignment = "hw5"
+        if assignment == "hw5":
             f = open(PARAMS_FILE, 'r')
             lines = f.read().split("\n")
             f.close()
             ind = 0
-            for line, i in enumerate(lines):
+            for i, line in enumerate(lines):
                 if line.startswith("assign"):
                     ind = i
                     break
@@ -102,13 +101,12 @@ class CodeReviewDatabase(object):
             return files
         # Old code
         else:
-        """
-        sql = "SELECT file FROM important_file WHERE assignment=?"
-        files = self.cursor.execute(sql, (assignment,))
-        temp = []
-        for row in files.fetchall():
-          temp.append(row[0])
-        return temp #maybe add some asserts?
+            sql = "SELECT file FROM important_file WHERE assignment=?"
+            files = self.cursor.execute(sql, (assignment,))
+            temp = []
+            for row in files.fetchall():
+              temp.append(row[0])
+            return temp #maybe add some asserts?
 
     @staticmethod    
     def combine_students(students):
