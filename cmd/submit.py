@@ -205,5 +205,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         main(args.assign)
-    except KeyboardInterrupt:
-        print()
+    except KeyboardInterrupt as e:
+        if 'proj' in args.assign:
+            print()
+        else:
+            raise e
