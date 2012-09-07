@@ -16,7 +16,7 @@ import glob
 import git
 import submit
 from functools import reduce
-from config import ConfigException, get_imp_file
+from config import ConfigException, get_imp_files
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())

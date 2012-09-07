@@ -8,7 +8,7 @@ import io
 import re
 import utils
 import sqlite3
-from config import get_imp_file, ConfigException
+from config import get_imp_files, ConfigException
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
