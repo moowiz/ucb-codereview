@@ -8,6 +8,7 @@ import io
 import re
 import utils
 import sqlite3
+from config import get_imp_file
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
@@ -15,15 +16,16 @@ LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
 def get_important_files(assign):    
-    conn = sqlite3.connect(utils.read_db_path())
-    cursor = conn.cursor()
-    sql = "SELECT file FROM important_file WHERE assignment=?"
-    files = cursor.execute(sql, (assign,))
-    temp = []
-    for row in files.fetchall():
-        temp.append(row[0])
-    conn.close()
-    return temp
+    # conn = sqlite3.connect(utils.read_db_path())
+    # cursor = conn.cursor()
+    # sql = "SELECT file FROM important_file WHERE assignment=?"
+    # files = cursor.execute(sql, (assign,))
+    # temp = []
+    # for row in files.fetchall():
+        # temp.append(row[0])
+    # conn.close()
+    # return temp
+    return get_imp_file(assign)
 
 def run_submit(assign):
     """Runs submit. Basic, slightly dumb version."""
