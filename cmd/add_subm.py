@@ -16,6 +16,7 @@ import glob
 import git
 import submit
 from functools import reduce
+from config import ConfigException, get_imp_file
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -76,7 +77,7 @@ def get_important_files(assign):
     Do we need this function, or should we copy everything?
     Would involve either some looking at the params file, or looking at the DB
     """
-    assign_files = model.get_important_file(assign)
+    assign_files = get_imp_files(assign)
     assign_files.extend(submit.important_files)
     return assign_files
 
