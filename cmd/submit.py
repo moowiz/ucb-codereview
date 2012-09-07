@@ -53,14 +53,24 @@ def run_submit(assign):
     def ignore_line(line):
         return "Looking for files to turn in...." in line or "Submitting " in line \
                 or "Skipping directory" in line or "Skipping file " in line
-    def read_line(stream):
-        char = get_char(stream)
+    def read_line():
+        char = get_char(proc.stderr)
         s = char
         while True:
             if s.endswith("/no]") or s[-1] == "\n":
                 break
-            s += get_char(stream)            
+            s += get_char(proc.stderr)            
         return s
+    def handle_login():
+        if partners:
+            part = partners.pop(0)
+            write_out(proc.stdin, part + "\n\r")
+            return read_line()
+        else:
+            write_out(proc.stdin, ".\n")
+            read_line()
+            write_out(proc.stdin, "yes\n") 
+            return read_line()     
     def write_out(stream, thing):
         if type(thing) != bytes:
             thing = bytes(thing, "utf-8")
@@ -92,7 +102,7 @@ def run_submit(assign):
                 print(decode(proc.stderr.read()), end="")
                 return
             if "perl: warning" in line:
-                print("ERROR: \"{}\". Please talk to a TA".format(line))
+                print("ERROR: \"{}\". Please talk to a TA.".format(line))
                 proc.stderr.read()
                 return
             if not ignore_line(line):
