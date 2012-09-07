@@ -8,7 +8,7 @@ import io
 import re
 import utils
 import sqlite3
-from config import get_imp_file
+from config import get_imp_file, ConfigException
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
@@ -174,10 +174,11 @@ def get_sections():
     return sections
 
 def main(assign):
-    files = get_important_files(utils.clean_assign(assign))
-    if not files:
-        print("ERROR. Trying to submit for an assignment that doesn't exist!", file=sys.stderr)
-        sys.exit(1)
+    try:
+        files = get_important_files(utils.clean_assign(assign))
+    except ConfigException as e:
+        print("ERROR {}".format(e))
+        return
     gmails = get_gmails()
     sections = get_sections()
     partners = get_partners()
