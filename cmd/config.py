@@ -9,7 +9,7 @@ _CODE_REVIEW_DIR = _GRADING_DIR + "codereview/"
 _REPO_DIR = _CODE_REVIEW_DIR + "repo/"
 _ASSIGN_DIR = _MASTER_DIR + "lib/"
 _TEMP_DIR = _MASTER_DIR + "tmp/robot-temp/tmp/"
-_PARAMS_FILE = _GRADING_DIR + "params/"
+_PARAMS_FILE = _GRADING_DIR + "params"
 
 class ConfigException(Exception):
     pass
@@ -43,6 +43,7 @@ class Config:
                 if command:
                     files.append(args[i][1:-1])
             break
+        files = list(map(lambda x: x.replace("\n\n", '').replace("\n", "").replace("'", ""), files))
         print("files is {}".format(files))
         if not files:
             raise ConfigException("Couldn't find {} in the params file".format(assignment))
