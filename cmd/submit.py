@@ -25,7 +25,7 @@ def get_important_files(assign):
         # temp.append(row[0])
     # conn.close()
     # return temp
-    return get_imp_file(assign)
+    return get_imp_files(assign)
 
 def run_submit(assign, partners):
     """Runs submit. Basic, slightly dumb version."""
