@@ -95,7 +95,7 @@ def run_submit(assign, partners):
                 if f in line:
                     write_out(sin, "yes\n")
                     print_it = False
-        else:
+        elif line.beginswith('        '):
             line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
             read = False
             special = False
@@ -111,7 +111,7 @@ def run_submit(assign, partners):
             if not ignore_line(line):
                 print(line, end="")
             sys.stdout.flush()
-            if "The files you have submitted are" in line:
+            if "The files you have submitted are" in line or line.beginswith('\t'):
                 special = True
             elif read:
                 write_out(sin, sys.stdin.readline())
