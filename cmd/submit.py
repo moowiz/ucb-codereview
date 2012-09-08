@@ -108,7 +108,6 @@ def run_submit(assign, partners):
                 print("line is {}".format(line))
             line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
             read = False
-            special = False
         if print_it:
             if "You must turn in " in line:
                 print(line, end="")
