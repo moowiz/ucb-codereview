@@ -52,7 +52,7 @@ def run_submit(assign, partners):
         return s
     def ignore_line(line):
         return "Looking for files to turn in...." in line or "Submitting " in line \
-                or "Skipping directory" in line or "Skipping file " in line
+                or "Skipping directory" in line or "Skipping file " in line or "Created MY.PARTNERS" in line
     def read_line():
         char = get_char(proc.stderr)
         s = char
@@ -90,12 +90,16 @@ def run_submit(assign, partners):
             break
         print_it = True
         read = not ignore_line(line)
+        if special and line.startswith('Is this corr'):
+            special = False
         if not special:
             for f in important_files:
                 if f in line:
                     write_out(sin, "yes\n")
                     print_it = False
-        elif line.startswith('        '):
+        else:
+            if assign == "proj01":
+                print("line is {}".format(line))
             line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
             read = False
             special = False
