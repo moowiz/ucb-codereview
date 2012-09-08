@@ -78,7 +78,13 @@ def run_submit(assign, partners):
         if type(thing) != bytes:
             thing = bytes(thing, "utf-8")
         stream.write(thing)
-        stream.flush()
+        try:
+            stream.flush()
+        except IOError as e:
+            if 'Error 32' in str(e):
+                return
+            else:
+                raise e
     cmd = "/share/b/grading/bin/submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
