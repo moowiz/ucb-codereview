@@ -81,7 +81,7 @@ def run_submit(assign, partners):
         try:
             stream.flush()
         except IOError as e:
-            if 'Error 32' in str(e):
+            if 'Errno 32' in str(e):
                 return
             else:
                 raise e
