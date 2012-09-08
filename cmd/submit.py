@@ -111,7 +111,7 @@ def run_submit(assign, partners):
             if not ignore_line(line):
                 print(line, end="")
             sys.stdout.flush()
-            if "The files you have submitted are" in line or line.startswith('\t'):
+            if "The files you have submitted are" in line:
                 special = True
             elif read:
                 write_out(sin, sys.stdin.readline())
