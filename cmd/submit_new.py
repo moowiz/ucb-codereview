@@ -162,7 +162,7 @@ def get_gmails():
     """
     def validate(s):
         regex = r'^[A-Za-z0-9._%\+]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$'
-        return re.match(s)
+        return re.match(regex,s)
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", validate, "Invalid email address: {}")
     write_defaults(gmails, GMAILS_FILE)
     return gmails
