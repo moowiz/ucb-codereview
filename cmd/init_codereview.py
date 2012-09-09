@@ -184,6 +184,8 @@ def import_old_data(db_path, path_to_backup):
     insert_query = "INSERT INTO roster (partners, assignment, issue) VALUES (?, ?, ?)"
     for row in all_roster:
         new_cursor.execute(insert_query, row)
+    new.commit()
+    old.commit()
     new.close()
     old.close()
 
