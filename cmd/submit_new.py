@@ -60,6 +60,7 @@ class IOHandler:
                 raise e
     def read_all(self):
         return self.read_stream.read()
+
 def decode(x):
     return x.decode('utf-8')
 
@@ -109,7 +110,7 @@ def run_submit(assign, partners):
                 else:
                     arr.append(to_print)
                     to_print = None
-            print(to_print)
+            print('\n'.join(arr))
             special = False
         if print_it:
             if "You must turn in " in line:
@@ -121,7 +122,7 @@ def run_submit(assign, partners):
                 handler.read_all()
                 return
             if not ignore_line(line):
-                print(line, end="")
+                print(line.strip(), end="")
             sys.stdout.flush()
             if "The files you have submitted are" in line:
                 special = True
