@@ -15,9 +15,6 @@ SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
-class SilentException(Exception):
-    pass
-
 def run_submit(assign, partners):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
@@ -199,42 +196,42 @@ def summarize(gmails, sections, partners):
 
 def main(assign, flag=False):
     try:
-        try:
-            files = config.get_imp_files(utils.clean_assign(assign))
-        except ConfigException as e:
-            print("ERROR {}".format(e))
-            return 1
-        if os.path.exists(GMAILS_FILE) and not flag:
-            def read_def(f):
-                try:
-                    fi = open(f, 'r')
-                    rval =  fi.read().split()
-                except IOError:
-                    main(assign, True)
-                    raise SilentException()
-                fi.close()
-                return rval
-            gmails = read_def(GMAILS_FILE)
-            sections = read_def(SECTIONS_FILE)
-            partners = read_def(LOGINS_FILE)
-            print("The following is previous information you've entered.")
-            summarize(gmails, sections, partners)
-            answer = yorn("Is this correct?")
-            if answer:
-                run_submit(assign, partners)
+        files = config.get_imp_files(utils.clean_assign(assign))
+    except ConfigException as e:
+        print("ERROR {}".format(e))
+        return 1
+    if os.path.exists(GMAILS_FILE) and not flag:
+        def read_def(f):
+            try:
+                fi = open(f, 'r')
+                rval =  fi.read().split()
+            except IOError:
+                main(assign, True)
                 return
-        def get_and_sum():
-            gmails = get_gmails()
-            sections = get_sections()
-            partners = get_partners()
-            summarize(gmails, sections, partners)
-            return partners
+            fi.close()
+            return rval
+        gmails = read_def(GMAILS_FILE)
+        sections = read_def(SECTIONS_FILE)
+        partners = read_def(LOGINS_FILE)
+        if not all((gmails, sections, partners)):
+            main(assign, True)
+            return
+        print("The following is previous information you've entered.")
+        summarize(gmails, sections, partners)
+        answer = yorn("Is this correct?")
+        if answer:
+            run_submit(assign, partners)
+            return
+    def get_and_sum():
+        gmails = get_gmails()
+        sections = get_sections()
+        partners = get_partners()
+        summarize(gmails, sections, partners)
+        return partners
+    partners = get_and_sum()
+    while not yorn("Is this correct?"):
         partners = get_and_sum()
-        while not yorn("Is this correct?"):
-            partners = get_and_sum()
-        run_submit(assign, partners)
-    except SilentException:
-        pass
+    run_submit(assign, partners)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
