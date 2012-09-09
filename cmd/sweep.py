@@ -75,7 +75,10 @@ def main(assign, add):
         for k, v in maxes.items():
             model.set_last_uploaded(v, k)
     else:
-        print(logins)  
+        for key, value in logins.items():
+            print('assignment {}'.format(key))
+            for item in value:
+                print(item)
 
 
 if __name__ == "__main__":
