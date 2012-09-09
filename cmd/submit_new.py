@@ -100,16 +100,13 @@ def run_submit(assign, partners):
             while not line.startswith("Is this correct"):
                 files.extend(my_filter(line))
                 line = handler.read_line()
-            to_print = ", ".join(files)
-            arr = []
-            while(to_print):
-                WIDTH_OF_OUTPUT = 50
-                if len(to_print) > WIDTH_OF_OUTPUT:
-                    arr.append(to_print[:WIDTH_OF_OUTPUT])
-                    to_print = to_print[WIDTH_OF_OUTPUT:]
-                else:
-                    arr.append(to_print)
-                    to_print = None
+            arr = [""]
+            tostr = lambda x: ", ".join(arr)
+            WIDTH_OF_OUTPUT = 50
+            while(files):
+                if len(tostr(arr[-1])) > WIDTH_OF_OUTPUT:
+                    arr.append("")
+                arr[-1] += files.pop(0)
             print()
             print('\n  '.join(arr))
             special = False
