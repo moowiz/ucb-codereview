@@ -110,7 +110,8 @@ def run_submit(assign, partners):
                 else:
                     arr.append(to_print)
                     to_print = None
-            print('\n'.join(arr))
+            print()
+            print('\n  '.join(arr))
             special = False
         if print_it:
             if "You must turn in " in line:
