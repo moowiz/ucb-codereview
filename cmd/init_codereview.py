@@ -13,6 +13,7 @@ import os
 import os.path
 import sqlite3   
 import utils
+import argparse
 
 from utils import read_db_path, get_timestamp_str
 
@@ -33,10 +34,6 @@ SCHEMA = {
             'section': 'INTEGER', # section number for the staff number
             'email': 'TEXT' # staff member email
             },
-        'important_file': {
-            'assignment':'TEXT',
-            'file': 'TEXT'
-            }
         }
 
 SECTION_TO_STAFF = {
@@ -67,26 +64,26 @@ SECTION_TO_STAFF = {
 	"Reader" : {
 	    "03" : "Sharad Vikram",
 	    "28" : "Sharad Vikram",
-            "23" : "Mark Miyashita",
-            "25" : "Mark Miyashita",
-            "19" : "Yan Zhao",
-            "02" : "Yan Zhao",
-            "24" : "Soumya Basu",
-            "27" : "Soumya Basu",
-            "18" : "Sharad Vikram",
-            "12" : "Sharad Vikram",
-            "16" : "Robert Huang",
-            "04" : "Robert Huang",
-            "17" : "Robert Huang",
-            "11" : "Robert Huang",
-            "15" : "Sagar Karandikar",
-            "01" : "Sagar Karandikar",
-            "13" : "Vaishaal Shankar",
-            "21" : "Vaishaal Shankar",
-            "14" : "Richie Zeng",
-            "28" : "Richie Zeng", 
+        "23" : "Mark Miyashita",
+        "25" : "Mark Miyashita",
+        "19" : "Yan Zhao",
+        "02" : "Yan Zhao",
+        "24" : "Soumya Basu",
+        "27" : "Soumya Basu",
+        "18" : "Sharad Vikram",
+        "12" : "Sharad Vikram",
+        "16" : "Robert Huang",
+        "04" : "Robert Huang",
+        "17" : "Alvin Wong",
+        "11" : "Alvin Wong",
+        "15" : "Sagar Karandikar",
+        "01" : "Sagar Karandikar",
+        "13" : "Vaishaal Shankar",
+        "21" : "Vaishaal Shankar",
+        "14" : "Richie Zeng",
+        "28" : "Richie Zeng", 
 	    "20" : "Kelvin Chou",
-            "26" : "Kelvin Chou"
+        "26" : "Kelvin Chou"
     }
 }
 
@@ -116,11 +113,6 @@ STAFF_TO_EMAIL = {
         "Mark Miyashita" : "negativetwelve@gmail.com"
 }
 
-IMPORTANT_FILES = {
-    "hw01" : "hw1.py",
-    "hw02" : "hw2.py",
-    "hw05" : "hw5.py"
-}
 
 BACKUP_EXT = ".bkp"
 
@@ -172,9 +164,6 @@ def init_data(db_path):
     for key,value in SECTION_TO_STAFF.items():
         for k,v in value.items():
             cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
-    query = "INSERT INTO important_file (assignment, file) VALUES (?, ?)"
-    for k, v in IMPORTANT_FILES.items():
-        cursor.execute(query, (k, v))
     conn.commit()
     conn.close()
 
@@ -194,17 +183,20 @@ def import_old_data(db_path, path_to_backup):
     new.close()
     old.close()
 
-def main():
+def main(transfer, clear, update):
     """
     The main function to run. Populates the database with basic info. 
     """
     utils.check_master_user()
     db_path = read_db_path()
-    backup_path = bkup_if_exists(db_path)
+    if transfer or clear:
+        backup_path = bkup_if_exists(db_path)
     try:
-        create_table(db_path)
+        if transfer or clear:
+            create_table(db_path)
         init_data(db_path)
-        import_old_data(db_path, backup_path)
+        if transfer:
+            import_old_data(db_path, backup_path)
         utils.chown_staff_master(db_path)
         utils.chmod_own_grp_other_read(db_path)
     except Exception as e:
@@ -212,4 +204,14 @@ def main():
         shutil.move(backup_path, db_path)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Initializes the codereview \
+                    database, or updates it with new data.")    
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-t', '--transfer', action='store_true',
+                        help="Creates a new database and transfers the data from the current one (which is now the backup) to the new database.")
+    group.add_argument('-c', '--clear', action='store_true', 
+                        help="Makes a new database which takes none of the old data from the backups.")
+    group.add_argument('-u', '--update', action='store_true',
+                        help="Updates the current database, while not making a backup.")
+    args = parser.parse_args()
+    main(args.transfer, args.clear, args.update)
