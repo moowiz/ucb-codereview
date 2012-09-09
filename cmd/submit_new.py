@@ -88,7 +88,7 @@ def run_submit(assign, partners):
         print_it = True
         read = not ignore_line(line)
         if not special:
-            for f in important_files:
+            for f in IMPORTANT_FILES:
                 if f in line:
                     handler.write_out("yes\n")
                     print_it = False
