@@ -51,7 +51,7 @@ def sweep(assign, first):
             splt = name.split(".")
             login = splt[0]
             timestamp = conv_timestamp(splt[1])
-            if (timestamp >= latest) and (not first or not model.get_issue_number(assign, login)):
+            if (timestamp >= latest) and (not first or not model.get_issue_number(login, assign)):
                 logins[directory].add(login)
                 if (timestamp > max):
                     max = timestamp

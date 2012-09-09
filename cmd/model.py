@@ -70,44 +70,8 @@ class CodeReviewDatabase(object):
         return temp #maybe add some asserts?
 
     def get_important_file(self, assignment):
-        if assignment == "hw05":
-            assignment = "hw5"
-        if assignment == "hw5":
-            f = open(PARAMS_FILE, 'r')
-            lines = f.read().split("\n")
-            f.close()
-            ind = 0
-            for i, line in enumerate(lines):
-                if line.startswith("assign"):
-                    ind = i
-                    break
-            lines = lines[ind:]
-            #skip the first one, because lines begins with assign
-            spl = "\n".join(lines).split("assign")[1:] 
-            files = []
-            for assign_spl in spl:
-                split = list(filter(lambda x: x and x != "\\\n" and x != "\n", assign_spl.split(" ")))
-                assign = split[0]
-                if not assign == assignment:
-                    continue
-                split.pop(0)
-                commands, args = split[::2], split[1::2]
-                commands = list(map(lambda x: x if x == "-req" else None, commands))
-                for i, command in enumerate(commands):
-                    if command:
-                        files.append(args[i][1:-1])
-                break
-            print("files is {}".format(files))
-            return files
-        # Old code
-        else:
-            sql = "SELECT file FROM important_file WHERE assignment=?"
-            files = self.cursor.execute(sql, (assignment,))
-            temp = []
-            for row in files.fetchall():
-              temp.append(row[0])
-            return temp #maybe add some asserts?
-
+        return config.get_imp_files(assignment)
+        
     @staticmethod    
     def combine_students(students):
         return "".join(sorted(students))
@@ -121,6 +85,8 @@ class CodeReviewDatabase(object):
                 eg. ("cs61a-ab",) or ("cs61a-ab", "cs61a-bc")
             assign: assignment name, eg. "proj1"
         """
+        if type(students) == str:
+            students = [students]
         partners = CodeReviewDatabase.combine_students(students)
         get_issue_sql = "SELECT issue FROM roster " + \
                 "WHERE partners=? AND assignment=? LIMIT 1"
