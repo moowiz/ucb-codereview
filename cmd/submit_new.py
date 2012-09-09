@@ -21,7 +21,7 @@ class SilentException(Exception):
 def run_submit(assign, partners):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
-    imp_files = get_important_files(utils.clean_assign(assign))
+    imp_files = config.get_imp_files(utils.clean_assign(assign))
     for imp_f in imp_files:
         if imp_f not in files:
             print("ERROR: missing a required file {}".format(imp_f))
@@ -193,7 +193,7 @@ def get_sections():
 
 def summarize(gmails, sections, partners):
     print("GMails: {}".format(",".join(gmails)))
-    print("Section numbers {}".format(",".join(sections)))
+    print("Section numbers: {}".format(",".join(sections)))
     print("Logins: {}".format(",".join(partners)))
 
 def main(assign, flag=False):
