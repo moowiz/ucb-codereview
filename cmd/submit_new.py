@@ -13,7 +13,7 @@ import config
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
-important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
+IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
 def ignore_line(line):
     return "Looking for files to turn in...." in line or "Submitting " in line \
@@ -95,7 +95,7 @@ def run_submit(assign, partners):
         else:
             def my_filter(l):
                 l = list(map(lambda x: x.replace('./', ''), l))
-                return list(filter(lambda x: x not in important_files, line.split()))
+                return list(filter(lambda x: x not in IMPORTANT_FILES, line.split()))
             files = []
             while not line.startswith("Is this correct"):
                 files.extend(my_filter(line))
