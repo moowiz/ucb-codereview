@@ -27,7 +27,7 @@ class IOHandler:
     def get_char(self):
         return decode(self.read_stream.read(1))
     def read_line(self):
-        char = get_char(self.read_stream)
+        char = self.get_char(self.read_stream)
         s = char
         while True:
             if s.startswith("Login: "):
