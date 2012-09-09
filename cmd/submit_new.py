@@ -107,7 +107,7 @@ def run_submit(assign, partners):
                 if len(tostr(arr[-1])) > WIDTH_OF_OUTPUT:
                     arr.append([])
                 arr[-1].append(files.pop(0))
-            arr = list(map(lambda x: tostr(x), arr))
+            arr = list(map(lambda x: "  " + tostr(x), arr))
             print()
             print('\n  '.join(arr))
             special = False
