@@ -82,6 +82,9 @@ def run_submit(assign, partners):
     special = False
     while True:
         line = handler.read_line()
+        if "Would you like to submit additional" in line:
+            handler.write_out("no\n")
+            continue
         if "Copying submission of assignment" in line:
             print(line)
             break
@@ -114,6 +117,10 @@ def run_submit(assign, partners):
         if print_it:
             if "You must turn in " in line:
                 print("\n\nPlease email Stephen Martinis if you see this message with a log of what you inputted into the submit program\n\n")
+                handler.read_all()
+                return
+            if "Submission FAILS by request" in line:
+                print(line)
                 handler.read_all()
                 return
             if "perl: warning" in line:
