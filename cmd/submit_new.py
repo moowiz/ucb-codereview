@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE
 import argparse
 import os
 import sqlite3
+import re
 
 import utils
 import config
@@ -161,7 +162,7 @@ def get_gmails():
     """
     def validate(s):
         regex = r'^[A-Za-z0-9._%\+]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$'
-        return re.match(regex,s)
+        return re.match(s)
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", validate, "Invalid email address: {}")
     write_defaults(gmails, GMAILS_FILE)
     return gmails
@@ -222,10 +223,15 @@ def main(assign, flag=False):
             if answer:
                 run_submit(assign, partners)
                 return
-        gmails = get_gmails()
-        sections = get_sections()
-        partners = get_partners()
-        summarize(gmails, sections, partners)
+        def get_and_sum():
+            gmails = get_gmails()
+            sections = get_sections()
+            partners = get_partners()
+            summarize(gmails, sections, partners)
+            return partners
+        partners = get_and_sum()
+        while not yorn("Is this correct?"):
+            partners = get_and_sum()
         run_submit(assign, partners)
     except SilentException:
         pass
