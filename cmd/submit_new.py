@@ -227,7 +227,7 @@ def main(assign, flag=False):
                 return rval
             gmails = read_def(GMAILS_FILE)
             sections = read_def(SECTIONS_FILE)
-            partners = read_def(PARTNERS_FILE)
+            partners = read_def(LOGINS_FILE)
             print("The following is previous information you've entered.")
             summarize(gmails, sections, partners)
             answer = yorn("Is this correct?")
