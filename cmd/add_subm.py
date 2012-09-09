@@ -230,7 +230,7 @@ def put_in_repo(login, assign):
         else:
             path_to_template += "projects/"
         assign = utils.clean_assign(assign)
-        path_to_template += assign + "/"
+        # path_to_template += assign + "/"
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
         git.add(None, path=path_to_repo)
