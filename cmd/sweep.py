@@ -59,8 +59,8 @@ def sweep(assign):
     return logins, maxes
 
 def main(assign, add):
-    original_dir = os.getcwd()
     utils.check_master_user()
+    original_dir = os.getcwd()
     logins, maxes = sweep(assign)
     if add:
         try:

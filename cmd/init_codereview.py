@@ -198,6 +198,7 @@ def main():
     """
     The main function to run. Populates the database with basic info. 
     """
+    utils.check_master_user()
     db_path = read_db_path()
     backup_path = bkup_if_exists(db_path)
     try:

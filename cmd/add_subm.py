@@ -252,8 +252,8 @@ def put_in_repo(login, assign):
     return path_to_repo, logins
 
 def add(login, assign):
-    print("Adding {} for {}".format(assign, login))
     utils.check_master_user()
+    print("Adding {} for {}".format(assign, login))
     original_path = os.getcwd()
     try:
         path_to_repo, logins = put_in_repo(login, assign)

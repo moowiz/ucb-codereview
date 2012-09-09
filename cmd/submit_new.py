@@ -128,7 +128,7 @@ def run_submit(assign, partners):
                 handler.read_all()
                 return
             if not ignore_line(line):
-                print(line.strip(), end="")
+                print(line.strip(), end=" ")
             sys.stdout.flush()
             if "The files you have submitted are" in line:
                 special = True
