@@ -170,7 +170,7 @@ def get_partners():
     Prompts the user for their logins, and stores the file in the LOGINS_FILE file
     """
     def validate(s):
-        regex = '^' + config.CLASS_NAME + '-[a-zA-Z0-9]{2,3}$'.format(config.CLASS_NAME)
+        regex = '^' + config.CLASS_NAME + '-[a-zA-Z0-9]{2,3}$'
         return re.match(regex, s)
     partners = my_prompt("Enter your partner(s) (if you have any) full logins.", "Login", validate, "Invalid " + config.CLASS_NAME + " login {}")
     partners.append(utils.getuser())
