@@ -35,7 +35,7 @@ def get_last_uploaded(assign):
         return get_small_time()
     return latest
 
-def sweep(assign):
+def sweep(assign, first):
     if assign == "all":
         dirs = os.listdir(SUBMISSION_DIR)    
     else:
@@ -51,17 +51,17 @@ def sweep(assign):
             splt = name.split(".")
             login = splt[0]
             timestamp = conv_timestamp(splt[1])
-            if (timestamp >= latest):
+            if (timestamp >= latest) and (not first or not model.get_issue_number(assign, login)):
                 logins[directory].add(login)
-            if (timestamp > max):
-                max = timestamp
+                if (timestamp > max):
+                    max = timestamp
         maxes[directory] = max
     return logins, maxes
 
-def main(assign, add):
+def main(assign, add, first):
     utils.check_master_user()
     original_dir = os.getcwd()
-    logins, maxes = sweep(assign)
+    logins, maxes = sweep(assign, first)
     if add:
         try:
             os.chdir(original_dir)
@@ -84,6 +84,8 @@ if __name__ == "__main__":
     parser.add_argument('assign', type=str,
                         help='the assignment to submit, or "all" for all assignments')
     parser.add_argument("-a", "--add", action="store_true",
-                    help="runs add.py on all inputs")
+                        help="runs add.py on all inputs")
+    parser.add_argument('--first', action='store_true', help='First run; this means that \
+                        if someone is already in the system then we don\'t add them again')
     args = parser.parse_args()
-    main(args.assign, args.add)
+    main(args.assign, args.add, args.first)
