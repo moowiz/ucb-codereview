@@ -122,7 +122,8 @@ def my_prompt(initial_message, prompt, validate, validate_msg):
         print(output, end="")
         sys.stdout.flush()
         value = sys.stdin.readline()
-        if value.strip() == '.':
+        value = value.strip()
+        if value == '.':
             break
         if not validate(value):
             print(validate_msg.format(value))
