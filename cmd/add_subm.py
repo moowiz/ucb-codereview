@@ -34,6 +34,7 @@ CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
 REPO_DIR = CODE_REVIEW_DIR + "repo/"
 ASSIGN_DIR = HOME_DIR + "lib/"
 TEMP_DIR = HOME_DIR + "tmp/robot-temp/tmp/"
+TEMPLATE_DIR = HOME_DIR + "public_html/fa12/"
 
 def get_subm(login, assign):
     """
@@ -223,11 +224,11 @@ def put_in_repo(login, assign):
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
-        path_to_template = ASSIGN_DIR
+        path_to_template = TEMPLATE_DIR
         if "hw" in assign:
             path_to_template += "hw/"
         else:
-            path_to_template += "proj/"
+            path_to_template += "projects/"
         assign = utils.clean_assign(assign)
         path_to_template += assign + "/"
         copy_important_files(assign, path_to_template, path_to_repo, template=True)

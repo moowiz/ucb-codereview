@@ -15,6 +15,54 @@ SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
+def ignore_line(line):
+    return "Looking for files to turn in...." in line or "Submitting " in line \
+            or "Skipping directory" in line or "Skipping file " in line or "Created MY.PARTNERS" in line
+
+class IOHandler:
+    def __init__(self, read_stream, out, partners):
+        self.read_stream = read_stream
+        self.out = out
+        self.partners = partners
+    def get_char(self):
+        return decode(self.read_stream.read(1))
+    def read_line(self):
+        char = get_char(self.read_stream)
+        s = char
+        while True:
+            if s.startswith("Login: "):
+                self.handle_login()
+                return read_line()
+            if s.endswith("/no]") or s[-1] == "\n":
+                break
+            s += get_char(self.read_stream)            
+        return s
+    def handle_login(self):
+        if self.partners:
+            part = self.partners.pop(0)
+            write_out(proc.stdin, part + "\n\r")
+            return self.read_line()
+        else:
+            write_out(proc.stdin, ".\n")
+            self.read_line()
+            write_out(proc.stdin, "yes\n") 
+            return self.read_line()     
+    def write_out(self, thing):
+        if type(thing) != bytes:
+            thing = bytes(thing, "utf-8")
+        self.out.write(thing)
+        try:
+            self.out.flush()
+        except IOError as e:
+            if 'Errno 32' in str(e):
+                return
+            else:
+                raise e
+    def read_all(self):
+        return self.read_stream.read()
+def decode(x):
+    return x.decode('utf-8')
+
 def run_submit(assign, partners):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
@@ -25,82 +73,52 @@ def run_submit(assign, partners):
             sys.exit(1)
         else:
             print("Submitting {}.".format(imp_f))
-    decode = lambda x: x.decode('utf-8')
-    def get_char(stream):
-        got = stream.read(1)
-        return decode(got)
-    def goto_newline(stream):
-        s, c = "", ""
-        while c != "\n":
-            c = get_char(stream)
-            s += c
-        return s
-    def ignore_line(line):
-        return "Looking for files to turn in...." in line or "Submitting " in line \
-                or "Skipping directory" in line or "Skipping file " in line or "Created MY.PARTNERS" in line
-    def read_line():
-        char = get_char(proc.stderr)
-        s = char
-        while True:
-            if s.startswith("Login: "):
-                handle_login()
-                return read_line()
-            if s.endswith("/no]") or s[-1] == "\n":
-                break
-            s += get_char(proc.stderr)            
-        return s
-    def handle_login():
-        if partners:
-            part = partners.pop(0)
-            write_out(proc.stdin, part + "\n\r")
-            return read_line()
-        else:
-            write_out(proc.stdin, ".\n")
-            read_line()
-            write_out(proc.stdin, "yes\n") 
-            return read_line()     
-    def write_out(stream, thing):
-        if type(thing) != bytes:
-            thing = bytes(thing, "utf-8")
-        stream.write(thing)
-        try:
-            stream.flush()
-        except IOError as e:
-            if 'Errno 32' in str(e):
-                return
-            else:
-                raise e
+
     cmd = "/share/b/grading/bin/submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
+    handler = IOHandler(proc.stderr, sin, partners)
     special = False
     while True:
-        line = read_line()
+        line = handler.read_line()
         if "Copying submission of assignment" in line:
             print(line)
             break
         print_it = True
         read = not ignore_line(line)
-        if special and line.startswith('Is this corr'):
-            special = False
         if not special:
             for f in important_files:
                 if f in line:
-                    write_out(sin, "yes\n")
+                    handler.write_out("yes\n")
                     print_it = False
         else:
-            if assign == "proj01":
-                print("line is {}".format(line))
-            line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
-            read = False
+            def my_filter(l):
+                l = list(map(lambda x: x.replace('./', '')))
+                return list(filter(lambda x: x not in important_files, line.split()))) 
+            files = []
+            while not line.startswith("Is this correct"):
+                files.extend(my_filter(line))
+                line = handler.read_line()
+            to_print = ", ".join(files)
+            arr = []
+            while(to_print):
+                WIDTH_OF_OUTPUT = 50
+                if len(to_print) > WIDTH_OF_OUTPUT:
+                    arr.append(to_print[:WIDTH_OF_OUTPUT])
+                    to_print = to_print[WIDTH_OF_OUTPUT:]
+                else:
+                    arr.append(to_print)
+                    to_print = None
+            print(to_print)
+            special = False
         if print_it:
             if "You must turn in " in line:
-                print(line, end="")
-                print(decode(proc.stderr.read()), end="")
+                print("\n\nPlease email Stephen Martinis if you see this message with a log of what you inputted into the submit program\n\n")
+                handler.read_all()
                 return
             if "perl: warning" in line:
                 print("ERROR: \"{}\". Please talk to a TA.".format(line))
-                proc.stderr.read()
+                handler.read_all()
                 return
             if not ignore_line(line):
                 print(line, end="")
@@ -108,7 +126,7 @@ def run_submit(assign, partners):
             if "The files you have submitted are" in line:
                 special = True
             elif read:
-                write_out(sin, sys.stdin.readline())
+                handler.write_out(input())
     proc.wait()
     print(decode(proc.stderr.read()), end="")
         
@@ -191,9 +209,10 @@ def get_sections():
     return sections
 
 def summarize(gmails, sections, partners):
-    print("GMails:   {}".format(",".join(gmails)))
-    print("Sections: {}".format(",".join(sections)))
-    print("Logins:   {}".format(",".join(partners)))
+    join_str = ", "
+    print("GMails:   {}".format(join_str.join(gmails)))
+    print("Sections: {}".format(join_str.join(sections)))
+    print("Logins:   {}".format(join_str.join(partners)))
 
 def main(assign, flag=False):
     try:
