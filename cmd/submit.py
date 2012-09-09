@@ -8,6 +8,7 @@ import io
 import re
 import utils
 import sqlite3
+from config import get_imp_files, ConfigException
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
@@ -15,17 +16,18 @@ LOGINS_FILE = "MY.PARTNERS"
 important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 
 def get_important_files(assign):    
-    conn = sqlite3.connect(utils.read_db_path())
-    cursor = conn.cursor()
-    sql = "SELECT file FROM important_file WHERE assignment=?"
-    files = cursor.execute(sql, (assign,))
-    temp = []
-    for row in files.fetchall():
-        temp.append(row[0])
-    conn.close()
-    return temp
+    # conn = sqlite3.connect(utils.read_db_path())
+    # cursor = conn.cursor()
+    # sql = "SELECT file FROM important_file WHERE assignment=?"
+    # files = cursor.execute(sql, (assign,))
+    # temp = []
+    # for row in files.fetchall():
+        # temp.append(row[0])
+    # conn.close()
+    # return temp
+    return get_imp_files(assign)
 
-def run_submit(assign):
+def run_submit(assign, partners):
     """Runs submit. Basic, slightly dumb version."""
     # print "running command {}".format(cmd)
     # print "cwd {}".format(os.getcwd())
@@ -50,47 +52,69 @@ def run_submit(assign):
         return s
     def ignore_line(line):
         return "Looking for files to turn in...." in line or "Submitting " in line \
-                or "Skipping directory" in line or "Skipping file " in line
-    def read_line(stream):
-        char = get_char(stream)
+                or "Skipping directory" in line or "Skipping file " in line or "Created MY.PARTNERS" in line
+    def read_line():
+        char = get_char(proc.stderr)
         s = char
         while True:
+            if s.startswith("Login: "):
+                handle_login()
+                return read_line()
             if s.endswith("/no]") or s[-1] == "\n":
                 break
-            s += get_char(stream)            
+            s += get_char(proc.stderr)            
         return s
+    def handle_login():
+        if partners:
+            part = partners.pop(0)
+            write_out(proc.stdin, part + "\n\r")
+            return read_line()
+        else:
+            write_out(proc.stdin, ".\n")
+            read_line()
+            write_out(proc.stdin, "yes\n") 
+            return read_line()     
     def write_out(stream, thing):
         if type(thing) != bytes:
             thing = bytes(thing, "utf-8")
         stream.write(thing)
-        stream.flush()
+        try:
+            stream.flush()
+        except IOError as e:
+            if 'Errno 32' in str(e):
+                return
+            else:
+                raise e
     cmd = "/share/b/grading/bin/submit " + assign
     proc = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     sin = proc.stdin
     special = False
     while True:
-        line = read_line(proc.stderr)
+        line = read_line()
         if "Copying submission of assignment" in line:
             print(line)
             break
         print_it = True
         read = not ignore_line(line)
+        if special and line.startswith('Is this corr'):
+            special = False
         if not special:
             for f in important_files:
                 if f in line:
                     write_out(sin, "yes\n")
                     print_it = False
         else:
+            if assign == "proj01":
+                print("line is {}".format(line))
             line = "    " + " ".join(list(filter(lambda x: x.replace("./", "") not in important_files, line.split()))) + "\n"
             read = False
-            special = False
         if print_it:
             if "You must turn in " in line:
                 print(line, end="")
                 print(decode(proc.stderr.read()), end="")
                 return
             if "perl: warning" in line:
-                print("ERROR: \"{}\". Please talk to a TA".format(line))
+                print("ERROR: \"{}\". Please talk to a TA.".format(line))
                 proc.stderr.read()
                 return
             if not ignore_line(line):
@@ -172,14 +196,15 @@ def get_sections():
     return sections
 
 def main(assign):
-    files = get_important_files(utils.clean_assign(assign))
-    if not files:
-        print("ERROR. Trying to submit for an assignment that doesn't exist!", file=sys.stderr)
-        sys.exit(1)
+    try:
+        files = get_important_files(utils.clean_assign(assign))
+    except ConfigException as e:
+        print("ERROR {}".format(e))
+        return
     gmails = get_gmails()
     sections = get_sections()
     partners = get_partners()
-    run_submit(assign)
+    run_submit(assign, partners)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
@@ -187,4 +212,10 @@ if __name__ == "__main__":
     parser.add_argument('assign', type=str,
                         help='the assignment to submit')
     args = parser.parse_args()
-    main(args.assign)
+    try:
+        main(args.assign)
+    except KeyboardInterrupt as e:
+        if 'proj' in args.assign:
+            print()
+        else:
+            raise e

@@ -16,6 +16,7 @@ import glob
 import git
 import submit
 from functools import reduce
+from config import ConfigException, get_imp_files
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -76,7 +77,7 @@ def get_important_files(assign):
     Do we need this function, or should we copy everything?
     Would involve either some looking at the params file, or looking at the DB
     """
-    assign_files = model.get_important_file(assign)
+    assign_files = get_imp_files(assign)
     assign_files.extend(submit.important_files)
     return assign_files
 
@@ -148,11 +149,11 @@ def upload(path_to_repo, logins, assign):
         if not issue_num:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
-                '--rev', hash_str, '--private'))
+                '--rev', hash_str, '--private', "--send_mail"))
         else:
             cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
                 "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
-                '--rev', hash_str, '--private'))
+                '--rev', hash_str, '--private', "--send_mail"))
         print("Uploading...")
         out, err = utils.run(cmd)
         if "Unhandled exception" in err:

@@ -66,8 +66,28 @@ SECTION_TO_STAFF = {
 	},
 	"Reader" : {
 	    "03" : "Sharad Vikram",
-	    "28" : "Sharad Vikram"
-	}
+	    "28" : "Sharad Vikram",
+        "23" : "Mark Miyashita",
+        "25" : "Mark Miyashita",
+        "19" : "Yan Zhao",
+        "02" : "Yan Zhao",
+        "24" : "Soumya Basu",
+        "27" : "Soumya Basu",
+        "18" : "Sharad Vikram",
+        "12" : "Sharad Vikram",
+        "16" : "Robert Huang",
+        "04" : "Robert Huang",
+        "17" : "Robert Huang",
+        "11" : "Robert Huang",
+        "15" : "Sagar Karandikar",
+        "01" : "Sagar Karandikar",
+        "13" : "Vaishaal Shankar",
+        "21" : "Vaishaal Shankar",
+        "14" : "Richie Zeng",
+        "28" : "Richie Zeng", 
+	    "20" : "Kelvin Chou",
+        "26" : "Kelvin Chou"
+    }
 }
 
 STAFF_TO_EMAIL = {
@@ -84,7 +104,16 @@ STAFF_TO_EMAIL = {
         "Shu Zhong" : "kramerfatman@gmail.com",
         "Keegan Mann" : "keeganmann@gmail.com",
         "Stephen Martinis" : "moowiz2020@gmail.com",
-        "Sharad Vikram" : "sharad.vikram@gmail.com"
+        "Sharad Vikram" : "sharad.vikram@gmail.com",
+        "Robert Huang" : "toroberthuang@gmail.com",
+        "Sagar Karandikar" : "karandikarsagar@gmail.com",
+        "Vaishaal Shankar" : "vaishaal@gmail.com",
+        "Richie Zeng" : "richzeng@gmail.com",
+        "Kelvin Chou" : "kelvin457@gmail.com",
+        "Alvin Wong" : "alvwong8@gmail.com",
+        "Soumya Basu" : "soumyabasu8@gmail.com",
+        "Yan Zhao" : "zhaoyan1117@gmail.com",
+        "Mark Miyashita" : "negativetwelve@gmail.com"
 }
 
 IMPORTANT_FILES = {
