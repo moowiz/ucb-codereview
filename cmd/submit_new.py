@@ -220,7 +220,7 @@ def main(assign, flag=False):
             summarize(gmails, sections, partners)
             answer = yorn("Is this correct?")
             if answer:
-                run_submit(assign)
+                run_submit(assign, partners)
                 return
         gmails = get_gmails()
         sections = get_sections()
