@@ -95,7 +95,7 @@ def run_submit(assign, partners):
         else:
             def my_filter(l):
                 l = list(map(lambda x: x.replace('./', ''), l.split()))
-                return list(filter(lambda x: x not in IMPORTANT_FILES, line.split()))
+                return list(filter(lambda x: x not in IMPORTANT_FILES, l))
             files = []
             while not line.startswith("Is this correct"):
                 files.extend(my_filter(line))
