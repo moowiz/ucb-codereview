@@ -27,19 +27,3 @@ addr_spec = "%s\\x40%s" % (local_part, domain)
 
 
 email_address = re.compile('\A%s\Z' % addr_spec)
-
-
-if __name__ == '__main__':
-  addresses = (
-    'cal@iamcalx.com',
-    'cal+henderson@iamcalx.com',
-    'cal henderson@iamcalx.com',
-    '"cal henderson"@iamcalx.com',
-    'cal@iamcalx',
-    'cal@iamcalx com',
-    'cal@hello world.com',
-    'cal@[hello world].com',
-    'abcdefghijklmnopqrstuvwxyz@abcdefghijklmnopqrstuvwxyz'
-  )
-  for address in addresses:
-    print "%s : %s" % (repr(address), email_address.match(address))
