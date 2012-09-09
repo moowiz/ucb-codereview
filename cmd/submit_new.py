@@ -8,7 +8,6 @@ import sqlite3
 
 import utils
 import config
-from rfc822 import email_address as EMAIL_REGEX
 
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
@@ -161,7 +160,8 @@ def get_gmails():
     Prompts the user for their gmails, and stores the file in the GMAILS_FILE file
     """
     def validate(s):
-        return EMAIL_REGEX.match(s)
+        regex = r'^[A-Za-z0-9._%\+]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$'
+        return regex.match(s)
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", validate, "Invalid email address: {}")
     write_defaults(gmails, GMAILS_FILE)
     return gmails
