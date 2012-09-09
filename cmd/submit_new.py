@@ -192,9 +192,9 @@ def get_sections():
     return sections
 
 def summarize(gmails, sections, partners):
-    print("GMails: {}".format(",".join(gmails)))
-    print("Section numbers: {}".format(",".join(sections)))
-    print("Logins: {}".format(",".join(partners)))
+    print("GMails:   {}".format(",".join(gmails)))
+    print("Sections: {}".format(",".join(sections)))
+    print("Logins:   {}".format(",".join(partners)))
 
 def main(assign, flag=False):
     try:
