@@ -32,10 +32,10 @@ class IOHandler:
         while True:
             if s.startswith("Login: "):
                 self.handle_login()
-                return read_line()
+                return self.read_line()
             if s.endswith("/no]") or s[-1] == "\n":
                 break
-            s += get_char(self.read_stream)            
+            s += self.get_char()            
         return s
     def handle_login(self):
         if self.partners:
