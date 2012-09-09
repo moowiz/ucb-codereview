@@ -94,7 +94,7 @@ def run_submit(assign, partners):
                     print_it = False
         else:
             def my_filter(l):
-                l = list(map(lambda x: x.replace('./', '')))
+                l = list(map(lambda x: x.replace('./', ''), l))
                 return list(filter(lambda x: x not in important_files, line.split()))
             files = []
             while not line.startswith("Is this correct"):
@@ -127,7 +127,7 @@ def run_submit(assign, partners):
             if "The files you have submitted are" in line:
                 special = True
             elif read:
-                handler.write_out(input())
+                handler.write_out(sys.stdin.readline())
     proc.wait()
     print(decode(proc.stderr.read()), end="")
         
