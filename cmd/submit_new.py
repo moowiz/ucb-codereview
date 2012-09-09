@@ -101,7 +101,7 @@ def run_submit(assign, partners):
                 files.extend(my_filter(line))
                 line = handler.read_line()
             arr = [[]]
-            tostr = lambda x: ", ".join(arr)
+            tostr = lambda x: ", ".join(x)
             WIDTH_OF_OUTPUT = 50
             while(files):
                 if len(tostr(arr[-1])) > WIDTH_OF_OUTPUT:
