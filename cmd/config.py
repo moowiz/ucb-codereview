@@ -2,6 +2,7 @@ import os
 import sys
 
 #hard coded configs for now. Can move to a config file if we want to.
+CLASS_NAME = 'cs61a'
 MASTER_DIR = os.path.expanduser('~cs61a/')
 GRADING_DIR = MASTER_DIR + "grading/"
 SUBMISSION_DIR = MASTER_DIR + "submissions/"
@@ -47,4 +48,3 @@ def get_imp_files(assignment):
     if not files:
         raise ConfigException("Couldn't find {} in the params file".format(assignment))
     return files
-

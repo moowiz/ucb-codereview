@@ -31,8 +31,11 @@ def get_timestamp_str():
 def get_staff_gid():
     return grp.getgrnam("cs61a-staff")[2]
 
+def getuser():
+    return getpass.getuser()
+
 def check_master_user():
-    if getpass.getuser() != "cs61a":
+    if getuser() != "cs61a":
         print("ERROR: Please run this command from the cs61a master account", file=sys.stderr)
         sys.exit(1)
 
