@@ -40,12 +40,12 @@ class IOHandler:
     def handle_login(self):
         if self.partners:
             part = self.partners.pop(0)
-            write_out(proc.stdin, part + "\n\r")
+            self.write_out(part + "\n\r")
             return self.read_line()
         else:
-            write_out(proc.stdin, ".\n")
+            self.write_out(".\n")
             self.read_line()
-            write_out(proc.stdin, "yes\n") 
+            self.write_out("yes\n") 
             return self.read_line()     
     def write_out(self, thing):
         if type(thing) != bytes:
