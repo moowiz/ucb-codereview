@@ -180,7 +180,7 @@ def import_old_data(db_path, path_to_backup):
     insert_query = "INSERT INTO upload (assign, last) VALUES (?, ?)"
     for row in all_uploads:
         new_cursor.execute(insert_query, row)
-    all_roster = old_cursor.execute("SELECT partners, assignment, issue FROM upload").fetchall()
+    all_roster = old_cursor.execute("SELECT partners, assignment, issue FROM roster").fetchall()
     insert_query = "INSERT INTO roster (partners, assignment, issue) VALUES (?, ?, ?)"
     for row in all_roster:
         new_cursor.execute(insert_query, row)
