@@ -109,7 +109,7 @@ def run_submit(assign, partners):
                 arr[-1].append(files.pop(0))
             arr = list(map(lambda x: "  " + tostr(x), arr))
             print()
-            print('\n  '.join(arr))
+            print('\n'.join(arr))
             special = False
         if print_it:
             if "You must turn in " in line:
