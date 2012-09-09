@@ -18,18 +18,6 @@ important_files = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 class SilentException(Exception):
     pass
 
-def get_important_files(assign):    
-    # conn = sqlite3.connect(utils.read_db_path())
-    # cursor = conn.cursor()
-    # sql = "SELECT file FROM important_file WHERE assignment=?"
-    # files = cursor.execute(sql, (assign,))
-    # temp = []
-    # for row in files.fetchall():
-        # temp.append(row[0])
-    # conn.close()
-    # return temp
-    return config.get_imp_files(assign)
-
 def run_submit(assign, partners):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
@@ -238,7 +226,7 @@ def main(assign, flag=False):
         sections = get_sections()
         partners = get_partners()
         summarize(gmails, sections, partners)
-        run_submit(assign)
+        run_submit(assign, partners)
     except SilentException:
         pass
 
