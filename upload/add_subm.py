@@ -44,11 +44,6 @@ def get_subm(login, assign):
         os.makedirs(tempdir)
     os.chdir(tempdir)
     out, err = utils.run("get-subm " + assign + " " + login)
-    # if err:
-        # print("ERROR: {}".format(err))
-    # print 'hmmm'
-    # print 'logins {} assign {}'.format(logins, assign)
-    # print("out is {}".format(out))
     print("Done unpacking.")
     return tempdir + "/" #need the trailing slash for the copy command
 
@@ -91,7 +86,6 @@ def get_sections(logins):
 def get_gmails(logins):
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
-    Not sure how to do this yet; we'll decide something in the first staff meeting
     """
     return open(submit.GMAILS_FILE, 'r').read().split()
 
@@ -99,12 +93,6 @@ PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
 SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
-
-def get_robot_pass():
-    """
-    We shouldn't ever call this....
-    """
-    return "reviewdatcode"
 
 def upload(path_to_repo, logins, assign):
     """
@@ -116,12 +104,9 @@ def upload(path_to_repo, logins, assign):
     --cc people to cc
     --private makes the issue private 
     --send_mail sends an email to the reviewers (might want)
-    --send_patch sends an email but with the diff attached, possible thing to do
     new version of the same issue
-    each issue is the same project
+    each issue is the same assignment
     These args are documented in upload.py starting on line 490.
-    This method also needs to deal with assigning the correct people to this, which means
-    it has to probably get info from somewhere about the roster. 
     """
     original_path = os.getcwd()
     try:
@@ -188,8 +173,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
                 os.mkdir(end_dir)
         for file in files_to_copy:
             dumb_template = open(start_dir + file, 'w')
-            dumb_template.write("You were not given a template for this assignment.\n")
-            dumb_template.flush()
+            dumb_template.write("You were not given a template for this assignment.\nThis is just placehold text; nothing to freak out about :)\n")
             dumb_template.close()
     for filename in files_to_copy:
         if os.path.isdir(start_dir+filename):
