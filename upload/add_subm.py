@@ -16,7 +16,7 @@ import glob
 import git
 import submit
 from functools import reduce
-from config import ConfigException, get_imp_files
+import config
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -27,23 +27,14 @@ class SubmissionException(Exception):
 class UploadException(Exception):
     pass
 
-HOME_DIR = os.path.expanduser('~cs61a/')
-GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = HOME_DIR + "submissions/"
-CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
-REPO_DIR = CODE_REVIEW_DIR + "repo/"
-ASSIGN_DIR = HOME_DIR + "lib/"
-TEMP_DIR = HOME_DIR + "tmp/robot-temp/tmp/"
-TEMPLATE_DIR = HOME_DIR + "public_html/fa12/"
-
 def get_subm(login, assign):
     """
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
     """
     print('Unpacking submission...')
-    tempdir = TEMP_DIR
-    files = glob.glob(TEMP_DIR + "*")
+    tempdir = config.TEMP_DIR
+    files = glob.glob(config.TEMP_DIR + "*")
     for f in files:
         if os.path.isdir(f):
             shutil.rmtree(f)
@@ -66,7 +57,7 @@ def find_path(logins, assign):
     Finds the path to the given login's assignment git repository
     """
     logins.sort()
-    path = REPO_DIR + "".join(logins) + "/" + assign + "/"
+    path = config.REPO_DIR + "".join(logins) + "/" + assign + "/"
     try:
         os.makedirs(path)
     except OSError:
@@ -79,7 +70,7 @@ def get_important_files(assign):
     Do we need this function, or should we copy everything?
     Would involve either some looking at the params file, or looking at the DB
     """
-    assign_files = get_imp_files(assign)
+    assign_files = config.get_imp_files(assign)
     assign_files.extend(submit.important_files)
     return assign_files
 
@@ -105,7 +96,7 @@ def get_gmails(logins):
     return open(submit.GMAILS_FILE, 'r').read().split()
 
 PYTHON_BIN = "python2.7"
-UPLOAD_SCRIPT = CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
+UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
 SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
@@ -225,7 +216,7 @@ def put_in_repo(login, assign):
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
-        path_to_template = TEMPLATE_DIR
+        path_to_template = config.TEMPLATE_DIR
         if "hw" in assign:
             path_to_template += "hw/"
         else:
