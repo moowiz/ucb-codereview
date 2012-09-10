@@ -4,7 +4,6 @@ import sys
 from subprocess import Popen, PIPE
 import argparse
 import os
-import sqlite3
 import re
 
 import utils
@@ -61,8 +60,8 @@ class IOHandler:
     def read_all(self):
         return self.read_stream.read()
 
-def decode(x):
-    return x.decode('utf-8')
+def decode(str_bytes):
+    return str_bytes.decode('utf-8')
 
 def run_submit(assign, partners):
     print("Looking for files to turn in....")

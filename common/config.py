@@ -48,3 +48,14 @@ def get_imp_files(assignment):
     if not files:
         raise ConfigException("Couldn't find {} in the params file".format(assignment))
     return files
+
+def init_config():
+    #the master directory for this user is stored in the environment!
+    if not "MASTERDIR" in os.environ:
+        print("ERROR: \"MASTERDIR\" is not set in the current environment", file=sys.stderr)
+        sys.exit(1)
+    else:
+        MASTER_DIR = os.environ["MASTERDIR"]
+    #to do in the future; read the params file and parse lots of fun info and/or our own config file
+
+init_config()
