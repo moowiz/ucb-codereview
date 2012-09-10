@@ -199,6 +199,7 @@ def get_partners():
         return re.match(regex, s)
     partners = my_prompt("Enter your partner(s) (if you have any) full logins.", "Login", validate, "Invalid " + config.CLASS_NAME + " login {}")
     partners.append(utils.getuser())
+    partners = list(set(partners))
     write_defaults(partners, LOGINS_FILE, string_to_join=" ")
     return partners
 
@@ -262,7 +263,7 @@ def main(assign, flag=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
-        assuming the correct files are in the given directory.")    
+        assuming the correct files are in the current directory.")    
     parser.add_argument('assign', type=str,
                         help='the assignment to submit')
     args = parser.parse_args()
