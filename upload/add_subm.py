@@ -179,7 +179,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     for filename in files_to_copy:
         if os.path.isdir(start_dir+filename):
             raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
-        shutil.copy(start_dir + filename, end_dir + filename)
+        shutil.copyfile(start_dir + filename, end_dir + filename)
 
 def git_init(path):
     git.init(path=path)
