@@ -10,11 +10,15 @@ CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
 REPO_DIR = CODE_REVIEW_DIR + "repo/"
 ASSIGN_DIR = MASTER_DIR + "lib/"
 TEMP_DIR = MASTER_DIR + "tmp/robot-temp/tmp/"
+TEMPLATE_DIR = MASTER_DIR + "public_html/fa12/"
 PARAMS_FILE = GRADING_DIR + "params"
 GMAILS_FILE = "MY.GMAILS"
 SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
+ASSIGN_TO_NAME_MAP = {
+        "proj1" : "hog"
+    }
 
 class ConfigException(Exception):
     pass
