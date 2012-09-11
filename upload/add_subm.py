@@ -66,14 +66,14 @@ def get_important_files(assign):
     Would involve either some looking at the params file, or looking at the DB
     """
     assign_files = config.get_imp_files(assign)
-    assign_files.extend(submit.important_files)
+    assign_files.extend(config.important_files)
     return assign_files
 
 def get_sections(logins):
     """
     Returns the sections for logins in a list
     """
-    file = open(submit.SECTIONS_FILE, 'r')
+    file = open(config.SECTIONS_FILE, 'r')
     text = file.read().split()
     rval = []
     for line in text:
@@ -87,7 +87,7 @@ def get_gmails(logins):
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
     """
-    return open(submit.GMAILS_FILE, 'r').read().split()
+    return open(config.GMAILS_FILE, 'r').read().split()
 
 PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
@@ -156,7 +156,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     original_path = os.getcwd()
     files_to_copy = get_important_files(assign)
     if template:
-        files_to_copy = list(filter(lambda x: x not in submit.important_files, files_to_copy))
+        files_to_copy = list(filter(lambda x: x not in config.important_files, files_to_copy))
         if os.path.exists(end_dir):
             print("Removing files in {} because template.".format(end_dir))
             while os.path.exists(end_dir):
@@ -194,7 +194,7 @@ def put_in_repo(login, assign):
     Puts the login's assignment into their repo
     """
     path_to_subm = get_subm(login, assign)
-    logins = open(submit.LOGINS_FILE, 'r').read().split('\n')
+    logins = open(config.LOGINS_FILE, 'r').read().split('\n')
     if len(logins) == 1 and logins[0] == '':
         logins = [login]
     path_to_repo = find_path(logins, assign)
