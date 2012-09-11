@@ -146,7 +146,7 @@ def upload(path_to_repo, logins, assign):
             line = line[line.rfind('/') + 1:].strip()
             issue_num = int(line)
             print("New issue {}; adding to DB".format(issue_num))
-            model.set_issue_number(logins, assign, issue_num)  
+            model.set_issue_numbers(logins, assign, issue_num)  
     except Exception as e:
         raise e 
     finally:
@@ -217,6 +217,8 @@ def put_in_repo(login, assign):
             print("Issue number present, but no files in repository. Resetting issue number...")
             model.remove_issue_number(logins, assign, issue_num)
             return put_in_repo(login, assign)
+        else: #we have a partner who submitted (I think)
+            raise SubmissionException("My partner has already uploaded a submission for me. Not uploading this submission...")
     copy_important_files(assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
@@ -233,7 +235,7 @@ def add(login, assign):
     original_path = os.getcwd()
     try:
         path_to_repo, logins = put_in_repo(login, assign)
-        os.chdir(original_path) #need this because somehow we end up in a bad place now...
+        os.chdir(original_path) #need this because somehow we end up in a bad place here...
         upload(path_to_repo, logins, assign)
     except IOError as e:
         if "No such file " in str(e):
