@@ -173,11 +173,11 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
             if not os.path.exists(end_dir):
                 os.mkdir(end_dir)
         for file in files_to_copy:
-            dumb_template = open(start_dir + file, 'w')
+            dumb_template = open(end_dir + file, 'w')
             dumb_template.write("You were not given a template for this assignment.\nThis is just placehold text; nothing to freak out about :)\n")
             dumb_template.close()
     for filename in files_to_copy:
-        if os.path.isdir(start_dir+filename):
+        if os.path.isdir(start_dir + filename):
             raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
         shutil.copyfile(start_dir + filename, end_dir + filename)
 
@@ -189,6 +189,7 @@ def git_init(path):
     gitignore.write("MY.*")
     gitignore.flush()
     gitignore.close()
+    os.chdir(original_path)
 
 def put_in_repo(login, assign):
     """
