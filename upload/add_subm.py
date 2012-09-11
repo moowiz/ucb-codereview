@@ -52,6 +52,7 @@ def find_path(logins, assign):
     Finds the path to the given login's assignment git repository
     """
     logins.sort()
+    logins = list(map(lambda x: x.strip(), logins))
     path = config.REPO_DIR + "".join(logins) + "/" + assign + "/"
     try:
         os.makedirs(path)
@@ -194,7 +195,7 @@ def put_in_repo(login, assign):
     Puts the login's assignment into their repo
     """
     path_to_subm = get_subm(login, assign)
-    logins = list(filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' ')))
+    logins = list(map(lambda x: x.replace('\n', '').strip(), filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' '))))
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
     if not issue_num:
