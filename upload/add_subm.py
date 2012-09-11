@@ -156,7 +156,7 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
     original_path = os.getcwd()
     files_to_copy = get_important_files(assign)
     if template:
-        files_to_copy = list(filter(lambda x: x not in config.important_files, files_to_copy))
+        files_to_copy = list(filter(lambda x: x not in config.IMPORTANT_FILES, files_to_copy))
         if os.path.exists(end_dir):
             print("Removing files in {} because template.".format(end_dir))
             while os.path.exists(end_dir):
