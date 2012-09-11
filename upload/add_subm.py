@@ -214,7 +214,7 @@ def put_in_repo(login, assign):
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
     else: #we want to check that we didnt mess up, and there is actually something here
-        out, err = utils.run("git status")
+        out, err = utils.run("git status", path=path_to_repo)
         if "fatal: Not a git repository" in err:
             print("Issue number present, but no files in repository. Resetting issue number...")
             model.remove_issue_number(logins, assign, issue_num)
