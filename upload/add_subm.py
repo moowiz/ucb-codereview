@@ -9,14 +9,14 @@
 import argparse
 import sys
 import tempfile
+from functools import reduce
 import shutil
-import utils
 import os
 import glob
+
 import git
-import submit
-from functools import reduce
 import config
+import utils
 
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
