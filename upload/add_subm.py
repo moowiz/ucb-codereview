@@ -66,7 +66,7 @@ def get_important_files(assign):
     Would involve either some looking at the params file, or looking at the DB
     """
     assign_files = config.get_imp_files(assign)
-    assign_files.extend(config.important_files)
+    assign_files.extend(config.IMPORTANT_FILES)
     return assign_files
 
 def get_sections(logins):
