@@ -9,11 +9,6 @@ import re
 import utils
 import config
 
-GMAILS_FILE = "MY.GMAILS"
-SECTIONS_FILE = "MY.SECTIONS"
-LOGINS_FILE = "MY.PARTNERS"
-IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
-
 def ignore_line(line):
     return "Looking for files to turn in...." in line or "Submitting " in line \
             or "Skipping directory" in line or "Skipping file " in line or "Created MY.PARTNERS" in line
@@ -90,7 +85,7 @@ def run_submit(assign, partners):
         print_it = True
         read = not ignore_line(line)
         if not special:
-            for f in IMPORTANT_FILES:
+            for f in config.IMPORTANT_FILES:
                 if f in line:
                     handler.write_out("yes\n")
                     print_it = False
@@ -186,7 +181,7 @@ def get_gmails():
         regex = r'^[A-Za-z0-9._%\+]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$'
         return re.match(regex,s)
     gmails = my_prompt("Enter you and your partner's gmail addresses.", "GMail", validate, "Invalid email address: {}")
-    write_defaults(gmails, GMAILS_FILE)
+    write_defaults(gmails, config.GMAILS_FILE)
     return gmails
 
 def get_partners():
@@ -199,7 +194,7 @@ def get_partners():
     partners = my_prompt("Enter your partner(s) (if you have any) full logins.", "Login", validate, "Invalid " + config.CLASS_NAME + " login {}")
     partners.append(utils.getuser())
     partners = list(set(partners))
-    write_defaults(partners, LOGINS_FILE, string_to_join=" ")
+    write_defaults(partners, config.LOGINS_FILE, string_to_join=" ")
     return partners
 
 def get_sections():
@@ -212,7 +207,7 @@ def get_sections():
         except:
             return False
     sections = my_prompt("Enter the last 2 digits of you and your partner's section numbers.", "Section Number", validate, "Invalid section number")
-    write_defaults(sections, SECTIONS_FILE)
+    write_defaults(sections, config.SECTIONS_FILE)
     return sections
 
 def summarize(gmails, sections, partners):
@@ -227,7 +222,7 @@ def main(assign, flag=False):
     except ConfigException as e:
         print("ERROR {}".format(e))
         return 1
-    if os.path.exists(GMAILS_FILE) and not flag:
+    if os.path.exists(config.GMAILS_FILE) and not flag:
         def read_def(f):
             try:
                 fi = open(f, 'r')
@@ -237,9 +232,9 @@ def main(assign, flag=False):
                 return
             fi.close()
             return rval
-        gmails = read_def(GMAILS_FILE)
-        sections = read_def(SECTIONS_FILE)
-        partners = read_def(LOGINS_FILE)
+        gmails = read_def(config.GMAILS_FILE)
+        sections = read_def(config.SECTIONS_FILE)
+        partners = read_def(config.LOGINS_FILE)
         if not all((gmails, sections, partners)):
             main(assign, True)
             return
