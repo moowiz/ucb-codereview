@@ -1,5 +1,5 @@
 """ This script gets run whenever we get a new submission to upload.
-    The login of the student is passed in as the first argument.
+    The login of the student is passed in as the second argument, and the assignment is passed as the first arguments.
     The steps to follow (should be fleshed out more) to add a submission are as follows:
     1. Unpack the submission into a temp directory.
     2. Move the file that has the student's code into their git repository.
@@ -13,11 +13,9 @@ from functools import reduce
 import shutil
 import os
 import glob
-
 import git
 import config
 import utils
-
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
 
@@ -26,6 +24,17 @@ class SubmissionException(Exception):
 
 class UploadException(Exception):
     pass
+
+def save_dir(func):
+    def fun(*args, **kwds):
+        original_dir = os.getcwd()
+        try:
+            func(*args, **kwds)
+        except Exception as e:
+            raise e
+        finally:
+            os.chdir(original_dir)
+    return fun
 
 def get_subm(login, assign):
     """
@@ -52,14 +61,13 @@ def find_path(logins, assign):
     Finds the path to the given login's assignment git repository
     """
     logins.sort()
-    logins = list(map(lambda x: x.strip(), logins))
+    logins = utils.lmap(lambda x: x.strip(), logins)
     path = config.REPO_DIR + "".join(logins) + "/" + assign + "/"
     try:
         os.makedirs(path)
     except OSError:
         pass
     return path
-
 def get_important_files(assign):
     """
     Returns the files we want to copy.
@@ -78,7 +86,7 @@ def get_sections(logins):
     text = file.read().split()
     rval = []
     for line in text:
-        if len(line) == 3:
+        if len(line) == 3: #if they entered a 3 digit section code instead of a 2 digit
             line = line[1:]
         rval.append(line)
     file.close()
@@ -88,73 +96,62 @@ def get_gmails(logins):
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
     """
-    return open(config.GMAILS_FILE, 'r').read().split()
+    file = open(config.GMAILS_FILE, 'r')
+    rval = file.read().split()
+    file.close()
+    return rval
 
 PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
 SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
+@save_dir
 def upload(path_to_repo, logins, assign):
     """
-    ~cs61a/code_review/repo/login/assign/
     Calls the upload script with the needed arguments given the path to the repo and the
     gmail account of the student.
-    Arguments we care about:
-    -r reviewers
-    --cc people to cc
-    --private makes the issue private 
-    --send_mail sends an email to the reviewers (might want)
-    new version of the same issue
-    each issue is the same assignment
-    These args are documented in upload.py starting on line 490.
     """
-    original_path = os.getcwd()
-    try:
-        os.chdir(path_to_repo)
-        gmails = get_gmails(logins)
-        if len(gmails) == 0:
-            raise UploadException("Student had no gmails. Not uploading.")
-        issue_num = model.get_issue_number(logins, assign)
-        def mextend(a, b):
-            a.extend(b)
-            return a
-        sections = get_sections(logins)
-        reviewers = set()
-        for section in sections:
-            reviewers.update(set(model.get_reviewers(section)))
-        gmails.extend(list(reviewers))
-        hash_str = git.get_revision_hash(path_to_repo)
-        if not issue_num:
-            cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-                "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
-                '--rev', hash_str, '--private', "--send_mail"))
-        else:
-            cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-                "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
-                '--rev', hash_str, '--private', "--send_mail"))
-        print("Uploading...")
-        out, err = utils.run(cmd)
-        if "Unhandled exception" in err:
-            raise UploadException(str(err))
-        print("Done uploading")
-        line = ""
-        for l in out.split('\n'):
-            if l.startswith("Issue created"):
-                line = l
-                break
-        if line:
-            line = line[line.rfind('/') + 1:].strip()
-            issue_num = int(line)
-            print("New issue {}; adding to DB".format(issue_num))
-            model.set_issue_numbers(logins, assign, issue_num)  
-    except Exception as e:
-        raise e 
-    finally:
-        os.chdir(original_path)
+    os.chdir(path_to_repo)
+    gmails = get_gmails(logins)
+    if len(gmails) == 0:
+        raise UploadException("Student had no gmails. Not uploading.")
+    issue_num = model.get_issue_number(logins, assign)
+    def mextend(a, b):
+        a.extend(b)
+        return a
+    sections = get_sections(logins)
+    reviewers = set()
+    for section in sections:
+        reviewers.update(set(model.get_reviewers(section)))
+    gmails.extend(list(reviewers))
+    hash_str = git.get_revision_hash(path_to_repo)
+    #now we create arguments
+    if not issue_num: #if this is the first time uploading...
+        cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+            "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
+            '--rev', hash_str, '--private', "--send_mail"))
+    else:
+        cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
+            "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
+            '--rev', hash_str, '--private', "--send_mail"))
+    print("Uploading...")
+    out, err = utils.run(cmd)
+    if "Unhandled exception" in err:
+        raise UploadException(str(err))
+    print("Done uploading")
+    line = ""
+    for l in out.split('\n'):
+        if l.startswith("Issue created"):
+            line = l
+            break
+    if line:
+        line = line[line.rfind('/') + 1:].strip()
+        issue_num = int(line)
+        print("New issue {}; adding to DB".format(issue_num))
+        model.set_issue_numbers(logins, assign, issue_num)  
 
 def copy_important_files(assign, start_dir, end_dir, template=False):
-    original_path = os.getcwd()
     files_to_copy = get_important_files(assign)
     if template:
         files_to_copy = list(filter(lambda x: x not in config.IMPORTANT_FILES, files_to_copy))
@@ -181,15 +178,14 @@ def copy_important_files(assign, start_dir, end_dir, template=False):
             raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
         shutil.copyfile(start_dir + filename, end_dir + filename)
 
+@save_dir
 def git_init(path):
     git.init(path=path)
-    original_path = os.getcwd()
     os.chdir(path)
     gitignore = open('.gitignore', 'w')
     gitignore.write("MY.*")
     gitignore.flush()
     gitignore.close()
-    os.chdir(original_path)
 
 def put_in_repo(login, assign):
     """
@@ -207,17 +203,16 @@ def put_in_repo(login, assign):
             path_to_template += "projects/"
         assign = utils.clean_assign(assign)
         if assign in config.ASSIGN_TO_NAME_MAP:
-            path_to_template = path_to_template + config.ASSIGN_TO_NAME_MAP[assign] 
-        # path_to_template += assign + "/"
+            path_to_template += config.ASSIGN_TO_NAME_MAP[assign] 
+        else:
+            path_to_template += assign
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
     else: #we want to check that we didnt mess up, and there is actually something here
-        original_path = os.getcwd()
         os.chdir(path_to_repo)
         out, err = utils.run("git status")
-        os.chdir(original_path)
         if "fatal: Not a git repository" in err:
             print("Issue number present, but no files in repository. Resetting issue number...")
             model.remove_issue_number(logins, assign, issue_num)
@@ -245,7 +240,6 @@ def add(login, assign):
     except IOError as e:
         if "No such file " in str(e):
             print("ERROR:{}. Ignoring...".format(str(e)), file=sys.stderr)
-            os.chdir(original_path)
             return
         raise e
     except SubmissionException as e:

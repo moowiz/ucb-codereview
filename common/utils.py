@@ -57,3 +57,6 @@ def clean_assign(assign):
     if len(assign) == 5:
         assign = assign[:4] + '0' + assign[-1]
     return assign
+
+def lmap(func, lst):
+    return list(map(func, lst))

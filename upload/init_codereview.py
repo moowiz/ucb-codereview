@@ -81,7 +81,7 @@ SECTION_TO_STAFF = {
         "13" : "Vaishaal Shankar",
         "21" : "Vaishaal Shankar",
         "14" : "Richie Zeng",
-        "28" : "Richie Zeng", 
+        "22" : "Richie Zeng", 
 	    "20" : "Kelvin Chou",
         "26" : "Kelvin Chou"
     }
