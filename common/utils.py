@@ -7,6 +7,7 @@ import sys
 import getpass
 import config
 import pwd
+import re
 
 def read_db_path():
     """
