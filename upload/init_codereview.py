@@ -193,7 +193,7 @@ def main(transfer, clear, update):
     """
     The main function to run. Populates the database with basic info. 
     """
-    utils.check_master_user()
+    utils.check_allowed_user()
     db_path = read_db_path()
     if transfer or clear:
         backup_path = bkup_if_exists(db_path)

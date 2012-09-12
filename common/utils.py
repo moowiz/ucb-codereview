@@ -5,6 +5,8 @@ import grp
 import stat
 import sys
 import getpass
+import config
+import pwd
 
 def read_db_path():
     """
@@ -34,13 +36,15 @@ def get_staff_gid():
 def getuser():
     return getpass.getuser()
 
-def check_master_user():
-    if getuser() != "cs61a":
+_REGEX_USER = config.CLASS_NAME + "-t[a-z]"
+
+def check_allowed_user():
+    if getuser() != "cs61a" and not re.match(_REGEX_USER, getuser()):
         print("ERROR: Please run this command from the cs61a master account", file=sys.stderr)
         sys.exit(1)
 
 def get_master_user_id():
-    return 20490
+    return pwd.getpwnam(config.CLASS_NAME)[2]
 
 def chmod_own_grp(path):
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP) 

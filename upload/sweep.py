@@ -59,7 +59,7 @@ def sweep(assign, first):
     return logins, maxes
 
 def main(assign, add, first):
-    utils.check_master_user()
+    utils.check_allowed_user()
     original_dir = os.getcwd()
     logins, maxes = sweep(assign, first)
     if add:
@@ -79,7 +79,6 @@ def main(assign, add, first):
             print('assignment {}'.format(key))
             for item in value:
                 print(item)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
