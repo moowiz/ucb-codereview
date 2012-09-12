@@ -45,8 +45,7 @@ def get_subm(login, assign):
     os.chdir(tempdir)
     out, err = utils.run("get-subm " + assign + " " + login)
     print("Done unpacking.")
-    timestamp = out[out.find(".") + 1: out.find("for")].strip() 
-    print("timestamp {}".format(timestamp))
+    timestamp = err[err.find(".") + 1: err.find("for")].strip() 
     return tempdir + "/", timestamp #need the trailing slash for the copy command
 
 def find_path(logins, assign):
@@ -219,7 +218,6 @@ def put_in_repo(login, assign):
         original_path = os.getcwd()
         os.chdir(path_to_repo)
         out, err = utils.run("git status")
-        os.chdir(original_path)
         if "fatal: Not a git repository" in err:
             print("Issue number present, but no files in repository. Resetting issue number...")
             model.remove_issue_number(logins, assign, issue_num)
@@ -232,7 +230,8 @@ def put_in_repo(login, assign):
             if last_line.find(":") != -1: #this is a special one-time case b/c of old code that didn't handle partners well enough...
                 com_time = last_line[last_line.find(":") + 1:]
                 if com_time in timestamp:
-                    raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...")
+                    raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
+        os.chdir(original_path)
     copy_important_files(assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code timestamp:{}".format(utils.get_timestamp_str(), timestamp), path=path_to_repo)
