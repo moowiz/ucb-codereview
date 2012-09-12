@@ -79,6 +79,7 @@ def main(assign, add, first):
             print('assignment {}'.format(key))
             for item in value:
                 print(item)
+            print("Number to upload: {}".format(len(value)))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
