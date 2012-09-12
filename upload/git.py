@@ -60,7 +60,7 @@ def get_revision_hash(path_to_repo=None):
     if len(out) == 1:
         rval = out[0]
     else:
-        rval = out[-1] #diff from the initial commit of the template
+        rval = out[1] #diff from the last commit
     if type(rval) == bytes:
         rval = rval.decode("utf-8")
     return rval 
