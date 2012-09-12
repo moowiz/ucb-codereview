@@ -45,7 +45,9 @@ def get_subm(login, assign):
     os.chdir(tempdir)
     out, err = utils.run("get-subm " + assign + " " + login)
     print("Done unpacking.")
-    return tempdir + "/" #need the trailing slash for the copy command
+    timestamp = out[out.find(".") + 1: out.find("for")].strip() 
+    print("timestamp {}".format(timestamp))
+    return tempdir + "/", timestamp #need the trailing slash for the copy command
 
 def find_path(logins, assign):
     """
@@ -195,7 +197,7 @@ def put_in_repo(login, assign):
     """
     Puts the login's assignment into their repo
     """
-    path_to_subm = get_subm(login, assign)
+    path_to_subm, timestamp = get_subm(login, assign)
     logins = list(map(lambda x: x.replace('\n', '').strip(), filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' '))))
     path_to_repo = find_path(logins, assign)
     issue_num = model.get_issue_number(logins, assign)
@@ -223,10 +225,17 @@ def put_in_repo(login, assign):
             model.remove_issue_number(logins, assign, issue_num)
             return put_in_repo(login, assign)
         else: #we have a partner who submitted (I think)
-            raise SubmissionException("My partner has already uploaded a submission for me. Not uploading this submission...")
+            out, err = utils.run("git log --pretty=oneline --abbrev-commit")
+            if "commit of code" not in out:
+                raise SubmissionException("Found a git repository that hasn't been committed to yet. Ignoring...")
+            last_line = out[:out.find("\n")]
+            if last_line.find(":") != -1: #this is a special one-time case b/c of old code that didn't handle partners well enough...
+                com_time = last_line[last_line.find(":") + 1:]
+                if com_time in timestamp:
+                    raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...")
     copy_important_files(assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
-    git.commit("{} commit of code".format(utils.get_timestamp_str()), path=path_to_repo)
+    git.commit("{} commit of code timestamp:{}".format(utils.get_timestamp_str(), timestamp), path=path_to_repo)
     shutil.rmtree(path_to_subm)
     files = glob.glob(path_to_repo + "*")
     for f in files:
