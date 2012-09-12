@@ -219,7 +219,7 @@ def summarize(gmails, sections, partners):
 def main(assign, flag=False):
     try:
         files = config.get_imp_files(utils.clean_assign(assign))
-    except ConfigException as e:
+    except config.ConfigException as e:
         print("ERROR {}".format(e))
         return 1
     if os.path.exists(config.GMAILS_FILE) and not flag:
