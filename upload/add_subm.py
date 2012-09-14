@@ -203,9 +203,7 @@ def put_in_repo(login, assign):
         else:
             path_to_template += "projects/"
         assign = utils.clean_assign(assign)
-        if assign in config.ASSIGN_TO_NAME_MAP:
-            path_to_template += config.ASSIGN_TO_NAME_MAP[assign] 
-        else:
+        if assign not in config.ASSIGN_TO_NAME_MAP:
             path_to_template += assign
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
