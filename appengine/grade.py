@@ -72,16 +72,14 @@ def grade():
             found_grade(issue, None)
 
 def my_mail():
-    address = "cs61a-ta@imail.eecs.berkeley.edu"
+    address = "cs61a-ty@imail.eecs.berkeley.edu"
     subject = "grades"
     body = "".join(__TEXT)
     mail.send_mail("moowiz2020@gmail.com", address, subject, body)
-    __TEXT.clear()
+    __TEXT[:] = []
         
 def found_grade(issue, grade):
-    out = ""
-    for person in issue.reviewers:
-        __TEXT.append("{} : {}\n".format(person, grade))
+    __TEXT.append("{} : {}\n".format(issue.key().id(), grade))
 
 def main(env, response):
     grade()

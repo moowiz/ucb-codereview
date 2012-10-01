@@ -1,4 +1,4 @@
 cron:
 - description: grading job
   url: /grade
-  schedule: every monday 13:42
+  schedule: every monday 19:25
