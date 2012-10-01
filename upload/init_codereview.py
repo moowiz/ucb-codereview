@@ -26,7 +26,7 @@ SCHEMA = {
             'last': 'INTEGER' # unix time of last upload
             },
         'roster': {
-            'partners': 'TEXT', # login, sorted lexicographically if > 1
+            'partners': 'TEXT', # login
             'assignment': 'TEXT', # assignment name, eg 'proj4'
             'issue': 'INTEGER' # issue number on rietveld
             },

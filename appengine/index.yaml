@@ -97,6 +97,11 @@ indexes:
 
 - kind: Issue
   properties:
+  - name: description
+  - name: subject
+
+- kind: Issue
+  properties:
   - name: owner
   - name: created
 
