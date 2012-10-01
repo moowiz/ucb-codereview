@@ -123,3 +123,11 @@ class CodeReviewDatabase(object):
             delete_sql = "DELETE FROM roster WHERE partners = ? AND assignment = ? AND issue=?"
             self.cursor.execute(delete_sql, (stu, assign, issue_num))
             self.conn.commit()
+
+    def find_logins(self, issue_num):
+        get_sql = "SELECT partners FROM roster WHERE issue = ?"
+        res = self.cursor.execute(get_sql, (issue_num,))
+        logins = []
+        for row in res:
+            logins.append(row[0])
+        return logins
