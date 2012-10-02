@@ -25,7 +25,6 @@ def is_grade(text_arr):
 
 """
 http://berkeley-61a.appspot.com/21161/diff/3001/hog.py File hog.py (right): http://berkeley-61a.appspot.com/21161/diff/3001/hog.py#newcode1 hog.py:1: \"\"\"The Game of Hog\"\"\" Very nice! 
-http://berkeley-61a.appspot.com/18087/diff/1/hw2.py File hw2.py (right): http://berkeley-61a.appspot.com/18087/diff/1/hw2.py#newcode7 hw2.py:7: Excellent!
 http://berkeley-61a.appspot.com/46070/diff/1003/hog.py File hog.py (right): http://berkeley-61a.appspot.com/46070/diff/1003/hog.py#newcode1 hog.py:1: 61A Project 1 Excellent!
 """
 
