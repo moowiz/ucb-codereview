@@ -16,7 +16,7 @@ GRADES = {u'very nice' : 2,
             u'good job' : 1}
 
 def is_grade(text_arr):
-    text_arr = list(map(lambda x: x.lower().replace("!","").replace(".", ""), text_arr))
+    text_arr = list(map(lambda x: x.lower().replace("!","").replace(".", "").replace(",", ""), text_arr))
     text = [" ".join(list(map(lambda x: x.lower(), text_arr))).replace("!", "").replace(".", "")]
     text.extend(text_arr[:])
     for grade in GRADES:
