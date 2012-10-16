@@ -10,15 +10,20 @@ def main(assign, path):
     if "~" in path:
         path = os.path.expanduser(path)
     grades = dict()
-    with f = open(path):
+    with open(path) as f:
         for line in f:
+            if ":" not in line:
+                continue
             issue_num, score = list(map(lambda x: x.strip(), line.split(":")))
+            if "N" in score:
+                continue
             score = int(score)
             issue_num = int(issue_num)
-            if not "None" in score:
-                logins = db.find_logins(issue_num)
-                for login in logins:
-                    grades[login] = score
+            logins = db.find_logins(issue_num)
+            for login in logins:
+                grades[login] = score
+    for k, v in grades.items():
+        print("{}\n{}".format(k, v))
 
 
 if __name__ == "__main__":

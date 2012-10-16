@@ -7,9 +7,9 @@ def main(login, assign):
     conn = sqlite3.connect(utils.read_db_path())
     cursor = conn.cursor()
 
-    query = "SELECT FROM roster WHERE partners=?"
+    query = "SELECT * FROM roster WHERE partners=?"
     if assign:
-        query += " AND assign=?"
+        query += " AND assignment=?"
         res = cursor.execute(query, (login, assign))
     else:
         res = cursor.execute(query, (login,))
