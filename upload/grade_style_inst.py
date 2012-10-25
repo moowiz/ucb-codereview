@@ -22,7 +22,7 @@ def main(assign, path):
             for login in logins:
                 grades[login] = score
     for k, v in grades.items():
-        print("{}\n{}".format(k, v))
+        print("{} a {} No Comment".format(k, v))
 
 
 if __name__ == "__main__":
