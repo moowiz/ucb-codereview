@@ -19,6 +19,6 @@ def main(login, assign):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Find the issue numbers for a student")
     parser.add_argument('login', type=str, help='The student\'s login')
-    parser.add_argument('--assign', '-a', type=str, help="The assignment to look at")
+    parser.add_argument('-a','--assign', type=str, help="The assignment to look at")
     args = parser.parse_args()
     main(args.login, args.assign)

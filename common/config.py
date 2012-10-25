@@ -17,7 +17,8 @@ SECTIONS_FILE = "MY.SECTIONS"
 LOGINS_FILE = "MY.PARTNERS"
 IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
 ASSIGN_TO_NAME_MAP = {
-        "proj1" : "hog"
+        "proj1" : "hog",
+        "proj3" : "ants"
     }
 
 class ConfigException(Exception):

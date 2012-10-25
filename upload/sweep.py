@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument('assign', type=str,
                         help='the assignment to submit, or "all" for all assignments')
     parser.add_argument("-a", "--add", action="store_true",
-                        help="runs add.py on all inputs")
+                        help="runs add_subm.py on all inputs")
     parser.add_argument('--first', action='store_true', help='First run; this means that \
                         if someone is already in the system then we don\'t add them again')
     args = parser.parse_args()
