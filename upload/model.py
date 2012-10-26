@@ -110,7 +110,7 @@ class CodeReviewDatabase(object):
         """
         if type(student) != str:
             raise Exception("Invalid student passed into model.")
-        get_issue_sql = "SELECT issue FROM roster " + \
+        get_issue_sql = "SELECT * FROM roster " + \
                 "WHERE partners=?"
         res_cur = self.cursor.execute(get_issue_sql, (student,))
         result = res_cur.fetchall()
