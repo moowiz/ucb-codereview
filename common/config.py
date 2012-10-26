@@ -28,18 +28,18 @@ class Config_Class:
             }
 
     def generate(self):
-        self.GRADING_DIR = MASTER_DIR + "grading/"
-        self.SUBMISSION_DIR = MASTER_DIR + "submissions/"
-        self.CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
-        self.REPO_DIR = CODE_REVIEW_DIR + "repo/"
-        self.ASSIGN_DIR = MASTER_DIR + "lib/"
-        self.TEMP_DIR = MASTER_DIR + "tmp/robot-temp/tmp/"
-        self.TEMPLATE_DIR = MASTER_DIR + "public_html/fa12/"
-        self.PARAMS_FILE = GRADING_DIR + "params"
+        self.GRADING_DIR = self.MASTER_DIR + "grading/"
+        self.SUBMISSION_DIR = self.MASTER_DIR + "submissions/"
+        self.CODE_REVIEW_DIR = self.GRADING_DIR + "codereview/"
+        self.REPO_DIR = self.CODE_REVIEW_DIR + "repo/"
+        self.ASSIGN_DIR = self.MASTER_DIR + "lib/"
+        self.TEMP_DIR = self.MASTER_DIR + "tmp/robot-temp/tmp/"
+        self.TEMPLATE_DIR = self.MASTER_DIR + "public_html/fa12/"
+        self.PARAMS_FILE = self.GRADING_DIR + "params"
         self.GMAILS_FILE = "MY.GMAILS"
         self.SECTIONS_FILE = "MY.SECTIONS"
         self.LOGINS_FILE = "MY.PARTNERS"
-        self.IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
+        self.IMPORTANT_FILES = (self.GMAILS_FILE, self.SECTIONS_FILE, self.LOGINS_FILE)
 
     def __getattr__(self, name):
         if name in self.__config:
