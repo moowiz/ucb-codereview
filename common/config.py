@@ -103,7 +103,7 @@ def init_config():
     else:
         config.MASTER_DIR = os.environ["MASTERDIR"]
         config.CLASS_NAME = os.environ["MASTER"]
-        generate_stuff()
+        config.generate()
         load_params()
 
 init_config()
