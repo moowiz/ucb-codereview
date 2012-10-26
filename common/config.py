@@ -91,7 +91,7 @@ def load_params():
     for line in lines:
         if "STAFF_GROUP" in line:
             config.STAFF_GROUP = line.split(" ")[2][1:-1]
-    if STAFF_GROUP == None:
+    if config.STAFF_GROUP == None:
         raise ConfigException("Couldn't find the staff group in the params file")
 
 
