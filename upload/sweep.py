@@ -5,19 +5,15 @@ import os
 import utils
 import argparse
 import add_subm
-import sys
 import datetime
 import calendar
+from config import *
 
 from model import CodeReviewDatabase
-model = CodeReviewDatabase(utils.read_db_path())
-
-HOME_DIR = os.path.expanduser('~cs61a/')
-GRADING_DIR = HOME_DIR + "grading/"
-SUBMISSION_DIR = GRADING_DIR + "submissions/"
+model = CodeReviewDatabase(config.DB_PATH)
 
 def get_small_time():
-    return 1000
+    return 1000 #randomly chosen. Guaranteed to be small :)
 
 def conv_timestamp(time_str):
     #format is 201208261827, return a date
@@ -37,14 +33,14 @@ def get_last_uploaded(assign):
 
 def sweep(assign, first):
     if assign == "all":
-        dirs = os.listdir(SUBMISSION_DIR)    
+        dirs = os.listdir(config.SUBMISSION_DIR)
     else:
         dirs = [assign]
     logins = {}
     max = get_small_time()
     maxes = {}
     for directory in dirs:
-        subms = list(filter(lambda x: not os.path.islink(SUBMISSION_DIR + x), os.listdir(SUBMISSION_DIR + directory)))
+        subms = list(filter(lambda x: not os.path.islink(config.SUBMISSION_DIR + x), os.listdir(config.SUBMISSION_DIR + directory)))
         latest = get_last_uploaded(directory)
         logins[directory] = set()
         for name in subms:
@@ -67,7 +63,7 @@ def main(assign, add, first):
             os.chdir(original_dir)
             for k, v in logins.items():
                 for login in v:
-                    add_subm.add(login, k) 
+                    add_subm.add(login, k)
         except Exception as e:
             print("Exception {}".format(e))
             raise e
@@ -83,7 +79,7 @@ def main(assign, add, first):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
-        assuming the correct files are in the given directory.")    
+        assuming the correct files are in the given directory.")
     parser.add_argument('assign', type=str,
                         help='the assignment to submit, or "all" for all assignments')
     parser.add_argument("-a", "--add", action="store_true",

@@ -1,10 +1,9 @@
 """
 Data model API for the database.
 """
-import os
+#import os
 import sqlite3
-
-PARAMS_FILE = os.path.expanduser("~cs61a/grading/params")
+from config import *
 
 class CodeReviewDatabase(object):
     """
@@ -12,7 +11,7 @@ class CodeReviewDatabase(object):
     the db path. Be sure to close connections for best performance.
     """
 
-    def __init__(self, db_path):
+    def __init__(self, db_path=config.DB_PATH):
         """
         Args:
             db_path: the path to find sqlite db at. see utils.read_db_path.
@@ -60,9 +59,9 @@ class CodeReviewDatabase(object):
             insert_last_upload_sql = "INSERT INTO upload (assign, last) VALUES (?, ?)"
             self.cursor.execute(insert_last_upload_sql, (assign, time_int))
             self.conn.commit()
-            
+
     def get_reviewers(self, section):
-        sql = "SELEcT email FROM section_to_email WHERE section=?"
+        sql = "SELECT email FROM section_to_email WHERE section=?"
         reviewers = self.cursor.execute(sql, (section,))
         temp = []
         for row in reviewers.fetchall():
@@ -71,8 +70,8 @@ class CodeReviewDatabase(object):
 
     def get_important_file(self, assignment):
         return config.get_imp_files(assignment)
-        
-    @staticmethod    
+
+    @staticmethod
     def combine_students(students):
         return "".join(sorted(students))
 
@@ -100,6 +99,26 @@ class CodeReviewDatabase(object):
             # this clause not really necessary
             return None
 
+    def query_student(self, student):
+        """
+        Gets the issue number for the particular student & assignment
+
+        Args:
+            students: a tuple of student logins,
+                eg. ("cs61a-ab",) or ("cs61a-ab", "cs61a-bc")
+            assign: assignment name, eg. "proj1"
+        """
+        if type(student) != str:
+            raise Exception("Invalid student passed into model.")
+        get_issue_sql = "SELECT issue FROM roster " + \
+                "WHERE partners=?"
+        res_cur = self.cursor.execute(get_issue_sql, (student,))
+        result = res_cur.fetchall()
+        if result:
+            return result
+        else:
+            return None
+
     def set_issue_numbers(self, students, assign, issue_num):
         """
         Records the new issue number for the particular student & assignment
@@ -123,6 +142,10 @@ class CodeReviewDatabase(object):
             delete_sql = "DELETE FROM roster WHERE partners = ? AND assignment = ? AND issue=?"
             self.cursor.execute(delete_sql, (stu, assign, issue_num))
             self.conn.commit()
+
+    def query_issue(self, issue_num):
+        get_sql = "SELECT partners FROM roster WHERE issue = ?"
+        return self.cursor.execute(get_sql, (issue_num,))
 
     def find_logins(self, issue_num):
         get_sql = "SELECT partners FROM roster WHERE issue = ?"

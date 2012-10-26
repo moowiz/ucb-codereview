@@ -2,24 +2,56 @@ import os
 import sys
 
 #hard coded configs for now. Can move to a config file if we want to.
-CLASS_NAME = 'cs61a'
-MASTER_DIR = os.path.expanduser('~cs61a/')
-GRADING_DIR = MASTER_DIR + "grading/"
-SUBMISSION_DIR = MASTER_DIR + "submissions/"
-CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
-REPO_DIR = CODE_REVIEW_DIR + "repo/"
-ASSIGN_DIR = MASTER_DIR + "lib/"
-TEMP_DIR = MASTER_DIR + "tmp/robot-temp/tmp/"
-TEMPLATE_DIR = MASTER_DIR + "public_html/fa12/"
-PARAMS_FILE = GRADING_DIR + "params"
-GMAILS_FILE = "MY.GMAILS"
-SECTIONS_FILE = "MY.SECTIONS"
-LOGINS_FILE = "MY.PARTNERS"
-IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
-ASSIGN_TO_NAME_MAP = {
-        "proj1" : "hog",
-        "proj3" : "ants"
-    }
+class Config_Class:
+    def __init__(self):
+        self.__config = {
+            "CLASS_NAME" : None, # 'cs61a'
+            "MASTER_DIR" : None, # os.path.expanduser(CLASS_NAME)
+            "STAFF_GROUP" : None, # 'cs61a-staff'
+            "GRADING_DIR" : None, # MASTER_DIR + "grading/"
+            "SUBMISSION_DIR" : None, # MASTER_DIR + "submissions/"
+            "CODE_REVIEW_DIR" : None, # GRADING_DIR + "codereview/"
+            "REPO_DIR" : None, # CODE_REVIEW_DIR + "repo/"
+            "ASSIGN_DIR" : None, # MASTER_DIR + "lib/"
+            "TEMP_DIR" : None, # MASTER_DIR + "tmp/robot-temp/tmp/"
+            "TEMPLATE_DIR" : None, # MASTER_DIR + "public_html/fa12/"
+            "PARAMS_FILE" : None, # GRADING_DIR + "params"
+            "GMAILS_FILE" : None, # "MY.GMAILS"
+            "SECTIONS_FILE" : None, # "MY.SECTIONS"
+            "LOGINS_FILE" : None, # "MY.PARTNERS"
+            "IMPORTANT_FILES" : None, # (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
+            "ASSIGN_TO_NAME_MAP" : {
+                    "proj1" : "hog",
+                    "proj3" : "ants"
+                },
+            "DB_PATH" : CODE_REVIEW_DIR + "codereview_db.sqlite"
+            }
+
+    def generate(self):
+        self.GRADING_DIR = MASTER_DIR + "grading/"
+        self.SUBMISSION_DIR = MASTER_DIR + "submissions/"
+        self.CODE_REVIEW_DIR = GRADING_DIR + "codereview/"
+        self.REPO_DIR = CODE_REVIEW_DIR + "repo/"
+        self.ASSIGN_DIR = MASTER_DIR + "lib/"
+        self.TEMP_DIR = MASTER_DIR + "tmp/robot-temp/tmp/"
+        self.TEMPLATE_DIR = MASTER_DIR + "public_html/fa12/"
+        self.PARAMS_FILE = GRADING_DIR + "params"
+        self.GMAILS_FILE = "MY.GMAILS"
+        self.SECTIONS_FILE = "MY.SECTIONS"
+        self.LOGINS_FILE = "MY.PARTNERS"
+        self.IMPORTANT_FILES = (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
+
+    def __getattr__(self, name):
+        if name in self.__config:
+            return self.__config[name]
+
+    def __setattr__(self, name, val):
+        if name in self.__config:
+            self.__config[name] = val
+        else:
+            object.__setattr__(self, name, value)
+
+config = Config_Class()
 
 class ConfigException(Exception):
     pass
@@ -29,7 +61,7 @@ def get_imp_files(assignment):
         assignment = assignment[:2] + assignment[-1]
     if len(assignment) == 6 and assignment[4] != "1":
         assignment = assignment[:4] + assignment[-1]
-    f = open(PARAMS_FILE, 'r')
+    f = open(config.PARAMS_FILE, 'r')
     lines = f.read().split("\n")
     f.close()
     ind = 0
@@ -39,7 +71,7 @@ def get_imp_files(assignment):
             break
     lines = lines[ind:]
     #skip the first one, because lines begins with assign
-    spl = "\n".join(lines).split("assign")[1:] 
+    spl = "\n".join(lines).split("assign")[1:]
     files = []
     for assign_spl in spl:
         split = list(filter(lambda x: x and x != "\\\n" and x != "\n", assign_spl.split(" ")))
@@ -58,13 +90,27 @@ def get_imp_files(assignment):
         raise ConfigException("Couldn't find {} in the params file".format(assignment))
     return files
 
+def load_params():
+    f = open(config.PARAMS_FILE, 'r')
+    lines = f.read().split("\n")
+    f.close()
+    lines = list(filter(lambda s: 'set' not in s.split(" ")[0], lines))
+    for line in lines:
+        if "STAFF_GROUP" in line:
+            config.STAFF_GROUP = line.split(" ")[2][1:-1]
+    if STAFF_GROUP == None:
+        raise ConfigException("Couldn't find the staff group in the params file")
+
+
 def init_config():
     #the master directory for this user is stored in the environment!
     if not "MASTERDIR" in os.environ:
         print("ERROR: \"MASTERDIR\" is not set in the current environment", file=sys.stderr)
         sys.exit(1)
     else:
-        MASTER_DIR = os.environ["MASTERDIR"]
-    #to do in the future; read the params file and parse lots of fun info and/or our own config file
+        config.MASTER_DIR = os.environ["MASTERDIR"]
+        config.CLASS_NAME = os.environ["MASTER"]
+        generate_stuff()
+        load_params()
 
 init_config()

@@ -14,7 +14,7 @@ import shutil
 import os
 import glob
 import git
-import config
+from config import *
 import utils
 from model import CodeReviewDatabase
 model = CodeReviewDatabase(utils.read_db_path())
@@ -54,7 +54,7 @@ def get_subm(login, assign):
     os.chdir(tempdir)
     out, err = utils.run("get-subm " + assign + " " + login)
     print("Done unpacking.")
-    timestamp = err[err.find(".") + 1: err.find("for")].strip() 
+    timestamp = err[err.find(".") + 1: err.find("for")].strip()
     return tempdir + "/", timestamp #need the trailing slash for the copy command
 
 def find_path(logins, assign):
@@ -150,7 +150,7 @@ def upload(path_to_repo, logins, assign):
         line = line[line.rfind('/') + 1:].strip()
         issue_num = int(line)
         print("New issue {}; adding to DB".format(issue_num))
-        model.set_issue_numbers(logins, assign, issue_num)  
+        model.set_issue_numbers(logins, assign, issue_num)
 
 def copy_important_files(assign, start_dir, end_dir, template=False):
     files_to_copy = get_important_files(assign)
@@ -261,7 +261,7 @@ def add(login, assign):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
-     submission for the given assignment to the code review system.")    
+     submission for the given assignment to the code review system.")
     parser.add_argument('assign', type=str,
                         help='the assignment to look at')
     parser.add_argument('login', type=str,

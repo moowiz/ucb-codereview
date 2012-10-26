@@ -8,12 +8,12 @@ WARNING:
     Do not use this code anywhere else without proper modification!
 """
 
-import sys
-import os     
+import os
 import os.path
-import sqlite3   
+import sqlite3
 import utils
 import argparse
+import shutil
 
 from utils import read_db_path, get_timestamp_str
 
@@ -37,34 +37,34 @@ SCHEMA = {
         }
 
 SECTION_TO_STAFF = {
-	"TA" : {
-	    "01" : "Varun Pai",
-	    "02" : "Stephen Martinis",
-	    "03" : "Allen Nguyen",     
-	    "04" : "Albert Wu",
-	    "11" : "Julia Oh",
-	    "12" : "Hamilton Nguyen",
-	    "13" : "Keegan Mann",
-	    "14" : "Andrew Nguyen",
-	    "15" : "Varun Pai",
-	    "16" : "Albert Wu",
-	    "17" : "Julia Oh",
-	    "18" : "Hamilton Nguyen",
-	    "19" : "Stephen Martinis",
-	    "20" : "Shu Zhong",
-	    "21" : "Steven Tang",
-	    "22" : "Andrew Nguyen",
-	    "23" : "Joy Jeng",
-	    "24" : "Phillip Carpenter",
-	    "25" : "Joy Jeng",
-	    "26" : "Shu Zhong",
-	    "27" : "Phillip Carpenter",
-	    "28" : "Allen Nguyen",
-	},
-	"Reader" : {
-	    "03" : "Sharad Vikram",
-	    "28" : "Sharad Vikram",
-        "23" : "Mark Miyashita",
+    "TA" : {
+        "01" : "Varun Pai",
+        "02" : "Stephen Martinis",
+        "03" : "Allen Nguyen",
+        "04" : "Albert Wu",
+        "11" : "Julia Oh",
+        "12" : "Hamilton Nguyen",
+        "13" : "Keegan Mann",
+        "14" : "Andrew Nguyen",
+        "15" : "Varun Pai",
+        "16" : "Albert Wu",
+        "17" : "Julia Oh",
+        "18" : "Hamilton Nguyen",
+        "19" : "Stephen Martinis",
+        "20" : "Shu Zhong",
+        "21" : "Steven Tang",
+        "22" : "Andrew Nguyen",
+        "23" : "Joy Jeng",
+        "24" : "Phillip Carpenter",
+        "25" : "Joy Jeng",
+        "26" : "Shu Zhong",
+        "27" : "Phillip Carpenter",
+        "28" : "Allen Nguyen",
+    },
+    "Reader" : {
+      "03" : "Sharad Vikram",
+      "28" : "Sharad Vikram",
+      "23" : "Mark Miyashita",
         "25" : "Mark Miyashita",
         "19" : "Yan Zhao",
         "02" : "Yan Zhao",
@@ -81,8 +81,8 @@ SECTION_TO_STAFF = {
         "13" : "Vaishaal Shankar",
         "21" : "Vaishaal Shankar",
         "14" : "Richie Zeng",
-        "22" : "Richie Zeng", 
-	    "20" : "Kelvin Chou",
+        "22" : "Richie Zeng",
+        "20" : "Kelvin Chou",
         "26" : "Kelvin Chou"
     }
 }
@@ -159,7 +159,7 @@ def create_table(path):
 
 def init_data(db_path):
     conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()    
+    cursor = conn.cursor()
     query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
     for key,value in SECTION_TO_STAFF.items():
         for k,v in value.items():
@@ -170,7 +170,7 @@ def init_data(db_path):
 def import_old_data(db_path, path_to_backup):
     """
     Imports data from the backed up DB into the new one.
-    For now, we just want the latest times. 
+    For now, we just want the latest times.
     """
     if not path_to_backup:
         return
@@ -191,7 +191,7 @@ def import_old_data(db_path, path_to_backup):
 
 def main(transfer, clear, update):
     """
-    The main function to run. Populates the database with basic info. 
+    The main function to run. Populates the database with basic info.
     """
     utils.check_allowed_user()
     db_path = read_db_path()
@@ -211,11 +211,11 @@ def main(transfer, clear, update):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Initializes the codereview \
-                    database, or updates it with new data.")    
+                    database, or updates it with new data.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-t', '--transfer', action='store_true',
                         help="Creates a new database and transfers the data from the current one (which is now the backup) to the new database.")
-    group.add_argument('-c', '--clear', action='store_true', 
+    group.add_argument('-c', '--clear', action='store_true',
                         help="Makes a new database which takes none of the old data from the backups.")
     group.add_argument('-u', '--update', action='store_true',
                         help="Updates the current database, while not making a backup.")

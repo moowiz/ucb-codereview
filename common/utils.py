@@ -9,13 +9,6 @@ import config
 import pwd
 import re
 
-def read_db_path():
-    """
-    Reads the DB path out of the config file.
-    """
-    return os.path.expanduser("~cs61a/grading/codereview/codereview_db.sqlite")
-    # for local testing #return os.path.expanduser("../codereview_db.sqlite")
-
 def run(cmd, content=""):
     """Run a shell command and pass content as stdin."""
     # print("running command {}".format(cmd))
@@ -32,7 +25,7 @@ def get_timestamp_str():
     return now.strftime("%Y-%m-%d-%H-%M")
 
 def get_staff_gid():
-    return grp.getgrnam("cs61a-staff")[2]
+    return grp.getgrnam(config.STAFF_GROUP)[2]
 
 def getuser():
     return getpass.getuser()
@@ -40,18 +33,18 @@ def getuser():
 _REGEX_USER = config.CLASS_NAME + "-t[a-z]"
 
 def check_allowed_user():
-    if getuser() != "cs61a" and not re.match(_REGEX_USER, getuser()):
-        print("ERROR: Please run this command from the cs61a master account", file=sys.stderr)
+    if not re.match(_REGEX_USER, getuser()):
+        print("ERROR: Only TA accounts are allowed to run this script.", file=sys.stderr)
         sys.exit(1)
 
 def get_master_user_id():
     return pwd.getpwnam(config.CLASS_NAME)[2]
 
 def chmod_own_grp(path):
-    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP) 
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
 
 def chmod_own_grp_other_read(path):
-    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH) 
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH)
 
 def chown_staff_master(path):
     os.chown(path, get_master_user_id(), get_staff_gid())
@@ -62,6 +55,3 @@ def clean_assign(assign):
     if len(assign) == 5:
         assign = assign[:4] + '0' + assign[-1]
     return assign
-
-def lmap(func, lst):
-    return list(map(func, lst))
