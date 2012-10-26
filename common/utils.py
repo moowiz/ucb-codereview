@@ -5,7 +5,7 @@ import grp
 import stat
 import sys
 import getpass
-import config
+from config import *
 import pwd
 import re
 
