@@ -4,7 +4,7 @@ import sys
 #hard coded configs for now. Can move to a config file if we want to.
 class Config_Class:
     def __init__(self):
-        self._config = {
+        config = {
             "CLASS_NAME" : None, # 'cs61a'
             "MASTER_DIR" : None, # os.path.expanduser(CLASS_NAME)
             "STAFF_GROUP" : None, # 'cs61a-staff'
@@ -25,7 +25,9 @@ class Config_Class:
                     "proj3" : "ants"
                 },
             "DB_PATH" : None #CODE_REVIEW_DIR + "codereview_db.sqlite"
-            }
+        }
+        for k, v in config.items():
+            self.__dict__[k] = v
 
     def generate(self):
         self.GRADING_DIR = self.MASTER_DIR + "grading/"
@@ -41,17 +43,6 @@ class Config_Class:
         self.LOGINS_FILE = "MY.PARTNERS"
         self.IMPORTANT_FILES = (self.GMAILS_FILE, self.SECTIONS_FILE, self.LOGINS_FILE)
         self.DB_PATH = self.CODE_REVIEW_DIR + "codereview_db.sqlite"
-
-    def __getattr__(self, name):
-        if hasattr(self, "_config") and name in self.__config:
-            return self.__config[name]
-        return object.__getattr__(self, name)
-
-    def __setattr__(self, name, val):
-        if hasattr(self, "_config") and name in self._config:
-            self._config[name] = val
-        else:
-            object.__setattr__(self, name, value)
 
 config = Config_Class()
 
