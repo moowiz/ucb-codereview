@@ -87,7 +87,7 @@ def load_params():
     f = open(config.PARAMS_FILE, 'r')
     lines = f.read().split("\n")
     f.close()
-    lines = list(filter(lambda s: 'set' not in s.split(" ")[0], lines))
+    lines = list(filter(lambda s: 'set' in s.split(" ")[0], lines))
     for line in lines:
         print("line is " + line)
         if "STAFF_GROUP" in line:
