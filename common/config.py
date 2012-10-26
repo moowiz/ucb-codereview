@@ -102,6 +102,8 @@ def init_config():
         sys.exit(1)
     else:
         config.MASTER_DIR = os.environ["MASTERDIR"]
+        if config.MASTER_DIR[-1] != "/":
+            config.MASTER_DIR += "/"
         config.CLASS_NAME = os.environ["MASTER"]
         config.generate()
         load_params()
