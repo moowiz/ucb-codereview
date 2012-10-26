@@ -7,7 +7,7 @@ import os
 import re
 
 import utils
-import config
+from config import *
 
 def ignore_line(line):
     return "Looking for files to turn in...." in line or "Submitting " in line \
@@ -29,7 +29,7 @@ class IOHandler:
                 return self.read_line()
             if s.endswith("/no]") or s[-1] == "\n":
                 break
-            s += self.get_char()            
+            s += self.get_char()
         return s
     def handle_login(self):
         if self.partners:
@@ -39,8 +39,8 @@ class IOHandler:
         else:
             self.write_out(".\n")
             self.read_line()
-            self.write_out("yes\n") 
-            return self.read_line()     
+            self.write_out("yes\n")
+            return self.read_line()
     def write_out(self, thing):
         if type(thing) != bytes:
             thing = bytes(thing, "utf-8")
@@ -130,7 +130,7 @@ def run_submit(assign, partners):
                 handler.write_out(sys.stdin.readline())
     proc.wait()
     print(decode(proc.stderr.read()), end="")
-        
+
 def my_prompt(initial_message, prompt, validate, validate_msg):
     print(initial_message)
     print("Enter '.' to stop.")
@@ -257,7 +257,7 @@ def main(assign, flag=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Submits the assignment, \
-        assuming the correct files are in the current directory.")    
+        assuming the correct files are in the current directory.")
     parser.add_argument('assign', type=str,
                         help='the assignment to submit')
     args = parser.parse_args()
