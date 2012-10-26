@@ -24,7 +24,7 @@ class Config_Class:
                     "proj1" : "hog",
                     "proj3" : "ants"
                 },
-            "DB_PATH" : CODE_REVIEW_DIR + "codereview_db.sqlite"
+            "DB_PATH" : None #CODE_REVIEW_DIR + "codereview_db.sqlite"
             }
 
     def generate(self):
@@ -40,6 +40,7 @@ class Config_Class:
         self.SECTIONS_FILE = "MY.SECTIONS"
         self.LOGINS_FILE = "MY.PARTNERS"
         self.IMPORTANT_FILES = (self.GMAILS_FILE, self.SECTIONS_FILE, self.LOGINS_FILE)
+        self.DB_PATH = self.CODE_REVIEW_DIR + "codereview_db.sqlite"
 
     def __getattr__(self, name):
         if name in self.__config:
