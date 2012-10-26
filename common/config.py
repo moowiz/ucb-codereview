@@ -89,6 +89,7 @@ def load_params():
     f.close()
     lines = list(filter(lambda s: 'set' not in s.split(" ")[0], lines))
     for line in lines:
+        print("line is " + line)
         if "STAFF_GROUP" in line:
             config.STAFF_GROUP = line.split(" ")[2][1:-1]
     if config.STAFF_GROUP == None:
