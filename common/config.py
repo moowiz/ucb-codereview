@@ -43,8 +43,9 @@ class Config_Class:
         self.DB_PATH = self.CODE_REVIEW_DIR + "codereview_db.sqlite"
 
     def __getattr__(self, name):
-        if name in self.__config:
+        if hasattr(self, "_config") and name in self.__config:
             return self.__config[name]
+        return object.__getattr__(self, name)
 
     def __setattr__(self, name, val):
         if hasattr(self, "_config") and name in self._config:
