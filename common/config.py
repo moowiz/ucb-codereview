@@ -4,7 +4,7 @@ import sys
 #hard coded configs for now. Can move to a config file if we want to.
 class Config_Class:
     def __init__(self):
-        self.__config = {
+        self._config = {
             "CLASS_NAME" : None, # 'cs61a'
             "MASTER_DIR" : None, # os.path.expanduser(CLASS_NAME)
             "STAFF_GROUP" : None, # 'cs61a-staff'
@@ -47,8 +47,8 @@ class Config_Class:
             return self.__config[name]
 
     def __setattr__(self, name, val):
-        if name in self.__config:
-            self.__config[name] = val
+        if hasattr(self, "_config") and name in self._config:
+            self._config[name] = val
         else:
             object.__setattr__(self, name, value)
 
