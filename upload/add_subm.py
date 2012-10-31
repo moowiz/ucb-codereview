@@ -17,7 +17,7 @@ import git
 from config import *
 import utils
 from model import CodeReviewDatabase
-model = CodeReviewDatabase(utils.read_db_path())
+model = CodeReviewDatabase()
 
 class SubmissionException(Exception):
     pass
