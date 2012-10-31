@@ -242,7 +242,7 @@ def add(login, assign,gmails=None):
     try:
         path_to_repo, logins = put_in_repo(login, assign)
         os.chdir(original_path) #need this because somehow we end up in a bad place here...
-        upload(path_to_repo, logins, assign)
+        upload(path_to_repo, logins, assign,gmails)
     except IOError as e:
         if "No such file " in str(e):
             print("ERROR:{}. Ignoring...".format(str(e)), file=sys.stderr)
