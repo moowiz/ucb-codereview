@@ -62,7 +62,7 @@ def find_path(logins, assign):
     Finds the path to the given login's assignment git repository
     """
     logins.sort()
-    logins = list(map((lambda x: x.strip(), logins)))
+    logins = list(map(lambda x: x.strip(), logins))
     path = config.REPO_DIR + "".join(logins) + "/" + assign + "/"
     try:
         os.makedirs(path)
