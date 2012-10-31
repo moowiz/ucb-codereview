@@ -33,7 +33,7 @@ def getuser():
 _REGEX_USER = config.CLASS_NAME + "-t[a-z]"
 
 def check_allowed_user():
-    if not re.match(_REGEX_USER, getuser()):
+    if not re.match(_REGEX_USER, getuser()) and not getuser() == config.CLASS_NAME:
         print("ERROR: Only TA accounts are allowed to run this script.", file=sys.stderr)
         sys.exit(1)
 
