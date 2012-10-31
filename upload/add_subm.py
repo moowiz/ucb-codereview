@@ -108,19 +108,17 @@ SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
 @save_dir
-def upload(path_to_repo, logins, assign):
+def upload(path_to_repo, logins, assign,gmails):
     """
     Calls the upload script with the needed arguments given the path to the repo and the
     gmail account of the student.
     """
     os.chdir(path_to_repo)
-    gmails = get_gmails(logins)
-    if len(gmails) == 0:
-        raise UploadException("Student had no gmails. Not uploading.")
+    if not gmails:
+        gmails = get_gmails(logins)
+        if len(gmails) == 0:
+            raise UploadException("Student had no gmails. Not uploading.")
     issue_num = model.get_issue_number(logins, assign)
-    def mextend(a, b):
-        a.extend(b)
-        return a
     sections = get_sections(logins)
     reviewers = set()
     for section in sections:
@@ -237,7 +235,7 @@ def put_in_repo(login, assign):
         utils.chown_staff_master(f)
     return path_to_repo, logins
 
-def add(login, assign):
+def add(login, assign,gmails=None):
     utils.check_allowed_user()
     print("Adding {} for {}".format(assign, login))
     original_path = os.getcwd()
@@ -266,5 +264,7 @@ if __name__ == "__main__":
                         help='the assignment to look at')
     parser.add_argument('login', type=str,
                         help='the login to add')
+    parser.add_argument('gmails', default=None,type=str,
+                        nargs="*", help="Optional gmails to force the student to have.")
     args = parser.parse_args()
-    add(args.login, args.assign)
+    add(args.login, args.assign, args.gmails)
