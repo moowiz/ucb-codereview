@@ -61,7 +61,7 @@ def decode(str_bytes):
 def run_submit(assign, partners):
     print("Looking for files to turn in....")
     files = os.listdir(os.getcwd())
-    imp_files = get_imp_files(utils.clean_assign(assign))
+    imp_files = config.get_imp_files(utils.clean_assign(assign))
     for imp_f in imp_files:
         if imp_f not in files:
             print("ERROR: missing a required file {}".format(imp_f))
@@ -218,7 +218,7 @@ def summarize(gmails, sections, partners):
 
 def main(assign, flag=False):
     try:
-        files = get_imp_files(utils.clean_assign(assign))
+        files = config.get_imp_files(utils.clean_assign(assign))
     except ConfigException as e:
         print("ERROR {}".format(e))
         return 1
