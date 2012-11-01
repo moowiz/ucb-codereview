@@ -122,7 +122,7 @@ def upload(path_to_repo, logins, data):
     reviewers = set()
     for section in sections:
         reviewers.update(set(model.get_reviewers(section)))
-    gmails.extend(list(reviewers))
+    data.gmails.extend(list(reviewers))
     hash_str = git.get_revision_hash(path_to_repo)
     #now we create arguments
     if not issue_num: #if this is the first time uploading...
@@ -169,7 +169,7 @@ def copy_important_files(data, start_dir, end_dir, template=False):
                 os.mkdir(end_dir)
         for file in files_to_copy:
             dumb_template = open(end_dir + file, 'w')
-            dumb_template.write("You were not given a template for this assignment.\nThis is just placehold text; nothing to freak out about :)\n")
+            dumb_template.write("You were not given a template for this assignment.\nThis is just placeholder text; nothing to freak out about :)\n")
             dumb_template.close()
     for filename in files_to_copy:
         if os.path.isdir(start_dir + filename):
