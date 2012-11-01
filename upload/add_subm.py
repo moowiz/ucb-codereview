@@ -191,7 +191,7 @@ def put_in_repo(data):
     """
     path_to_subm, timestamp = get_subm(data)
     logins = list(map(lambda x: x.replace('\n', '').strip(), filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' '))))
-    path_to_repo = find_path(logins, data.assign)
+    path_to_repo = find_path(logins, data)
     issue_num = model.get_issue_number(logins, data.git_assign)
     if not issue_num:
         path_to_template = config.TEMPLATE_DIR
