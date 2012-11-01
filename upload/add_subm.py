@@ -237,7 +237,8 @@ def put_in_repo(data):
         utils.chown_staff_master(f)
     return path_to_repo, logins
 
-def add(data):
+def add(login, assign, gmails=None):
+    data = Data(login, assign, gmails)
     utils.check_allowed_user()
     print("Adding {} for {}".format(data.assign, data.login))
     original_path = os.getcwd()
@@ -279,5 +280,4 @@ if __name__ == "__main__":
     parser.add_argument('gmails', default=None,type=str,
                         nargs="*", help="Optional gmails to force the student to have.")
     args = parser.parse_args()
-    data = Data(args.login, args.assign, args.gmails)
-    add(data)
+    add(args.login, args.assign, args.gmails)
