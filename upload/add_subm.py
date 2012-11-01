@@ -150,7 +150,7 @@ def upload(path_to_repo, logins, data):
         model.set_issue_numbers(logins, data.git_assign, issue_num)
 
 def copy_important_files(data, start_dir, end_dir, template=False):
-    files_to_copy = get_important_files(data.assign)
+    files_to_copy = get_important_files(data)
     if template:
         files_to_copy = list(filter(lambda x: x not in config.IMPORTANT_FILES, files_to_copy))
         if os.path.exists(end_dir):
