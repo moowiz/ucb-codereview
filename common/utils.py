@@ -50,8 +50,8 @@ def chown_staff_master(path):
     os.chown(path, get_master_user_id(), get_staff_gid())
 
 def clean_assign(assign):
-    if len(assign) == 3: #wonderful hackage
-        assign = assign[:2] + '0' + assign[-1]
-    if len(assign) == 5:
-        assign = assign[:4] + '0' + assign[-1]
+    if 'hw' in assign and (len(assign) == 3 or not assign[3].isdigit()): #wonderful hackage
+        assign = assign[:2] + '0' + assign[3:]
+    elif 'proj' in assign and (len(assign) < 5 or not assign[5].isdigit()):
+        assign = assign[:4] + '0' + assign[4:]
     return assign
