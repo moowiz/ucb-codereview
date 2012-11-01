@@ -227,7 +227,7 @@ def put_in_repo(data):
                 if com_time in timestamp:
                     raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
         os.chdir(original_path)
-    copy_important_files(data.assign, path_to_subm, path_to_repo)
+    copy_important_files(data, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code timestamp:{}".format(utils.get_timestamp_str(), timestamp), path=path_to_repo)
     shutil.rmtree(path_to_subm)
