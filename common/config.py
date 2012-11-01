@@ -31,7 +31,7 @@ class Config_Class:
 
     def generate(self):
         self.GRADING_DIR = self.MASTER_DIR + "grading/"
-        self.SUBMISSION_DIR = self.MASTER_DIR + "submissions/"
+        self.SUBMISSION_DIR = self.GRADING_DIR + "submissions/"
         self.CODE_REVIEW_DIR = self.GRADING_DIR + "codereview/"
         self.REPO_DIR = self.CODE_REVIEW_DIR + "repo/"
         self.ASSIGN_DIR = self.MASTER_DIR + "lib/"
