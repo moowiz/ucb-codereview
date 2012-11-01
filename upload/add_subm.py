@@ -214,7 +214,7 @@ def put_in_repo(data):
             print("Issue number present, but no files in repository. Resetting issue number...")
             model.remove_issue_number(logins, data.git_assign, issue_num)
             os.chdir(original_path)
-            return put_in_repo(login, assign)
+            return put_in_repo(data)
         else: #we have a partner who submitted (I think)
             out, err = utils.run("git log --pretty=oneline --abbrev-commit")
             if "commit of code" not in out:
