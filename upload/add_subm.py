@@ -36,7 +36,7 @@ def save_dir(func):
             os.chdir(original_dir)
     return fun
 
-def get_subm(login, assign):
+def get_subm(data):
     """
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
@@ -52,34 +52,33 @@ def get_subm(login, assign):
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
     os.chdir(tempdir)
-    out, err = utils.run("get-subm " + assign + " " + login)
+    out, err = utils.run("get-subm " + data.assign + " " + data.login)
     print("Done unpacking.")
     timestamp = err[err.find(".") + 1: err.find("for")].strip()
     return tempdir + "/", timestamp #need the trailing slash for the copy command
 
-def find_path(logins, assign):
+def find_path(logins, data):
     """
     Finds the path to the given login's assignment git repository
     """
     logins.sort()
     logins = list(map(lambda x: x.strip(), logins))
-    path = config.REPO_DIR + "".join(logins) + "/" + assign + "/"
+    path = config.REPO_DIR + "".join(logins) + "/" + data.assign + "/"
     try:
         os.makedirs(path)
     except OSError:
         pass
     return path
-def get_important_files(assign):
+
+def get_important_files(data):
     """
     Returns the files we want to copy.
-    Do we need this function, or should we copy everything?
-    Would involve either some looking at the params file, or looking at the DB
     """
-    assign_files = config.get_imp_files(assign)
+    assign_files = config.get_imp_files(data.assign)
     assign_files.extend(config.IMPORTANT_FILES)
     return assign_files
 
-def get_sections(logins):
+def get_sections():
     """
     Returns the sections for logins in a list
     """
@@ -93,7 +92,7 @@ def get_sections(logins):
     file.close()
     return rval
 
-def get_gmails(logins):
+def get_gmails():
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
     """
@@ -108,18 +107,18 @@ SERVER_NAME = "berkeley-61a.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
 @save_dir
-def upload(path_to_repo, logins, assign,gmails):
+def upload(path_to_repo, logins, data):
     """
     Calls the upload script with the needed arguments given the path to the repo and the
     gmail account of the student.
     """
     os.chdir(path_to_repo)
-    if not gmails:
-        gmails = get_gmails(logins)
-        if len(gmails) == 0:
-            raise UploadException("Student had no gmails. Not uploading.")
-    issue_num = model.get_issue_number(logins, assign)
-    sections = get_sections(logins)
+    if not data.gmails:
+        data.gmails = get_gmails()
+    if not data.gmails or len(data.gmails) == 0:
+        raise UploadException("Student had no gmails. Not uploading.")
+    issue_num = model.get_issue_number(logins, data.git_assign)
+    sections = get_sections()
     reviewers = set()
     for section in sections:
         reviewers.update(set(model.get_reviewers(section)))
@@ -128,7 +127,7 @@ def upload(path_to_repo, logins, assign,gmails):
     #now we create arguments
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-            "-t", assign, '-r', ",".join(gmails), '-e', ROBOT_EMAIL,
+            "-t", data.git_assign, '-r', ",".join(data.gmails), '-e', ROBOT_EMAIL,
             '--rev', hash_str, '--private', "--send_mail"))
     else:
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
@@ -148,10 +147,10 @@ def upload(path_to_repo, logins, assign,gmails):
         line = line[line.rfind('/') + 1:].strip()
         issue_num = int(line)
         print("New issue {}; adding to DB".format(issue_num))
-        model.set_issue_numbers(logins, assign, issue_num)
+        model.set_issue_numbers(logins, data.git_assign, issue_num)
 
-def copy_important_files(assign, start_dir, end_dir, template=False):
-    files_to_copy = get_important_files(assign)
+def copy_important_files(data, start_dir, end_dir, template=False):
+    files_to_copy = get_important_files(data.assign)
     if template:
         files_to_copy = list(filter(lambda x: x not in config.IMPORTANT_FILES, files_to_copy))
         if os.path.exists(end_dir):
@@ -186,21 +185,21 @@ def git_init(path):
     gitignore.flush()
     gitignore.close()
 
-def put_in_repo(login, assign):
+def put_in_repo(data):
     """
     Puts the login's assignment into their repo
     """
-    path_to_subm, timestamp = get_subm(login, assign)
+    path_to_subm, timestamp = get_subm(data.login, data.assign)
     logins = list(map(lambda x: x.replace('\n', '').strip(), filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' '))))
-    path_to_repo = find_path(logins, assign)
-    issue_num = model.get_issue_number(logins, assign)
+    path_to_repo = find_path(logins, data.assign)
+    issue_num = model.get_issue_number(logins, data.git_assign)
     if not issue_num:
         path_to_template = config.TEMPLATE_DIR
-        if "hw" in assign:
+        if "hw" in data.assign:
             path_to_template += "hw/"
         else:
             path_to_template += "projects/"
-        assign = utils.clean_assign(assign)
+        data.assign = utils.clean_assign(data.assign)
         if assign not in config.ASSIGN_TO_NAME_MAP:
             path_to_template += assign + "/"
         copy_important_files(assign, path_to_template, path_to_repo, template=True)
@@ -213,14 +212,15 @@ def put_in_repo(login, assign):
         out, err = utils.run("git status")
         if "fatal: Not a git repository" in err:
             print("Issue number present, but no files in repository. Resetting issue number...")
-            model.remove_issue_number(logins, assign, issue_num)
+            model.remove_issue_number(logins, data.git_assign, issue_num)
+            os.chdir(original_path)
             return put_in_repo(login, assign)
         else: #we have a partner who submitted (I think)
             out, err = utils.run("git log --pretty=oneline --abbrev-commit")
             if "commit of code" not in out:
                 raise SubmissionException("Found a git repository that hasn't been committed to yet. Ignoring...")
             last_line = out[:out.find("\n")]
-            if last_line.find(":") != -1: #this is a special one-time case b/c of old code that didn't handle partners well enough...
+            if last_line.find(":") != -1:
                 com_time = last_line[last_line.find(":") + 1:]
                 if com_time in timestamp:
                     raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
@@ -235,14 +235,14 @@ def put_in_repo(login, assign):
         utils.chown_staff_master(f)
     return path_to_repo, logins
 
-def add(login, assign,gmails=None):
+def add(data):
     utils.check_allowed_user()
-    print("Adding {} for {}".format(assign, login))
+    print("Adding {} for {}".format(data.assign, data.login))
     original_path = os.getcwd()
     try:
-        path_to_repo, logins = put_in_repo(login, assign)
+        path_to_repo, logins = put_in_repo(data)
         os.chdir(original_path) #need this because somehow we end up in a bad place here...
-        upload(path_to_repo, logins, assign,gmails)
+        upload(path_to_repo, logins, data)
     except IOError as e:
         if "No such file " in str(e):
             print("ERROR:{}. Ignoring...".format(str(e)), file=sys.stderr)
@@ -257,6 +257,16 @@ def add(login, assign,gmails=None):
     finally:
         os.chdir(original_path)
 
+class Data:
+    def __init__(self,login,assign,gmails=None):
+        self.login = login
+        self.assign = assign
+        self.gmails = gmails
+        if "revision" in self.assign:
+            self.git_assign = self.assign[:self.assign.find("revision")]
+        else:
+            self.git_assign = assign
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
      submission for the given assignment to the code review system.")
@@ -267,4 +277,5 @@ if __name__ == "__main__":
     parser.add_argument('gmails', default=None,type=str,
                         nargs="*", help="Optional gmails to force the student to have.")
     args = parser.parse_args()
+    data = Data(args.login, args.assign, args.gmails)
     add(args.login, args.assign, args.gmails)
