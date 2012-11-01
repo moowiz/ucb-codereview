@@ -200,9 +200,9 @@ def put_in_repo(data):
         else:
             path_to_template += "projects/"
         data.assign = utils.clean_assign(data.assign)
-        if assign not in config.ASSIGN_TO_NAME_MAP:
-            path_to_template += assign + "/"
-        copy_important_files(assign, path_to_template, path_to_repo, template=True)
+        if data.assign not in config.ASSIGN_TO_NAME_MAP:
+            path_to_template += data.assign + "/"
+        copy_important_files(data.assign, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
@@ -225,7 +225,7 @@ def put_in_repo(data):
                 if com_time in timestamp:
                     raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
         os.chdir(original_path)
-    copy_important_files(assign, path_to_subm, path_to_repo)
+    copy_important_files(data.assign, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code timestamp:{}".format(utils.get_timestamp_str(), timestamp), path=path_to_repo)
     shutil.rmtree(path_to_subm)
