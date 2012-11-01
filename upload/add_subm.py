@@ -63,7 +63,7 @@ def find_path(logins, data):
     """
     logins.sort()
     logins = list(map(lambda x: x.strip(), logins))
-    path = config.REPO_DIR + "".join(logins) + "/" + data.assign + "/"
+    path = config.REPO_DIR + "".join(logins) + "/" + data.git_assign + "/"
     try:
         os.makedirs(path)
     except OSError:
