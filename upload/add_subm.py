@@ -189,7 +189,7 @@ def put_in_repo(data):
     """
     Puts the login's assignment into their repo
     """
-    path_to_subm, timestamp = get_subm(data.login, data.assign)
+    path_to_subm, timestamp = get_subm(data.login)
     logins = list(map(lambda x: x.replace('\n', '').strip(), filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' '))))
     path_to_repo = find_path(logins, data.assign)
     issue_num = model.get_issue_number(logins, data.git_assign)
