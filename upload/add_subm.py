@@ -202,7 +202,7 @@ def put_in_repo(data):
         data.assign = utils.clean_assign(data.assign)
         if data.assign not in config.ASSIGN_TO_NAME_MAP:
             path_to_template += data.assign + "/"
-        copy_important_files(data.assign, path_to_template, path_to_repo, template=True)
+        copy_important_files(data, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
         git.add(None, path=path_to_repo)
         git.commit("Initial commit", path=path_to_repo)
