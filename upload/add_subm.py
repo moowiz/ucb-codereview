@@ -278,4 +278,4 @@ if __name__ == "__main__":
                         nargs="*", help="Optional gmails to force the student to have.")
     args = parser.parse_args()
     data = Data(args.login, args.assign, args.gmails)
-    add(args.login, args.assign, args.gmails)
+    add(data)
