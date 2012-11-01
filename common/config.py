@@ -45,10 +45,7 @@ class Config_Class:
         self.DB_PATH = self.CODE_REVIEW_DIR + "codereview_db.sqlite"
 
     def get_imp_files(self, assignment):
-        if len(assignment) == 4 and assignment[2] != "1":
-            assignment = assignment[:2] + assignment[-1]
-        if len(assignment) == 6 and assignment[4] != "1":
-            assignment = assignment[:4] + assignment[-1]
+        assignment = utils.clean_assign(assignment)
         f = open(config.PARAMS_FILE, 'r')
         lines = f.read().split("\n")
         f.close()
