@@ -3,6 +3,7 @@ Data model API for the database.
 """
 #import os
 import sqlite3
+import utils
 from config import *
 
 class CodeReviewDatabase(object):
