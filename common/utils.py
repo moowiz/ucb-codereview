@@ -50,9 +50,9 @@ def chown_staff_master(path):
     os.chown(path, get_master_user_id(), get_staff_gid())
 
 def dirty_assign(assign):
-    if 'hw' in assign and len(assign[2:]) == 1:
+    if 'hw' in assign and len(assign[2:]) == 2:
         assign = assign[:2] + assign[3]
-    elif 'proj' in assign and len(assign[4:]) == 1:
+    elif 'proj' in assign and len(assign[4:]) == 2:
         assign = assign[:4] + assign[5]
     return assign
 
