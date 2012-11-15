@@ -40,12 +40,15 @@ def sweep(assign, first):
     max = get_small_time()
     maxes = {}
     for directory in dirs:
-        subms = list(filter(lambda x: not os.path.islink(config.SUBMISSION_DIR + x), os.listdir(config.SUBMISSION_DIR + directory)))
+        subms = filter(lambda x: not os.path.islink(config.SUBMISSION_DIR + x), os.listdir(config.SUBMISSION_DIR + directory))
         latest = get_last_uploaded(directory)
         logins[directory] = set()
         for name in subms:
             splt = name.split(".")
             login = splt[0]
+            if not splt[1].isdigit():
+                print("Warning: Ignoring " + login +"'s submission')
+                continue
             timestamp = conv_timestamp(splt[1])
             if (timestamp >= latest) and (not first or not model.get_issue_number(login, assign)):
                 logins[directory].add(login)
