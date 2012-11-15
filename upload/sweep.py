@@ -47,7 +47,7 @@ def sweep(assign, first):
             splt = name.split(".")
             login = splt[0]
             if not splt[1].isdigit():
-                print("Warning: Ignoring " + login +"'s submission')
+                print("Warning: Ignoring " + login +"'s submission")
                 continue
             timestamp = conv_timestamp(splt[1])
             if (timestamp >= latest) and (not first or not model.get_issue_number(login, assign)):
