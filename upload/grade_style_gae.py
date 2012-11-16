@@ -42,7 +42,7 @@ def grade(assign):
     for issue in issues:
         messages = Message.all().filter("issue = ", issue).fetch(None)
         if counter % 30 == 0:
-            print "tick"
+            print "Downloaded ", counter
         counter += 1
         for m in messages:
             mtext = m.text.split()
