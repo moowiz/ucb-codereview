@@ -1,9 +1,10 @@
 import model
 import utils
+from config import *
 import os
 import argparse
 
-db = model.CodeReviewDatabase(utils.read_db_path())
+db = model.CodeReviewDatabase(config.DB_PATH)
 
 def main(assign, path):
     if "~" in path:
