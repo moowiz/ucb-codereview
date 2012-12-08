@@ -172,9 +172,10 @@ def copy_important_files(data, start_dir, end_dir, template=False):
             dumb_template.write("You were not given a template for this assignment.\nThis is just placeholder text; nothing to freak out about :)\n")
             dumb_template.close()
     for filename in files_to_copy:
-        if os.path.isdir(start_dir + filename):
-            raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
-        shutil.copyfile(start_dir + filename, end_dir + filename)
+        if os.path.exists(filename):
+            if os.path.isdir(start_dir + filename):
+                raise SubmissionException("ERROR. Turned in a directory that should be a file. Exiting...")
+            shutil.copyfile(start_dir + filename, end_dir + filename)
 
 @save_dir
 def git_init(path):
