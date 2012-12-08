@@ -261,7 +261,7 @@ def add(login, assign, gmails=None):
         os.chdir(original_path)
 
 class Data:
-    def __init__(self,login,assign,gmails=None):
+    def __init__(self,login,assign,gmails):
         self.login = login
         self.assign = assign
         self.gmails = gmails

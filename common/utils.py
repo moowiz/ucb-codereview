@@ -30,7 +30,7 @@ def get_staff_gid():
 def getuser():
     return getpass.getuser()
 
-_REGEX_USER = config.CLASS_NAME + "-t[a-z]"
+_REGEX_USER = config.CLASS_NAME + "-[tr][a-z]"
 
 def check_allowed_user():
     if not re.match(_REGEX_USER, getuser()) and not getuser() == config.CLASS_NAME:
