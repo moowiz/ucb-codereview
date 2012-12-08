@@ -55,7 +55,9 @@ def get_subm(data):
     out, err = utils.run("get-subm " + data.assign + " " + data.login)
     print("Done unpacking.")
     timestamp = err[err.find(".") + 1: err.find("for")].strip()
-    return tempdir + "/", timestamp #need the trailing slash for the copy command
+    if tempdir[-1] != "/":
+        tempdir += "/"
+    return tempdir, timestamp #need the trailing slash for the copy command
 
 def find_path(logins, data):
     """
