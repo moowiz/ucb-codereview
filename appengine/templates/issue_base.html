@@ -27,17 +27,10 @@
 {%block body%}
   <h2>
     {%include "issue_star.html"%}
-{%if issue.edit_allowed and not issue.closed%}
-<span class="issue-close" id="issue-close-{{issue.key.id}}">
-    <a href="javascript:M_closeIssue({{issue.key.id}})">
-      <img src="{{media_url}}close.gif" title="Close This Issue" width="15"
-	   height="15" border="0"></a>
-</span>
-{%endif%}
     Issue <a href="{%url codereview.views.show issue.key.id%}"
                onmouseover="M_showPopUp(this, 'popup-issue');">
             {{issue.key.id}}</a>:
-    {{issue.subject}} {%if issue.closed %} (Closed) {%endif%}
+    {{issue.subject}}
   </h2>
 
   <table class="issue-details" border="0" width="100%">
@@ -70,11 +63,31 @@
                 <b>Start Review</b>
               </a>
             {%endif%}
+            {%if issue.edit_allowed%}
+            <br/>
+            <div><b>Composition Score:</b><br/>
+                <select>
+                    <option value = "0">0 - Needs Work.</option>
+                    <option value = "1">1 - Good job.</option>
+                    <option value = "2">2 - Nice work!</option>
+                    <option value = "3">3 - Excellent!</option>
+                </select>
+            </div>
+            {%endif%}
           </div>
         {%endblock%}
         <div class="issue_details_sidebar">
+        {%if not issue.edit_allowed%}
+        <div><b>Composition Score:</b><br/>
+            {%if issue.comp_score > -1%}
+                {{issue.comp_score}}
+            {%else%}
+                Not graded yet.
+            {%endif%}
+        </div>
+        {%endif%}
           <div><b>Created:</b><br/>
-            {{issue.created|timesince}} ago by {{issue.owner|show_user}}
+            {{issue.created|timesince}} ago
           </div>
           <div><b>Modified:</b><br/>
             {{issue.modified|timesince}} ago
@@ -82,29 +95,6 @@
           <div><b>Reviewers:</b><br/>
             {{issue.reviewers|show_users}}
           </div>
-          {%if issue.cc%}
-          <div><b>CC:</b><br/>
-            {%nicknames issue.cc%}
-          </div>
-          {%endif%}
-          {%if issue.base%}
-          <div><b>Base URL:</b><br/>
-            {{issue.base}}
-          </div>
-          {%endif%}
-          <div><b>Visibility:</b><br/>
-            {%if issue.private%}
-                Private. Only viewable by reviewers and CCs.
-            {% else %}
-                Public.
-            {%endif%}
-          </div>
-          {%if issue.repo_guid%}
-          <div><a title="Find reviews for the same repository ID - {{issue.repo_guid}}"
-               href="{%url codereview.views.search%}?repo_guid={{issue.repo_guid}}">
-            <b>More Reviews</b></a>
-          </div>
-          {%endif%}
         </div>
       </td>
 
@@ -121,10 +111,9 @@
     <div class="popup" id="popup-issue">
       <b>Issue {{issue.key.id}}: {{issue.subject}}
 	{%if issue.closed %} (Closed) {%endif%}</b><br/>
-      Created {{issue.created|timesince}} ago by {%nickname issue.owner%}<br/>
+      Created {{issue.created|timesince}} ago<br/>
       Modified {{issue.modified|timesince}} ago<br/>
       Reviewers: {%nicknames issue.reviewers%}<br/>
-      Base URL: {{issue.base}}<br/>
       Comments: {{issue.num_comments}}
       {%if issue.num_drafts%} <span style="color: red;">+
 	{{issue.num_drafts}} drafts</span>{%endif%}

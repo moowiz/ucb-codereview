@@ -33,7 +33,7 @@
        href="{%url codereview.views.show issue.key.id%}#ps{{patchset.key.id}}"
        onclick="M_toggleSectionForPS('{{issue.key.id}}', '{{patchset.key.id}}')"
        class="toggled-section {%if forloop.last%}opentriangle{%endif%}">
-      Patch Set {{forloop.counter}}
+      Submission {{forloop.counter}}
       {%if patchset.message%}: {{patchset.message}}{%endif%}
       <span class="anchor">#</span>
     </a>

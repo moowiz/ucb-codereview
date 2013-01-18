@@ -233,7 +233,7 @@ def put_in_repo(data):
     copy_important_files(data, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
     git.commit("{} commit of code timestamp:{}".format(utils.get_timestamp_str(), timestamp), path=path_to_repo)
-    shutil.rmtree(path_to_subm)
+    #shutil.rmtree(path_to_subm)
     files = glob.glob(path_to_repo + "*")
     for f in files:
         utils.chmod_own_grp(f)

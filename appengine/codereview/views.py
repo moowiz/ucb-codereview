@@ -128,52 +128,9 @@ class IssueBaseForm(forms.Form):
 
   subject = forms.CharField(max_length=MAX_SUBJECT,
                             widget=forms.TextInput(attrs={'size': 60}))
-  description = forms.CharField(required=False,
-                                max_length=MAX_DESCRIPTION,
-                                widget=forms.Textarea(attrs={'cols': 60}))
-  branch = forms.ChoiceField(required=False, label='Base URL')
-  base = forms.CharField(required=False,
-                         max_length=MAX_URL,
-                         widget=forms.TextInput(attrs={'size': 60}))
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
-  cc = forms.CharField(required=False,
-                       max_length=MAX_CC,
-                       label = 'CC',
-                       widget=AccountInput(attrs={'size': 60}))
-  private = forms.BooleanField(required=False, initial=False)
-
-  def set_branch_choices(self, base=None):
-    branches = models.Branch.all()
-    bound_field = self['branch']
-    choices = []
-    default = None
-    for b in branches:
-      if not b.repo_name:
-        b.repo_name = b.repo.name
-        b.put()
-      pair = (b.key(), '%s - %s - %s' % (b.repo_name, b.category, b.name))
-      choices.append(pair)
-      if default is None and (base is None or b.url == base):
-        default = b.key()
-    choices.sort(key=lambda pair: pair[1].lower())
-    choices.insert(0, ('', '[See Base]'))
-    bound_field.field.choices = choices
-    if default is not None:
-      self.initial['branch'] = default
-
-  def get_base(self):
-    base = self.cleaned_data.get('base')
-    if not base:
-      key = self.cleaned_data['branch']
-      if key:
-        branch = models.Branch.get(key)
-        if branch is not None:
-          base = branch.url
-    if not base:
-      self.errors['base'] = ['You must specify a base']
-    return base or None
 
 
 class NewForm(IssueBaseForm):
@@ -204,24 +161,12 @@ class UploadForm(forms.Form):
   description = forms.CharField(max_length=MAX_DESCRIPTION, required=False)
   content_upload = forms.BooleanField(required=False)
   separate_patches = forms.BooleanField(required=False)
-  base = forms.CharField(max_length=MAX_URL, required=False)
   data = forms.FileField(required=False)
   issue = forms.IntegerField(required=False)
   reviewers = forms.CharField(max_length=MAX_REVIEWERS, required=False)
-  cc = forms.CharField(max_length=MAX_CC, required=False)
-  private = forms.BooleanField(required=False, initial=False)
   send_mail = forms.BooleanField(required=False)
   base_hashes = forms.CharField(required=False)
   repo_guid = forms.CharField(required=False, max_length=MAX_URL)
-
-  def clean_base(self):
-    base = self.cleaned_data.get('base')
-    if not base and not self.cleaned_data.get('content_upload', False):
-      raise forms.ValidationError, 'Base URL is required.'
-    return self.cleaned_data.get('base')
-
-  def get_base(self):
-    return self.cleaned_data.get('base')
 
 
 class UploadContentForm(forms.Form):
@@ -253,28 +198,7 @@ class UploadPatchForm(forms.Form):
 
 
 class EditForm(IssueBaseForm):
-
-  closed = forms.BooleanField(required=False)
-
-
-class EditLocalBaseForm(forms.Form):
-  subject = forms.CharField(max_length=MAX_SUBJECT,
-                            widget=forms.TextInput(attrs={'size': 60}))
-  description = forms.CharField(required=False,
-                                max_length=MAX_DESCRIPTION,
-                                widget=forms.Textarea(attrs={'cols': 60}))
-  reviewers = forms.CharField(required=False,
-                              max_length=MAX_REVIEWERS,
-                              widget=AccountInput(attrs={'size': 60}))
-  cc = forms.CharField(required=False,
-                       max_length=MAX_CC,
-                       label = 'CC',
-                       widget=AccountInput(attrs={'size': 60}))
-  private = forms.BooleanField(required=False, initial=False)
-  closed = forms.BooleanField(required=False)
-
-  def get_base(self):
-    return None
+    pass
 
 
 class RepoForm(forms.Form):
@@ -282,26 +206,11 @@ class RepoForm(forms.Form):
   url = forms.URLField()
   guid = forms.CharField(required=False)
 
-
-class BranchForm(forms.Form):
-  category = forms.CharField(
-    widget=forms.Select(choices=[(ch, ch)
-                                 for ch in models.Branch.category.choices]))
-  name = forms.CharField()
-  url = forms.URLField()
-
-
 class PublishForm(forms.Form):
 
-  subject = forms.CharField(max_length=MAX_SUBJECT,
-                            widget=forms.TextInput(attrs={'size': 60}))
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
-  cc = forms.CharField(required=False,
-                       max_length=MAX_CC,
-                       label = 'CC',
-                       widget=AccountInput(attrs={'size': 60}))
   send_mail = forms.BooleanField(required=False)
   message = forms.CharField(required=False,
                             max_length=MAX_MESSAGE,
@@ -313,26 +222,6 @@ class PublishForm(forms.Form):
   in_reply_to = forms.CharField(required=False,
                                 max_length=MAX_DB_KEY_LENGTH,
                                 widget=forms.HiddenInput())
-
-
-class MiniPublishForm(forms.Form):
-
-  reviewers = forms.CharField(required=False,
-                              max_length=MAX_REVIEWERS,
-                              widget=AccountInput(attrs={'size': 60}))
-  cc = forms.CharField(required=False,
-                       max_length=MAX_CC,
-                       label = 'CC',
-                       widget=AccountInput(attrs={'size': 60}))
-  send_mail = forms.BooleanField(required=False)
-  message = forms.CharField(required=False,
-                            max_length=MAX_MESSAGE,
-                            widget=forms.Textarea(attrs={'cols': 60}))
-  message_only = forms.BooleanField(required=False,
-                                    widget=forms.HiddenInput())
-  no_redirect = forms.BooleanField(required=False,
-                                   widget=forms.HiddenInput())
-
 
 FORM_CONTEXT_VALUES = [(x, '%d lines' % x) for x in models.CONTEXT_CHOICES]
 FORM_CONTEXT_VALUES.append(('', 'Whole file'))
@@ -351,10 +240,6 @@ class SettingsForm(forms.Form):
       max_value=django_settings.MAX_COLUMN_WIDTH)
   notify_by_email = forms.BooleanField(required=False,
                                        widget=forms.HiddenInput())
-  notify_by_chat = forms.BooleanField(
-      required=False,
-      help_text='You must accept the invite for this to work.')
-
   def clean_nickname(self):
     nickname = self.cleaned_data.get('nickname')
     # Check for allowed characters
@@ -440,18 +325,12 @@ class SearchForm(forms.Form):
       initial=10,
       widget=forms.HiddenInput(attrs={'value': '10'}))
   closed = forms.NullBooleanField(required=False)
-  owner = forms.CharField(required=False,
-                          max_length=MAX_REVIEWERS,
-                          widget=AccountInput(attrs={'size': 60,
-                                                     'multiple': False}))
   reviewer = forms.CharField(required=False,
                              max_length=MAX_REVIEWERS,
                              widget=AccountInput(attrs={'size': 60,
                                                         'multiple': False}))
   repo_guid = forms.CharField(required=False, max_length=MAX_URL,
                               label="Repository ID")
-  base = forms.CharField(required=False, max_length=MAX_URL)
-  private = forms.NullBooleanField(required=False)
   created_before = forms.DateTimeField(required=False, label='Created before')
   created_after = forms.DateTimeField(
       required=False, label='Created on or after')
@@ -485,9 +364,6 @@ class SearchForm(forms.Form):
     if not acct:
       raise forms.ValidationError('Unknown user')
     return acct.user
-
-  def clean_owner(self):
-    return self._clean_accounts('owner')
 
   def clean_reviewer(self):
     user = self._clean_accounts('reviewer')
@@ -530,11 +406,9 @@ def respond(request, template, params=None):
   if params is None:
     params = {}
   must_choose_nickname = False
-  uploadpy_hint = False
   if request.user is not None:
     account = models.Account.current_user_account
     must_choose_nickname = not account.user_has_selected_nickname()
-    uploadpy_hint = account.uploadpy_hint
   params['request'] = request
   params['counter'] = counter
   params['user'] = request.user
@@ -551,7 +425,6 @@ def respond(request, template, params=None):
     if account is not None:
       params['xsrf_token'] = account.get_xsrf_token()
   params['must_choose_nickname'] = must_choose_nickname
-  params['uploadpy_hint'] = uploadpy_hint
   params['rietveld_revision'] = django_settings.RIETVELD_REVISION
   try:
     return render_to_response(template, params,
@@ -590,69 +463,8 @@ def _clean_int(value, default, min_value=None, max_value=None):
 
 
 def _can_view_issue(user, issue):
-  if user is None:
-    return not issue.private
   user_email = db.Email(user.email().lower())
-  return (not issue.private
-          or issue.owner == user
-          or user_email in issue.cc
-          or user_email in issue.reviewers)
-
-
-def _notify_issue(request, issue, message):
-  """Try sending an XMPP (chat) message.
-
-  Args:
-    request: The request object.
-    issue: Issue whose owner, reviewers, CC are to be notified.
-    message: Text of message to send, e.g. 'Created'.
-
-  The current user and the issue's subject and URL are appended to the message.
-
-  Returns:
-    True if the message was (apparently) delivered, False if not.
-  """
-  iid = issue.key().id()
-  emails = [issue.owner.email()]
-  if issue.reviewers:
-    emails.extend(issue.reviewers)
-  if issue.cc:
-    emails.extend(issue.cc)
-  accounts = models.Account.get_multiple_accounts_by_email(emails)
-  jids = []
-  for account in accounts.itervalues():
-    logging.debug('email=%r,chat=%r', account.email, account.notify_by_chat)
-    if account.notify_by_chat:
-      jids.append(account.email)
-  if not jids:
-    logging.debug('No XMPP jids to send to for issue %d', iid)
-    return True  # Nothing to do.
-  jids_str = ', '.join(jids)
-  logging.debug('Sending XMPP for issue %d to %s', iid, jids_str)
-  sender = '?'
-  if models.Account.current_user_account:
-    sender = models.Account.current_user_account.nickname
-  elif request.user:
-    sender = request.user.email()
-  message = '%s by %s: %s\n%s' % (message,
-                                  sender,
-                                  issue.subject,
-                                  request.build_absolute_uri(
-                                    reverse(show, args=[iid])))
-  try:
-    sts = xmpp.send_message(jids, message)
-  except Exception, err:
-    logging.exception('XMPP exception %s sending for issue %d to %s',
-                      err, iid, jids_str)
-    return False
-  else:
-    if sts == [xmpp.NO_ERROR] * len(jids):
-      logging.info('XMPP message sent for issue %d to %s', iid, jids_str)
-      return True
-    else:
-      logging.error('XMPP error %r sending for issue %d to %s',
-                    sts, iid, jids_str)
-      return False
+  return user_email in issue.reviewers
 
 
 class HttpTextResponse(HttpResponse):
@@ -764,13 +576,6 @@ def issue_required(func):
     if issue is None:
       return HttpTextResponse(
           'No issue exists with that id (%s)' % issue_id, status=404)
-    if issue.private:
-      if request.user is None:
-        return HttpResponseRedirect(
-            users.create_login_url(request.get_full_path().encode('utf-8')))
-      if not _can_view_issue(request.user, issue):
-        return HttpTextResponse(
-            'You do not have permission to view this issue', status=403)
     request.issue = issue
     return func(request, *args, **kwds)
 
@@ -795,32 +600,6 @@ def user_key_required(func):
     return func(request, *args, **kwds)
 
   return user_key_wrapper
-
-
-def owner_required(func):
-  """Decorator that insists you own the issue.
-
-  It must appear after issue_required or equivalent, like patchset_required.
-  """
-
-  @login_required
-  def owner_wrapper(request, *args, **kwds):
-    if request.issue.owner != request.user:
-      return HttpTextResponse('You do not own this issue', status=403)
-    return func(request, *args, **kwds)
-
-  return owner_wrapper
-
-
-def issue_owner_required(func):
-  """Decorator that processes the issue_id argument and insists you own it."""
-
-  @issue_required
-  @owner_required
-  def issue_owner_wrapper(request, *args, **kwds):
-    return func(request, *args, **kwds)
-
-  return issue_owner_wrapper
 
 
 def issue_editor_required(func):
@@ -853,17 +632,6 @@ def patchset_required(func):
 
   return patchset_wrapper
 
-
-def patchset_owner_required(func):
-  """Decorator that processes the patchset_id argument and insists you own the
-  issue."""
-
-  @patchset_required
-  @owner_required
-  def patchset_owner_wrapper(request, *args, **kwds):
-    return func(request, *args, **kwds)
-
-  return patchset_owner_wrapper
 
 
 def patch_required(func):
@@ -993,8 +761,6 @@ def _url(path, **kwargs):
 
 def _inner_paginate(request, issues, template, extra_template_params):
   """Display paginated list of issues.
-
-  Takes care of the private bit.
 
   Args:
     request: Request containing offset and limit parameters.
@@ -1137,7 +903,7 @@ def all(request, index_call=False):
   if closed is not None:
     nav_parameters['closed'] = int(closed)
 
-  query = models.Issue.all().filter('private =', False)
+  query = models.Issue.all()
   if closed is not None:
     # return only opened or closed issues
     query.filter('closed =', closed)
@@ -1198,7 +964,7 @@ def _load_users_for_issues(issues):
   """Load all user links for a list of issues in one go."""
   user_dict = {}
   for i in issues:
-    for e in i.reviewers + i.cc + [i.owner.email()]:
+    for e in i.reviewers:
       # keeping a count lets you track total vs. distinct if you want
       user_dict[e] = user_dict.setdefault(e, 0) + 1
 
@@ -1219,50 +985,30 @@ def _show_user(request):
     draft_issues = models.Issue.get(draft_keys)
   else:
     draft_issues = draft_keys = []
-  my_issues = [
-      issue for issue in db.GqlQuery(
-          'SELECT * FROM Issue '
-          'WHERE closed = FALSE AND owner = :1 '
-          'ORDER BY modified DESC '
-          'LIMIT 100',
-          user)
-      if issue.key() not in draft_keys and _can_view_issue(request.user, issue)]
+  checker = lambda issue: issue.key() not in draft_keys and _can_view_issue(request.user, issue)
   review_issues = [
       issue for issue in db.GqlQuery(
           'SELECT * FROM Issue '
-          'WHERE closed = FALSE AND reviewers = :1 '
+          'WHERE reviewers = :1 '
           'ORDER BY modified DESC '
           'LIMIT 100',
           user.email().lower())
-      if (issue.key() not in draft_keys and issue.owner != user
-          and _can_view_issue(request.user, issue))]
+      if checker(issue)]
   closed_issues = [
       issue for issue in db.GqlQuery(
           'SELECT * FROM Issue '
-          'WHERE closed = TRUE AND modified > :1 AND owner = :2 '
+          'WHERE comp_score = -1 '
           'ORDER BY modified DESC '
           'LIMIT 100',
-          datetime.datetime.now() - datetime.timedelta(days=7),
-          user)
-      if issue.key() not in draft_keys and _can_view_issue(request.user, issue)]
-  cc_issues = [
-      issue for issue in db.GqlQuery(
-          'SELECT * FROM Issue '
-          'WHERE closed = FALSE AND cc = :1 '
-          'ORDER BY modified DESC '
-          'LIMIT 100',
-          user.email())
-      if (issue.key() not in draft_keys and issue.owner != user
-          and _can_view_issue(request.user, issue))]
-  all_issues = my_issues + review_issues + closed_issues + cc_issues
+          )
+      if checker(issue) and issue.comp_score > -1]
+  all_issues = review_issues + closed_issues
   _load_users_for_issues(all_issues)
   _optimize_draft_counts(all_issues)
   return respond(request, 'user.html',
                  {'email': user.email(),
-                  'my_issues': my_issues,
                   'review_issues': review_issues,
                   'closed_issues': closed_issues,
-                  'cc_issues': cc_issues,
                   'draft_issues': draft_issues,
                   })
 
@@ -1294,7 +1040,6 @@ def use_uploadpy(request):
   """Show an intermediate page about upload.py."""
   if request.method == 'POST':
     if 'disable_msg' in request.POST:
-      models.Account.current_user_account.uploadpy_hint = False
       models.Account.current_user_account.put()
     if 'download' in request.POST:
       url = reverse(customized_upload_py)
@@ -1330,18 +1075,13 @@ def upload(request):
       if issue is None:
         form.errors['issue'] = ['No issue exists with that id (%s)' %
                                 issue_id]
-      elif issue.local_base and not form.cleaned_data.get('content_upload'):
+      elif not form.cleaned_data.get('content_upload'):
         form.errors['issue'] = ['Base files upload required for that issue.']
         issue = None
       else:
-        if request.user != issue.owner:
-          form.errors['user'] = ['You (%s) don\'t own this issue (%s)' %
-                                 (request.user, issue_id)]
-          issue = None
-        else:
-          patchset = _add_patchset_from_form(request, issue, form, 'subject',
-                                             emails_add_only=True)
-          if not patchset:
+        patchset = _add_patchset_from_form(request, issue, form, 'subject',
+                                            emails_add_only=True)
+        if not patchset:
             issue = None
     else:
       action = 'created'
@@ -1359,7 +1099,6 @@ def upload(request):
       msg +="\n%d" % patchset.key().id()
       if form.cleaned_data.get('content_upload'):
         # Extend the response: additional lines are the expected filenames.
-        issue.local_base = True
         issue.put()
 
         base_hashes = {}
@@ -1429,9 +1168,6 @@ def upload_content(request):
       request.user = users.User(request.POST.get('user', 'test@example.com'))
     else:
       return HttpTextResponse('Error: Login required', status=401)
-  if request.user != request.issue.owner:
-    return HttpTextResponse('ERROR: You (%s) don\'t own this issue (%s).' %
-                            (request.user, request.issue.key().id()))
   patch = request.patch
   patch.status = form.cleaned_data['status']
   patch.is_binary = form.cleaned_data['is_binary']
@@ -1479,10 +1215,6 @@ def upload_patch(request):
       request.user = users.User(request.POST.get('user', 'test@example.com'))
     else:
       return HttpTextResponse('Error: Login required', status=401)
-  if request.user != request.issue.owner:
-    return HttpTextResponse(
-        'ERROR: You (%s) don\'t own this issue (%s).' %
-        (request.user, request.issue.key().id()))
   form = UploadPatchForm(request.POST, request.FILES)
   if not form.is_valid():
     return HttpTextResponse(
@@ -1507,7 +1239,7 @@ def upload_patch(request):
 
 
 @post_required
-@issue_owner_required
+@issue_required
 @upload_required
 def upload_complete(request, patchset_id=None):
   """/<issue>/upload_complete/<patchset> - Patchset upload is complete.
@@ -1532,17 +1264,11 @@ def upload_complete(request, patchset_id=None):
     patchset = None
   # Check for completeness
   errors = []
-  if request.issue.local_base and patchset is not None:
-    query = patchset.patch_set.filter('is_binary =', False)
-    query = query.filter('status =', None)  # all uploaded file have a status
-    if query.count() > 0:
-      errors.append('Base files missing.')
   # Create (and send) a message if needed.
   if request.POST.get('send_mail') == 'yes' or request.POST.get('message'):
     msg = _make_message(request, request.issue, request.POST.get('message', ''),
                         send_mail=(request.POST.get('send_mail', '') == 'yes'))
     msg.put()
-    _notify_issue(request, request.issue, 'Mailed')
   if errors:
     msg = ('The following errors occured:\n%s\n'
            'Try to upload the changeset again.'
@@ -1577,22 +1303,11 @@ def _make_new(request, form):
   if not form.is_valid() or reviewers is None:
     return (None, None)
 
-  cc = _get_emails(form, 'cc')
-  if not form.is_valid():
-    return (None, None)
-
-  base = form.get_base()
-  if base is None:
-    return (None, None)
-
   def txn():
     issue = models.Issue(subject=form.cleaned_data['subject'],
                          description=form.cleaned_data['description'],
-                         base=base,
                          repo_guid=form.cleaned_data.get('repo_guid', None),
                          reviewers=reviewers,
-                         cc=cc,
-                         private=form.cleaned_data.get('private', False),
                          n_comments=0)
     issue.put()
 
@@ -1616,7 +1331,6 @@ def _make_new(request, form):
   if form.cleaned_data.get('send_mail'):
     msg = _make_message(request, issue, '', '', True)
     msg.put()
-    _notify_issue(request, issue, 'Created')
   return (issue, patchset)
 
 
@@ -1669,7 +1383,7 @@ def _get_data_url(form):
 
 
 @post_required
-@issue_owner_required
+@issue_required
 @xsrf_required
 def add(request):
   """/<issue>/add - Add a new PatchSet to an existing Issue."""
@@ -1687,9 +1401,6 @@ def _add_patchset_from_form(request, issue, form, message_key='message',
   if form.is_valid():
     data_url = _get_data_url(form)
   if not form.is_valid():
-    return None
-  if request.user != issue.owner:
-    # This check is done at each call site but check again as a safety measure.
     return None
   data, url, separate_patches = data_url
   message = form.cleaned_data[message_key]
@@ -1724,7 +1435,6 @@ def _add_patchset_from_form(request, issue, form, message_key='message',
   if form.cleaned_data.get('send_mail'):
     msg = _make_message(request, issue, message, '', True)
     msg.put()
-    _notify_issue(request, issue, 'Updated')
   return patchset
 
 
@@ -2018,69 +1728,39 @@ def account(request):
 def edit(request):
   """/<issue>/edit - Edit an issue."""
   issue = request.issue
-  base = issue.base
 
-  if issue.local_base:
-    form_cls = EditLocalBaseForm
-  else:
-    form_cls = EditForm
+  form_cls = EditForm
 
   if request.method != 'POST':
     reviewers = [models.Account.get_nickname_for_email(reviewer,
                                                        default=reviewer)
                  for reviewer in issue.reviewers]
-    ccs = [models.Account.get_nickname_for_email(cc, default=cc)
-           for cc in issue.cc]
     form = form_cls(initial={'subject': issue.subject,
-                             'description': issue.description,
-                             'base': base,
                              'reviewers': ', '.join(reviewers),
-                             'cc': ', '.join(ccs),
-                             'closed': issue.closed,
-                             'private': issue.private,
                              })
-    if not issue.local_base:
-      form.set_branch_choices(base)
     return respond(request, 'edit.html', {'issue': issue, 'form': form})
 
   form = form_cls(request.POST)
-  if not issue.local_base:
-    form.set_branch_choices()
-
   if form.is_valid():
     reviewers = _get_emails(form, 'reviewers')
 
-  if form.is_valid():
-    cc = _get_emails(form, 'cc')
-
-  if form.is_valid() and not issue.local_base:
-    base = form.get_base()
 
   if not form.is_valid():
     return respond(request, 'edit.html', {'issue': issue, 'form': form})
   cleaned_data = form.cleaned_data
 
-  was_closed = issue.closed
   issue.subject = cleaned_data['subject']
-  issue.description = cleaned_data['description']
-  issue.closed = cleaned_data['closed']
-  issue.private = cleaned_data.get('private', False)
-  base_changed = (issue.base != base)
-  issue.base = base
   issue.reviewers = reviewers
-  issue.cc = cc
-  if base_changed:
-    for patchset in issue.patchset_set:
-      db.run_in_transaction(_delete_cached_contents, list(patchset.patch_set))
   issue.put()
+  #TODO modify this to use the score
+  """"
   if issue.closed == was_closed:
     message = 'Edited'
   elif issue.closed:
     message = 'Closed'
   else:
     message = 'Reopened'
-  _notify_issue(request, issue, message)
-
+    """
   return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
 
 
@@ -2114,7 +1794,7 @@ def _delete_cached_contents(patch_set):
 
 
 @post_required
-@issue_owner_required
+@issue_required
 @xsrf_required
 def delete(request):
   """/<issue>/delete - Delete an issue.  There is no way back."""
@@ -2124,12 +1804,10 @@ def delete(request):
               models.Message, models.Content]:
     tbd += cls.gql('WHERE ANCESTOR IS :1', issue)
   db.delete(tbd)
-  _notify_issue(request, issue, 'Deleted')
   return HttpResponseRedirect(reverse(mine))
 
 
 @post_required
-@patchset_owner_required
 @xsrf_required
 def delete_patchset(request):
   """/<issue>/patch/<patchset>/delete - Delete a patchset.
@@ -2147,7 +1825,6 @@ def delete_patchset(request):
         if ps_id in patch.delta:
           patches.append(patch)
   db.run_in_transaction(_patchset_delete, ps_delete, patches)
-  _notify_issue(request, issue, 'Patchset deleted')
   return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
 
 
@@ -2184,28 +1861,7 @@ def close(request):
     if new_description:
       issue.description = new_description
   issue.put()
-  _notify_issue(request, issue, 'Closed')
   return HttpTextResponse('Closed')
-
-
-@post_required
-@issue_required
-@upload_required
-def mailissue(request):
-  """/<issue>/mail - Send mail for an issue.
-
-  This URL is deprecated and shouldn't be used anymore.  However,
-  older versions of upload.py or wrapper scripts still may use it.
-  """
-  if request.issue.owner != request.user:
-    if not IS_DEV:
-      return HttpTextResponse('Login required', status=401)
-  issue = request.issue
-  msg = _make_message(request, issue, '', '', True)
-  msg.put()
-  _notify_issue(request, issue, 'Mailed')
-
-  return HttpTextResponse('OK')
 
 
 @patchset_required
@@ -2239,7 +1895,6 @@ def description(request):
   issue = request.issue
   issue.description = request.POST.get('description')
   issue.put()
-  _notify_issue(request, issue, 'Changed')
   return HttpTextResponse('')
 
 
@@ -2276,7 +1931,6 @@ def fields(request):
   if 'subject' in fields:
     issue.subject = fields['subject']
   issue.put()
-  _notify_issue(request, issue, 'Changed')
   return HttpTextResponse('')
 
 
@@ -2338,8 +1992,6 @@ def download_patch(request):
 def _issue_as_dict(issue, messages, request=None):
   """Converts an issue into a dict."""
   values = {
-    'owner': library.get_nickname(issue.owner, True, request),
-    'owner_email': issue.owner.email(),
     'modified': str(issue.modified),
     'created': str(issue.created),
     'closed': issue.closed,
@@ -2349,8 +2001,6 @@ def _issue_as_dict(issue, messages, request=None):
     'description': issue.description,
     'subject': issue.subject,
     'issue': issue.key().id(),
-    'base_url': issue.base,
-    'private': issue.private,
   }
   if messages:
     values['messages'] = [
@@ -2372,8 +2022,6 @@ def _patchset_as_dict(patchset, request=None):
   values = {
     'patchset': patchset.key().id(),
     'issue': patchset.issue.key().id(),
-    'owner': library.get_nickname(patchset.issue.owner, True, request),
-    'owner_email': patchset.issue.owner.email(),
     'message': patchset.message,
     'url': patchset.url,
     'created': str(patchset.created),
@@ -2993,12 +2641,11 @@ def _get_mail_template(request, issue, full_diff=False):
   """
   context = {}
   template = 'mails/comment.txt'
-  if request.user == issue.owner:
-    if db.GqlQuery('SELECT * FROM Message WHERE ANCESTOR IS :1 AND sender = :2',
-                   issue, db.Email(request.user.email())).count(1) == 0:
-      template = 'mails/review.txt'
-      files, patch = _get_affected_files(issue, full_diff)
-      context.update({'files': files, 'patch': patch, 'base': issue.base})
+  if db.GqlQuery('SELECT * FROM Message WHERE ANCESTOR IS :1 AND sender = :2',
+                issue, db.Email(request.user.email())).count(1) == 0:
+    template = 'mails/review.txt'
+    files, patch = _get_affected_files(issue, full_diff)
+    context.update({'files': files, 'patch': patch, })
   return template, context
 
 
@@ -3008,10 +2655,7 @@ def _get_mail_template(request, issue, full_diff=False):
 def publish(request):
   """ /<issue>/publish - Publish draft comments and send mail."""
   issue = request.issue
-  if request.user == issue.owner:
-    form_class = PublishForm
-  else:
-    form_class = MiniPublishForm
+  form_class = PublishForm
   draft_message = None
   if not request.POST.get('message_only', None):
     query = models.Message.gql(('WHERE issue = :1 AND sender = :2 '
@@ -3020,16 +2664,11 @@ def publish(request):
     draft_message = query.get()
   if request.method != 'POST':
     reviewers = issue.reviewers[:]
-    cc = issue.cc[:]
-    if request.user != issue.owner and (request.user.email()
-                                        not in issue.reviewers):
+    if (request.user.email() not in issue.reviewers):
       reviewers.append(request.user.email())
-      if request.user.email() in cc:
-        cc.remove(request.user.email())
     reviewers = [models.Account.get_nickname_for_email(reviewer,
                                                        default=reviewer)
                  for reviewer in reviewers]
-    ccs = [models.Account.get_nickname_for_email(cc, default=cc) for cc in cc]
     tbd, comments = _get_draft_comments(request, issue, True)
     preview = _get_draft_details(request, comments)
     if draft_message is None:
@@ -3038,7 +2677,6 @@ def publish(request):
       msg = draft_message.text
     form = form_class(initial={'subject': issue.subject,
                                'reviewers': ', '.join(reviewers),
-                               'cc': ', '.join(ccs),
                                'send_mail': True,
                                'message': msg,
                                })
@@ -3051,25 +2689,15 @@ def publish(request):
   form = form_class(request.POST)
   if not form.is_valid():
     return respond(request, 'publish.html', {'form': form, 'issue': issue})
-  if request.user == issue.owner:
-    issue.subject = form.cleaned_data['subject']
   if form.is_valid() and not form.cleaned_data.get('message_only', False):
     reviewers = _get_emails(form, 'reviewers')
   else:
     reviewers = issue.reviewers
-    if request.user != issue.owner and request.user.email() not in reviewers:
+    if request.user.email() not in reviewers:
       reviewers.append(db.Email(request.user.email()))
-  if form.is_valid() and not form.cleaned_data.get('message_only', False):
-    cc = _get_emails(form, 'cc')
-  else:
-    cc = issue.cc
-    # The user is in the reviewer list, remove them from CC if they're there.
-    if request.user.email() in cc:
-      cc.remove(request.user.email())
   if not form.is_valid():
     return respond(request, 'publish.html', {'form': form, 'issue': issue})
   issue.reviewers = reviewers
-  issue.cc = cc
   if not form.cleaned_data.get('message_only', False):
     tbd, comments = _get_draft_comments(request, issue)
   else:
@@ -3091,7 +2719,6 @@ def publish(request):
   for obj in tbd:
     db.put(obj)
 
-  _notify_issue(request, issue, 'Comments published')
 
   # There are now no comments here (modulo race conditions)
   models.Account.current_user_account.update_drafts(issue, 0)
@@ -3171,7 +2798,6 @@ def _get_draft_details(request, comments):
   output = []
   linecache = {}  # Maps (c.patch.key(), c.left) to mapping (lineno, line)
   modified_patches = []
-  fetch_base_failed = False
 
   for c in comments:
     if (c.patch.key(), c.left) != last_key:
@@ -3197,7 +2823,6 @@ def _get_draft_details(request, comments):
         except FetchError:
           linecache[last_key] = _patchlines2cache(
             patching.ParsePatchToLines(patch.lines), c.left)
-          fetch_base_failed = True
     context = linecache[last_key].get(c.lineno, '').strip()
     url = request.build_absolute_uri(
       '%s#%scode%d' % (reverse(diff, args=[request.issue.key().id(),
@@ -3219,7 +2844,7 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
   template, context = _get_mail_template(request, issue, full_diff=attach_patch)
   # Decide who should receive mail
   my_email = db.Email(request.user.email())
-  to = [db.Email(issue.owner.email())] + issue.reviewers
+  to = issue.reviewers[:]
   cc = issue.cc[:]
   if django_settings.RIETVELD_INCOMING_MAIL_ADDRESS:
     cc.append(db.Email(django_settings.RIETVELD_INCOMING_MAIL_ADDRESS))
@@ -3472,16 +3097,10 @@ def search(request):
     q.with_cursor(form.cleaned_data['cursor'])
   if form.cleaned_data['closed'] is not None:
     q.filter('closed = ', form.cleaned_data['closed'])
-  if form.cleaned_data['owner']:
-    q.filter('owner = ', form.cleaned_data['owner'])
   if form.cleaned_data['reviewer']:
     q.filter('reviewers = ', form.cleaned_data['reviewer'])
-  if form.cleaned_data['private'] is not None:
-    q.filter('private = ', form.cleaned_data['private'])
   if form.cleaned_data['repo_guid']:
     q.filter('repo_guid = ', form.cleaned_data['repo_guid'])
-  if form.cleaned_data['base']:
-    q.filter('base = ', form.cleaned_data['base'])
 
   # Default sort by ascending key to save on indexes.
   sorted_by = '__key__'
@@ -3530,173 +3149,6 @@ def search(request):
                       for i in filtered_results]
   return data
 
-
-### Repositories and Branches ###
-
-
-def repos(request):
-  """/repos - Show the list of known Subversion repositories."""
-  # Clean up garbage created by buggy edits
-  bad_branches = models.Branch.gql('WHERE owner = :1', None).fetch(100)
-  if bad_branches:
-    db.delete(bad_branches)
-  repo_map = {}
-  for repo in models.Repository.all().fetch(1000, batch_size=100):
-    repo_map[str(repo.key())] = repo
-  branches = []
-  for branch in models.Branch.all().fetch(2000, batch_size=100):
-    # Using ._repo instead of .repo returns the db.Key of the referenced entity.
-    # Access to a protected member FOO of a client class
-    # pylint: disable=W0212
-    branch.repository = repo_map[str(branch._repo)]
-    branches.append(branch)
-  branches.sort(key=lambda b: map(
-    unicode.lower, (b.repository.name, b.category, b.name)))
-  return respond(request, 'repos.html', {'branches': branches})
-
-
-@login_required
-@xsrf_required
-def repo_new(request):
-  """/repo_new - Create a new Subversion repository record."""
-  if request.method != 'POST':
-    form = RepoForm()
-    return respond(request, 'repo_new.html', {'form': form})
-  form = RepoForm(request.POST)
-  errors = form.errors
-  if not errors:
-    try:
-      repo = models.Repository(
-        name=form.cleaned_data.get('name'),
-        url=form.cleaned_data.get('url'),
-        guid=form.cleaned_data.get('guid'),
-        )
-    except (db.BadValueError, ValueError), err:
-      errors['__all__'] = unicode(err)
-  if errors:
-    return respond(request, 'repo_new.html', {'form': form})
-  repo.put()
-  branch_url = repo.url
-  if not branch_url.endswith('/'):
-    branch_url += '/'
-  branch_url += 'trunk/'
-  branch = models.Branch(repo=repo, repo_name=repo.name,
-                         category='*trunk*', name='Trunk',
-                         url=branch_url)
-  branch.put()
-  return HttpResponseRedirect(reverse(repos))
-
-
-SVN_ROOT = 'http://svn.python.org/view/*checkout*/python/'
-BRANCHES = [
-    # category, name, url suffix
-    ('*trunk*', 'Trunk', 'trunk/'),
-    ('branch', '2.5', 'branches/release25-maint/'),
-    ('branch', 'py3k', 'branches/py3k/'),
-    ]
-
-
-# TODO: Make this a POST request to avoid XSRF attacks.
-@admin_required
-def repo_init(_request):
-  """/repo_init - Initialze the list of known Subversion repositories."""
-  python = models.Repository.gql("WHERE name = 'Python'").get()
-  if python is None:
-    python = models.Repository(name='Python', url=SVN_ROOT)
-    python.put()
-    pybranches = []
-  else:
-    pybranches = list(models.Branch.gql('WHERE repo = :1', python))
-  for category, name, url in BRANCHES:
-    url = python.url + url
-    for br in pybranches:
-      if (br.category, br.name, br.url) == (category, name, url):
-        break
-    else:
-      br = models.Branch(repo=python, repo_name='Python',
-                         category=category, name=name, url=url)
-      br.put()
-  return HttpResponseRedirect(reverse(repos))
-
-
-@login_required
-@xsrf_required
-def branch_new(request, repo_id):
-  """/branch_new/<repo> - Add a new Branch to a Repository record."""
-  repo = models.Repository.get_by_id(int(repo_id))
-  if request.method != 'POST':
-    form = BranchForm(initial={'url': repo.url,
-                               'category': 'branch',
-                               })
-    return respond(request, 'branch_new.html', {'form': form, 'repo': repo})
-  form = BranchForm(request.POST)
-  errors = form.errors
-  if not errors:
-    try:
-      branch = models.Branch(
-        repo=repo,
-        category=form.cleaned_data.get('category'),
-        name=form.cleaned_data.get('name'),
-        url=form.cleaned_data.get('url'),
-        )
-    except (db.BadValueError, ValueError), err:
-      errors['__all__'] = unicode(err)
-  if errors:
-    return respond(request, 'branch_new.html', {'form': form, 'repo': repo})
-  branch.repo_name = repo.name
-  branch.put()
-  return HttpResponseRedirect(reverse(repos))
-
-
-@login_required
-@xsrf_required
-def branch_edit(request, branch_id):
-  """/branch_edit/<branch> - Edit a Branch record."""
-  branch = models.Branch.get_by_id(int(branch_id))
-  if branch.owner != request.user:
-    return HttpTextResponse('You do not own this branch', status=403)
-  if request.method != 'POST':
-    form = BranchForm(initial={'category': branch.category,
-                               'name': branch.name,
-                               'url': branch.url,
-                               })
-    return respond(request, 'branch_edit.html',
-                   {'branch': branch, 'form': form})
-
-  form = BranchForm(request.POST)
-  errors = form.errors
-  if not errors:
-    try:
-      branch.category = form.cleaned_data.get('category')
-      branch.name = form.cleaned_data.get('name')
-      branch.url = form.cleaned_data.get('url')
-    except (db.BadValueError, ValueError), err:
-      errors['__all__'] = unicode(err)
-  if errors:
-    return respond(request, 'branch_edit.html',
-                   {'branch': branch, 'form': form})
-  branch.put()
-  return HttpResponseRedirect(reverse(repos))
-
-
-@post_required
-@login_required
-@xsrf_required
-def branch_delete(request, branch_id):
-  """/branch_delete/<branch> - Delete a Branch record."""
-  branch = models.Branch.get_by_id(int(branch_id))
-  if branch.owner != request.user:
-    return HttpTextResponse('You do not own this branch', status=403)
-  repo = branch.repo
-  branch.delete()
-  num_branches = models.Branch.gql('WHERE repo = :1', repo).count()
-  if not num_branches:
-    # Even if we don't own the repository?  Yes, I think so!  Empty
-    # repositories have no representation on screen.
-    repo.delete()
-  return HttpResponseRedirect(reverse(repos))
-
-
 ### User Profiles ###
 
 
@@ -3712,40 +3164,15 @@ def settings(request):
                                  'context': default_context,
                                  'column_width': default_column_width,
                                  'notify_by_email': account.notify_by_email,
-                                 'notify_by_chat': account.notify_by_chat,
                                  })
-    chat_status = None
-    if account.notify_by_chat:
-      try:
-        presence = xmpp.get_presence(account.email)
-      except Exception, err:
-        logging.error('Exception getting XMPP presence: %s', err)
-        chat_status = 'Error (%s)' % err
-      else:
-        if presence:
-          chat_status = 'online'
-        else:
-          chat_status = 'offline'
-    return respond(request, 'settings.html', {'form': form,
-                                              'chat_status': chat_status})
   form = SettingsForm(request.POST)
   if form.is_valid():
     account.nickname = form.cleaned_data.get('nickname')
     account.default_context = form.cleaned_data.get('context')
     account.default_column_width = form.cleaned_data.get('column_width')
     account.notify_by_email = form.cleaned_data.get('notify_by_email')
-    notify_by_chat = form.cleaned_data.get('notify_by_chat')
-    must_invite = notify_by_chat and not account.notify_by_chat
-    account.notify_by_chat = notify_by_chat
     account.fresh = False
     account.put()
-    if must_invite:
-      logging.info('Sending XMPP invite to %s', account.email)
-      try:
-        xmpp.send_invite(account.email)
-      except Exception, err:
-        # XXX How to tell user it failed?
-        logging.error('XMPP invite to %s failed', account.email)
   else:
     return respond(request, 'settings.html', {'form': form})
   return HttpResponseRedirect(reverse(mine))
@@ -3758,73 +3185,6 @@ def account_delete(_request):
   account = models.Account.current_user_account
   account.delete()
   return HttpResponseRedirect(users.create_logout_url(reverse(index)))
-
-
-@login_required
-@xsrf_required
-def migrate_entities(request):
-  msg = None
-  if request.method == 'POST':
-    form = MigrateEntitiesForm(request.POST)
-    form.set_user(request.user)
-    if form.is_valid():
-      # verify that the account belongs to the user
-      old_account = form.cleaned_data['account']
-      old_account_key = str(old_account.key())
-      new_account_key = str(models.Account.current_user_account.key())
-      for kind in ('Issue', 'Repository', 'Branch'):
-        taskqueue.add(url=reverse(task_migrate_entities),
-                      params={'kind': kind,
-                              'old': old_account_key,
-                              'new': new_account_key})
-      msg = (u'Migration job started. The issues, repositories and branches'
-             u' created with your old account (%s) will be moved to your'
-             u' current account (%s) in a background task and should'
-             u' be visible for your current account shortly.'
-             % (old_account.user.email(), request.user.email()))
-  else:
-    form = MigrateEntitiesForm()
-  return respond(request, 'migrate_entities.html', {'form': form, 'msg': msg})
-
-
-@post_required
-def task_migrate_entities(request):
-  """/tasks/migrate_entities - Migrates entities from one account to another."""
-  kind = request.POST.get('kind')
-  old = request.POST.get('old')
-  new = request.POST.get('new')
-  batch_size = 20
-  if kind is None or old is None or new is None:
-    logging.warning('Missing parameters')
-    return HttpResponse()
-  if kind not in ('Issue', 'Repository', 'Branch'):
-    logging.warning('Invalid kind: %s' % kind)
-    return HttpResponse()
-  old_account = models.Account.get(db.Key(old))
-  new_account = models.Account.get(db.Key(new))
-  if old_account is None or new_account is None:
-    logging.warning('Invalid accounts')
-    return HttpResponse()
-  # make sure that accounts match
-  if old_account.user.user_id() != new_account.user.user_id():
-    logging.warning('Accounts don\'t match')
-    return HttpResponse()
-  model = getattr(models, kind)
-  key = request.POST.get('key')
-  query = model.all().filter('owner =', old_account.user)
-  if key:
-    query = query.filter('__key__ >', db.Key(key))
-  query = query.order('__key__')
-  tbd = []
-  for entity in query.fetch(batch_size):
-    entity.owner = new_account.user
-    tbd.append(entity)
-  if tbd:
-    db.put(tbd)
-    taskqueue.add(url=reverse(task_migrate_entities),
-                  params={'kind': kind, 'old': old, 'new': new,
-                          'key': str(tbd[-1].key())})
-  return HttpResponse()
 
 
 @user_key_required
@@ -3844,10 +3204,6 @@ def _user_popup(request):
   user = request.user_to_show
   popup_html = memcache.get('user_popup:' + user.email())
   if popup_html is None:
-    num_issues_created = db.GqlQuery(
-      'SELECT * FROM Issue '
-      'WHERE closed = FALSE AND owner = :1',
-      user).count()
     num_issues_reviewed = db.GqlQuery(
       'SELECT * FROM Issue '
       'WHERE closed = FALSE AND reviewers = :1',
@@ -3856,7 +3212,6 @@ def _user_popup(request):
     user.nickname = models.Account.get_nickname_for_email(user.email())
     popup_html = render_to_response('user_popup.html',
                             {'user': user,
-                             'num_issues_created': num_issues_created,
                              'num_issues_reviewed': num_issues_reviewed,
                              },
                              context_instance=RequestContext(request))
@@ -3950,7 +3305,7 @@ def _process_incoming_mail(raw_message, recipients):
 
   # Add sender to reviewers if needed.
   all_emails = [str(x).lower()
-                for x in [issue.owner.email()]+issue.reviewers+issue.cc]
+                for x in issue.reviewers+issue.cc]
   if sender.lower() not in all_emails:
     query = models.Account.all().filter('lower_email =', sender.lower())
     account = query.get()

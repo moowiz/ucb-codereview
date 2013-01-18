@@ -34,7 +34,6 @@ urlpatterns = patterns(
     (r'^(\d+)/edit$', 'edit'),
     (r'^(\d+)/delete$', 'delete'),
     (r'^(\d+)/close$', 'close'),
-    (r'^(\d+)/mail$', 'mailissue'),
     (r'^(\d+)/publish$', 'publish'),
     (r'^download/issue(\d+)_(\d+)\.diff', 'download'),
     (r'^download/issue(\d+)_(\d+)_(\d+)\.diff', 'download_patch'),
@@ -62,15 +61,8 @@ urlpatterns = patterns(
     (r'^api/(\d+)/(\d+)/?$', 'api_patchset'),
     (r'^user/(.+)$', 'show_user'),
     (r'^inline_draft$', 'inline_draft'),
-    (r'^repos$', 'repos'),
-    (r'^repo_new$', 'repo_new'),
-    (r'^repo_init$', 'repo_init'),
-    (r'^branch_new/(\d+)$', 'branch_new'),
-    (r'^branch_edit/(\d+)$', 'branch_edit'),
-    (r'^branch_delete/(\d+)$', 'branch_delete'),
     (r'^settings$', 'settings'),
     (r'^account_delete$', 'account_delete'),
-    (r'^migrate_entities$', 'migrate_entities'),
     (r'^user_popup/(.+)$', 'user_popup'),
     (r'^(\d+)/patchset/(\d+)$', 'patchset'),
     (r'^(\d+)/patchset/(\d+)/delete$', 'delete_patchset'),
@@ -83,7 +75,6 @@ urlpatterns = patterns(
     (r'^static/upload.py$', 'customized_upload_py'),
     (r'^search$', 'search'),
     (r'^tasks/calculate_delta$', 'calculate_delta'),
-    (r'^tasks/migrate_entities$', 'task_migrate_entities'),
     )
 
 feed_dict = {
@@ -93,9 +84,3 @@ feed_dict = {
   'all': feeds.AllFeed,
   'issue' : feeds.OneIssueFeed,
 }
-
-urlpatterns += patterns(
-    '',
-    (r'^rss/(?P<url>.*)$', 'django.contrib.syndication.views.feed',
-     {'feed_dict': feed_dict}),
-    )

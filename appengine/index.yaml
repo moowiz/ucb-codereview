@@ -49,6 +49,12 @@ indexes:
 - kind: Issue
   properties:
   - name: closed
+  - name: modified
+    direction: desc
+
+- kind: Issue
+  properties:
+  - name: closed
   - name: owner
   - name: created
 
@@ -92,6 +98,12 @@ indexes:
   properties:
   - name: closed
   - name: reviewers
+  - name: modified
+    direction: desc
+
+- kind: Issue
+  properties:
+  - name: comp_score
   - name: modified
     direction: desc
 

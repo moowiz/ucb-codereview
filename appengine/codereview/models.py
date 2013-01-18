@@ -61,8 +61,11 @@ def gql(cls, clause, *args, **kwds):
   return query
 
 
-### Issues, PatchSets, Patches, Contents, Comments, Messages ###
-
+class Class(db.Model):
+    """Represents a class.
+    Each class has assignments and accounts associated with it.
+    """
+    name = db.StringProperty()
 
 class Issue(db.Model):
   """The major top-level entity.
@@ -71,21 +74,14 @@ class Issue(db.Model):
   """
 
   subject = db.StringProperty(required=True)
-  description = db.TextProperty()
   #: in Subversion - repository path (URL) for files in patch set
-  base = db.StringProperty()
-  #: if True then base files for patches were uploaded with upload.py
-  #: (if False - then Rietveld attempts to download them from server)
-  local_base = db.BooleanProperty(default=False)
-  repo_guid = db.StringProperty()
-  owner = db.UserProperty(auto_current_user_add=True, required=True)
+  #base = db.StringProperty()
+  m_class = db.ReferenceProperty(Class)
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   reviewers = db.ListProperty(db.Email)
-  cc = db.ListProperty(db.Email)
-  closed = db.BooleanProperty(default=False)
-  private = db.BooleanProperty(default=False)
   n_comments = db.IntegerProperty()
+  comp_score = db.IntegerProperty(default=-1)
 
   _is_starred = None
 
@@ -100,7 +96,7 @@ class Issue(db.Model):
 
   def user_can_edit(self, user):
     """Return true if the given user has permission to edit this issue."""
-    return user == self.owner
+    return Account.get_account_for_user(user).is_staff
 
   @property
   def edit_allowed(self):
@@ -186,6 +182,7 @@ class PatchSet(db.Model):
     """
     # For older patchsets n_comments is None.
     return self.n_comments or 0
+
 
 
 class Message(db.Model):
@@ -567,34 +564,7 @@ class Bucket(db.Model):
 ### Repositories and Branches ###
 
 
-class Repository(db.Model):
-  """A specific Subversion repository."""
-
-  name = db.StringProperty(required=True)
-  url = db.LinkProperty(required=True)
-  owner = db.UserProperty(auto_current_user_add=True)
-  guid = db.StringProperty()  # global unique repository id
-
-  def __str__(self):
-    return self.name
-
-
-class Branch(db.Model):
-  """A trunk, branch, or a tag in a specific Subversion repository."""
-
-  repo = db.ReferenceProperty(Repository, required=True)
-  # Cache repo.name as repo_name, to speed up set_branch_choices()
-  # in views.IssueBaseForm.
-  repo_name = db.StringProperty()
-  category = db.StringProperty(required=True,
-                               choices=('*trunk*', 'branch', 'tag'))
-  name = db.StringProperty(required=True)
-  url = db.LinkProperty(required=True)
-  owner = db.UserProperty(auto_current_user_add=True)
-
-
 ### Accounts ###
-
 
 class Account(db.Model):
   """Maps a user or email address to a user-selected nickname, and more.
@@ -625,9 +595,9 @@ class Account(db.Model):
   modified = db.DateTimeProperty(auto_now=True)
   stars = db.ListProperty(int)  # Issue ids of all starred issues
   fresh = db.BooleanProperty()
-  uploadpy_hint = db.BooleanProperty(default=True)
   notify_by_email = db.BooleanProperty(default=True)
-  notify_by_chat = db.BooleanProperty(default=False)
+  is_staff = db.BooleanProperty(default=False)
+  m_class = db.ReferenceProperty(Class)
 
   # Current user's Account.  Updated by middleware.AddUserToRequestMiddleware.
   current_user_account = None
