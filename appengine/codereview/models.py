@@ -63,9 +63,11 @@ def gql(cls, clause, *args, **kwds):
 
 class Class(db.Model):
     """Represents a class.
-    Each class has assignments and accounts associated with it.
+    Each class has accounts associated with it.
     """
     name = db.StringProperty()
+    year = db.DateProperty()
+
 
 class Issue(db.Model):
   """The major top-level entity.
@@ -76,7 +78,6 @@ class Issue(db.Model):
   subject = db.StringProperty(required=True)
   #: in Subversion - repository path (URL) for files in patch set
   #base = db.StringProperty()
-  m_class = db.ReferenceProperty(Class)
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   reviewers = db.ListProperty(db.Email)
@@ -586,7 +587,6 @@ class Account(db.Model):
 
   user = db.UserProperty(auto_current_user_add=True, required=True)
   email = db.EmailProperty(required=True)  # key == <email>
-  nickname = db.StringProperty(required=True)
   default_context = db.IntegerProperty(default=settings.DEFAULT_CONTEXT,
                                        choices=CONTEXT_CHOICES)
   default_column_width = db.IntegerProperty(
@@ -594,10 +594,9 @@ class Account(db.Model):
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   stars = db.ListProperty(int)  # Issue ids of all starred issues
-  fresh = db.BooleanProperty()
-  notify_by_email = db.BooleanProperty(default=True)
   is_staff = db.BooleanProperty(default=False)
-  m_class = db.ReferenceProperty(Class)
+  class_and_year = db.ReferenceProperty(Class)
+  section = db.ListProperty(int, default = [])
 
   # Current user's Account.  Updated by middleware.AddUserToRequestMiddleware.
   current_user_account = None
@@ -605,6 +604,10 @@ class Account(db.Model):
   lower_email = db.StringProperty()
   lower_nickname = db.StringProperty()
   xsrf_secret = db.BlobProperty()
+
+  @property
+  def nickname(self):
+      return self.email[:self.email.find('@')]
 
   # Note that this doesn't get called when doing multi-entity puts.
   def put(self):
@@ -624,8 +627,7 @@ class Account(db.Model):
     if account is not None:
       return account
     nickname = cls.create_nickname_for_user(user)
-    return cls.get_or_insert(key, user=user, email=email, nickname=nickname,
-                             fresh=True)
+    return cls.get_or_insert(key, user=user, email=email, nickname=nickname)
 
   @classmethod
   def create_nickname_for_user(cls, user):
@@ -721,23 +723,6 @@ class Account(db.Model):
     if account is None:
       return None
     return account.email
-
-  def user_has_selected_nickname(self):
-    """Return True if the user picked the nickname.
-
-    Normally this returns 'not self.fresh', but if that property is
-    None, we assume that if the created and modified timestamp are
-    within 2 seconds, the account is fresh (i.e. the user hasn't
-    selected a nickname yet).  We then also update self.fresh, so it
-    is used as a cache and may even be written back if we're lucky.
-    """
-    if self.fresh is None:
-      delta = self.created - self.modified
-      # Simulate delta = abs(delta)
-      if delta.days < 0:
-        delta = -delta
-      self.fresh = (delta.days == 0 and delta.seconds < 2)
-    return not self.fresh
 
   _drafts = None
 

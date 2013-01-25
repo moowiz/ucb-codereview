@@ -23,7 +23,7 @@ document.onkeydown = M_dashboardKeyDown;
 
   <tr>
     <td colspan="9" class="header">
-      <h3>Reviewable by {%nickname email%} ({{review_issues|length}})</h3>
+      <h3>Assignments Needing Grading ({{review_issues|length}})</h3>
     </td>
   </tr>
   {%if not review_issues%}
@@ -41,7 +41,7 @@ document.onkeydown = M_dashboardKeyDown;
 
   <tr>
     <td colspan="9" class="header">
-      <h3>Closed Recently ({{closed_issues|length}})</h3>
+      <h3>Graded Assignments ({{closed_issues|length}})</h3>
     </td>
   </tr>
   {%if not closed_issues%}

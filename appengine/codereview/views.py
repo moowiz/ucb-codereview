@@ -405,10 +405,8 @@ def respond(request, template, params=None):
   counter += 1
   if params is None:
     params = {}
-  must_choose_nickname = False
   if request.user is not None:
     account = models.Account.current_user_account
-    must_choose_nickname = not account.user_has_selected_nickname()
   params['request'] = request
   params['counter'] = counter
   params['user'] = request.user
@@ -424,7 +422,6 @@ def respond(request, template, params=None):
     account = models.Account.current_user_account
     if account is not None:
       params['xsrf_token'] = account.get_xsrf_token()
-  params['must_choose_nickname'] = must_choose_nickname
   params['rietveld_revision'] = django_settings.RIETVELD_REVISION
   try:
     return render_to_response(template, params,
@@ -978,6 +975,8 @@ def show_user(request):
 
 def _show_user(request):
   user = request.user_to_show
+  acc = models.Account.get_account_for_user(user)
+  #TODO add some validation so that people can't see other submissions
   if user == request.user:
     query = models.Comment.all().filter('draft =', True)
     query = query.filter('author =', request.user).fetch(100)
@@ -986,23 +985,29 @@ def _show_user(request):
   else:
     draft_issues = draft_keys = []
   checker = lambda issue: issue.key() not in draft_keys and _can_view_issue(request.user, issue)
-  review_issues = [
+  rev_q = 'SELECT * FROM Issue '
+  if acc.is_staff:
+      rev_q += 'WHERE section IN :1 '
+      arg = acc.section
+  else:
+      rev_q += 'WHERE reviewers = :1 '
+      arg = user.email().lower()
+  rev_q += 'ORDER BY modified DESC LIMIT 100'
+  all_issues = [
       issue for issue in db.GqlQuery(
-          'SELECT * FROM Issue '
-          'WHERE reviewers = :1 '
-          'ORDER BY modified DESC '
-          'LIMIT 100',
-          user.email().lower())
+          rev_q,
+          arg)
       if checker(issue)]
-  closed_issues = [
-      issue for issue in db.GqlQuery(
-          'SELECT * FROM Issue '
-          'WHERE comp_score = -1 '
-          'ORDER BY modified DESC '
-          'LIMIT 100',
-          )
-      if checker(issue) and issue.comp_score > -1]
-  all_issues = review_issues + closed_issues
+  review_issues = [None]*len(all_issues)
+  closed_issues = [None]*len(all_issues)
+  i, j = 0, 0
+  for iss in all_issues:
+      if issue.comp_score > -1:
+          closed_issues[i] = iss
+          i += 1
+      else:
+          review_issues[j] = iss
+          j += 1
   _load_users_for_issues(all_issues)
   _optimize_draft_counts(all_issues)
   return respond(request, 'user.html',

@@ -34,7 +34,7 @@ def get_links_for_users(user_emails):
   """Return a dictionary of email->link to user page and fill caches."""
   link_dict = {}
   remaining_emails = set(user_emails)
-  
+
   # initialize with email usernames
   for email in remaining_emails:
     nick = email.split('@', 1)[0]
@@ -63,12 +63,12 @@ def get_links_for_users(user_emails):
   # and finally hit the datastore
   accounts = models.Account.get_accounts_for_emails(remaining_emails)
   for account in accounts:
-    if account and account.user_has_selected_nickname:
+    if account:
       ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
              (reverse('codereview.views.show_user', args=[account.nickname]),
               cgi.escape(account.nickname)))
       link_dict[account.email] = ret
-    
+
   datastore_results = dict((e, link_dict[e]) for e in remaining_emails)
   memcache.set_multi(datastore_results, 300, key_prefix='show_user:')
   user_cache.update(datastore_results)
@@ -112,7 +112,7 @@ def show_users(email_list, arg=None):
     user = users.get_current_user()
     if user is not None:
       links[user.email()] = 'me'
-      
+
   return django.utils.safestring.mark_safe(', '.join(
       links[email] for email in email_list))
 

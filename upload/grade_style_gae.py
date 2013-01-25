@@ -6,10 +6,9 @@ import getpass
 from google.appengine.ext.remote_api import remote_api_stub
 
 cwd = os.getcwdu()
-cwd = "/".join(cwd.split("/")[:-1]) + "/"
-cwd += "appengine"
-print cwd
+cwd = "/".join(cwd.split("/")[:-1]) + "/appengine"
 sys.path.append(cwd)
+#Idk what this is about....
 os.environ['SERVER_SOFTWARE'] = ''
 
 def auth_func():
