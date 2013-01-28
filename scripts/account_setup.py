@@ -12,7 +12,7 @@ sys.path.append(cwd)
 os.environ['SERVER_SOFTWARE'] = ''
 
 def auth_func():
-    return (u'moowiz2020@gmail.com', getpass.getpass(u'Password:'))
+    return (u'moowiz2020@gmail.com', u'twyibazqjqpsqvph')
 
 parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
 parser.add_argument('mapping', type=str,
@@ -28,7 +28,7 @@ def make_acc(email, section):
     section = int(section)
     if section not in acc.section:
         acc.section.append(section)
-    acc.put()
+        acc.put()
 
 def main(filename):
     f = open(os.path.expanduser(filename))
@@ -37,9 +37,10 @@ def main(filename):
     f.close()
     count = 0
     for it in split:
-        if count % 50 == 0:
+        if count % 10 == 0:
             print 'counter {}'.format(count)
         make_acc(it[0], it[1])
+        count += 1
 
 if __name__ == "__main__":
     main(args.mapping)
