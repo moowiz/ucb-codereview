@@ -203,13 +203,13 @@ def put_in_repo(data):
     if not issue_num:
         path_to_template = config.TEMPLATE_DIR
         if "hw" in data.assign:
-            pass
-            #path_to_template += "hw/"
+            path_to_template += "hw/"
         else:
             path_to_template += "projects/"
         data.git_assign = utils.clean_assign(data.git_assign)
         if data.git_assign not in config.ASSIGN_TO_NAME_MAP:
-            path_to_template += data.git_assign + "/"
+            pass
+            #path_to_template += data.git_assign + "/"
         else:
             path_to_template += config.ASSIGN_TO_NAME_MAP[data.git_assign] + "/"
         copy_important_files(data, path_to_template, path_to_repo, template=True)
