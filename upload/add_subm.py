@@ -203,7 +203,8 @@ def put_in_repo(data):
     if not issue_num:
         path_to_template = config.TEMPLATE_DIR
         if "hw" in data.assign:
-            path_to_template += "hw/"
+            pass
+            #path_to_template += "hw/"
         else:
             path_to_template += "projects/"
         data.git_assign = utils.clean_assign(data.git_assign)
