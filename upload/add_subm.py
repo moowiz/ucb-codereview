@@ -57,7 +57,7 @@ def get_subm(data):
     timestamp = err[err.find(".") + 1: err.find("for")].strip()
     if tempdir[-1] != "/":
         tempdir += "/"
-    return tempdir, timestamp #need the trailing slash for the copy command
+    return tempdir, timestamp
 
 def find_path(logins, data):
     """
@@ -94,18 +94,30 @@ def get_sections():
     file.close()
     return rval
 
-def get_gmails():
+def get_logins(login):
+    logins = [login]
+    if os.path.exists(os.getcwd() + "/MY.PARTNERS"):
+        f = open("MY.PARTNERS")
+        logins = list(map(lambda x: x.replace('\n', '').strip(),
+                          filter(lambda x: x, f.read().split(' '))))
+        f.close()
+    return logins
+
+def get_gmails(logins):
     """
     Returns the gmail accounts (in a list) associated with these students for the code review system.
     """
-    file = open(config.GMAILS_FILE, 'r')
-    rval = file.read().split()
-    file.close()
-    return rval
+    gmails = []
+    for login in logins:
+        f = open(config.GRADING_DIR + "register/" + login)
+        email = f.read().split("\n")[-1].strip()
+        f.close()
+        gmails.append(email)
+    return gmails
 
 PYTHON_BIN = "python2.7"
 UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
-SERVER_NAME = "berkeley-61a.appspot.com"
+SERVER_NAME = "ucb-codereview.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
 @save_dir
@@ -115,16 +127,8 @@ def upload(path_to_repo, logins, data):
     gmail account of the student.
     """
     os.chdir(path_to_repo)
-    if not data.gmails:
-        data.gmails = get_gmails()
-    if not data.gmails or len(data.gmails) == 0:
-        raise UploadException("Student had no gmails. Not uploading.")
+    data.gmails = get_gmails(logins)
     issue_num = model.get_issue_number(logins, data.git_assign)
-    sections = get_sections()
-    reviewers = set()
-    for section in sections:
-        reviewers.update(set(model.get_reviewers(section)))
-    data.gmails.extend(list(reviewers))
     hash_str = git.get_revision_hash(path_to_repo)
     #now we create arguments
     if not issue_num: #if this is the first time uploading...
@@ -193,7 +197,7 @@ def put_in_repo(data):
     Puts the login's assignment into their repo
     """
     path_to_subm, timestamp = get_subm(data)
-    logins = list(map(lambda x: x.replace('\n', '').strip(), filter(lambda x: x, open(config.LOGINS_FILE, 'r').read().split(' '))))
+    logins = get_logins()
     path_to_repo = find_path(logins, data)
     issue_num = model.get_issue_number(logins, data.git_assign)
     if not issue_num:
