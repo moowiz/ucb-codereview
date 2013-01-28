@@ -1645,6 +1645,7 @@ def _get_patchset_info(request, patchset_id):
   return issue, patchsets, response
 
 
+@login_required
 @issue_required
 def show(request, form=None):
   """/<issue> - Show an issue."""
