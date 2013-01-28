@@ -41,7 +41,7 @@ def bkup_if_exists(path):
     Args:
         path: path of sqlite db
     """
-    newpath = path + "." + get_timestamp_str() + BACKUP_EXT
+    newpath = path + "." + utils.get_timestamp_str() + BACKUP_EXT
     if os.path.exists(newpath):
         raise RuntimeError("Tried to backup the database too fast!") #not sure about this error message
     print('path {}'.format(newpath))
