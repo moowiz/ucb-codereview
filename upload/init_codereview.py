@@ -14,8 +14,7 @@ import sqlite3
 import utils
 import argparse
 import shutil
-
-from utils import read_db_path, get_timestamp_str
+from config import *
 
 
 # A dictionary repr of the schema. Mapping is
@@ -75,15 +74,6 @@ def create_table(path):
     conn.commit()
     conn.close()
 
-def init_data(db_path):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    query = "INSERT INTO section_to_email (section, email) VALUES (?, ?)"
-    for key,value in SECTION_TO_STAFF.items():
-        for k,v in value.items():
-            cursor.execute(query, (k,STAFF_TO_EMAIL[v]))
-    conn.commit()
-    conn.close()
 
 def import_old_data(db_path, path_to_backup):
     """
@@ -112,13 +102,12 @@ def main(transfer, clear, update):
     The main function to run. Populates the database with basic info.
     """
     utils.check_allowed_user()
-    db_path = read_db_path()
+    db_path = config.DB_PATH
     if transfer or clear:
         backup_path = bkup_if_exists(db_path)
     try:
         if transfer or clear:
             create_table(db_path)
-        init_data(db_path)
         if transfer:
             import_old_data(db_path, backup_path)
         utils.chown_staff_master(db_path)
