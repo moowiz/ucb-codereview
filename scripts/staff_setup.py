@@ -24,8 +24,12 @@ remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host
 from codereview.models import Account
 
 def make_acc(email, section):
-    acc = Account.get_or_insert('<%s>' % email, user=User(email), email=email)
+    section = int(section)
+    username = email[:email.find('@')]
+    acc = Account.get_or_insert('<%s>' % email, user=User(username), email=email)
     acc.is_staff = True
+    if section not in acc.sections:
+        acc.sections.append(section)
     acc.put()
 
 def main(filename):

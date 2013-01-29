@@ -60,15 +60,6 @@ def gql(cls, clause, *args, **kwds):
   query.bind(*args, **kwds)
   return query
 
-
-class Class(db.Model):
-    """Represents a class.
-    Each class has accounts associated with it.
-    """
-    name = db.StringProperty()
-    year = db.DateProperty()
-
-
 class Issue(db.Model):
   """The major top-level entity.
 
@@ -597,8 +588,7 @@ class Account(db.Model):
   modified = db.DateTimeProperty(auto_now=True)
   stars = db.ListProperty(int)  # Issue ids of all starred issues
   is_staff = db.BooleanProperty(default=False)
-  class_and_year = db.ReferenceProperty(Class)
-  section = db.ListProperty(int, default = [])
+  sections = db.ListProperty(int, default = [])
 
   # Current user's Account.  Updated by middleware.AddUserToRequestMiddleware.
   current_user_account = None
@@ -615,6 +605,12 @@ class Account(db.Model):
   def put(self):
     self.lower_email = str(self.email).lower()
     self.lower_nickname = self.nickname.lower()
+    if not self.is_staff:
+        for num in self.sections:
+            section = Section.get_or_insert('<{}>'.format(num))
+            if self.key() not in section.accounts:
+                section.accounts.append(self.key())
+            section.put()
     super(Account, self).put()
 
   @classmethod
@@ -816,3 +812,10 @@ class Account(db.Model):
     when = int(time.time()) // 3600 + offset
     m.update(str(when))
     return m.hexdigest()
+
+class Section(db.Model):
+    """Represents a class.
+    Each class has accounts associated with it.
+    """
+    accounts = db.ListProperty(db.Key)
+

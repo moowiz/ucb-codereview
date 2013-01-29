@@ -461,7 +461,7 @@ def _clean_int(value, default, min_value=None, max_value=None):
 
 def _can_view_issue(user, issue):
   user_email = db.Email(user.email().lower())
-  return user_email in issue.reviewers
+  return user_email in issue.reviewers or Account.get_account_for_user(user).is_staff
 
 
 class HttpTextResponse(HttpResponse):
@@ -985,24 +985,28 @@ def _show_user(request):
   else:
     draft_issues = draft_keys = []
   checker = lambda issue: issue.key() not in draft_keys and _can_view_issue(request.user, issue)
-  rev_q = 'SELECT * FROM Issue '
+  all_issues = []
   if acc.is_staff:
-      rev_q += 'WHERE section IN :1 '
-      arg = acc.section
+      for num in acc.sections:
+          section = models.Section.get_by_key_name("<{}>".format(num))
+          for stu in section.accounts:
+              email = models.Account.get(stu).lower_email
+              for issue in models.Issue.all().filter('reviewers =', email).order('modified').run():
+                  if issue.key() not in draft_keys:
+                    all_issues.append(issue)
   else:
-      rev_q += 'WHERE reviewers = :1 '
-      arg = user.email().lower()
-  rev_q += 'ORDER BY modified DESC LIMIT 100'
-  all_issues = [
+      all_issues = [
       issue for issue in db.GqlQuery(
-          rev_q,
-          arg)
+          'SELECT * FROM Issue '
+          'WHERE reviewers = :1 '
+          'ORDER BY modified DESC',
+          user.email().lower())
       if checker(issue)]
   review_issues = [None]*len(all_issues)
   closed_issues = [None]*len(all_issues)
   i, j = 0, 0
   for iss in all_issues:
-      if issue.comp_score > -1:
+      if issue.closed:
           closed_issues[i] = iss
           i += 1
       else:
