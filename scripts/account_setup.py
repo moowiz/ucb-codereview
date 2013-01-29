@@ -26,9 +26,9 @@ from codereview.models import Account
 def make_acc(email, section):
     acc = Account.get_or_insert('<%s>' % email, user=User(email), email=email)
     section = int(section)
-    if section not in acc.section:
-        acc.section.append(section)
-        acc.put()
+    if section not in acc.sections:
+        acc.sections.append(section)
+    acc.put()
 
 def main(filename):
     f = open(os.path.expanduser(filename))
@@ -39,6 +39,8 @@ def main(filename):
     for it in split:
         if count % 10 == 0:
             print 'counter {}'.format(count)
+        if count > 20:
+            return
         make_acc(it[0], it[1])
         count += 1
 
