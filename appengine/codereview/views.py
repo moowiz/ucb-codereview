@@ -1008,6 +1008,10 @@ def _show_user(request):
       else:
           review_issues[j] = iss
           j += 1
+  while review_issues and review_issues[-1] is None:
+    review_issues.pop()
+  while closed_issues and closed_issues[-1] is None:
+    closed_issues.pop()
   _load_users_for_issues(all_issues)
   _optimize_draft_counts(all_issues)
   return respond(request, 'user.html',
@@ -1650,6 +1654,9 @@ def _get_patchset_info(request, patchset_id):
 def show(request, form=None):
   """/<issue> - Show an issue."""
   issue, patchsets, response = _get_patchset_info(request, None)
+  if (request.user.email() not in issue.reviewers) and (not models.Account.get_account_for_user(request.user).is_staff):
+      return HttpTextResponse(
+          'You cannot view this issue.', status=403)
   if response:
     return response
   if not form:
@@ -2000,8 +2007,6 @@ def _issue_as_dict(issue, messages, request=None):
   values = {
     'modified': str(issue.modified),
     'created': str(issue.created),
-    'closed': issue.closed,
-    'cc': issue.cc,
     'reviewers': issue.reviewers,
     'patchsets': [p.key().id() for p in issue.patchset_set.order('created')],
     'description': issue.description,
@@ -3101,12 +3106,8 @@ def search(request):
   q = models.Issue.all(keys_only=keys_only)
   if form.cleaned_data['cursor']:
     q.with_cursor(form.cleaned_data['cursor'])
-  if form.cleaned_data['closed'] is not None:
-    q.filter('closed = ', form.cleaned_data['closed'])
   if form.cleaned_data['reviewer']:
     q.filter('reviewers = ', form.cleaned_data['reviewer'])
-  if form.cleaned_data['repo_guid']:
-    q.filter('repo_guid = ', form.cleaned_data['repo_guid'])
 
   # Default sort by ascending key to save on indexes.
   sorted_by = '__key__'

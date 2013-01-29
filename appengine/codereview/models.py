@@ -76,8 +76,6 @@ class Issue(db.Model):
   """
 
   subject = db.StringProperty(required=True)
-  #: in Subversion - repository path (URL) for files in patch set
-  #base = db.StringProperty()
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   reviewers = db.ListProperty(db.Email)
@@ -94,6 +92,10 @@ class Issue(db.Model):
     account = Account.current_user_account
     self._is_starred = account is not None and self.key().id() in account.stars
     return self._is_starred
+
+  @property
+  def closed(self):
+      return self.comp_score > -1
 
   def user_can_edit(self, user):
     """Return true if the given user has permission to edit this issue."""
