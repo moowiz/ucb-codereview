@@ -99,7 +99,7 @@ def get_logins(login):
     if os.path.exists(os.getcwd() + "/MY.PARTNERS"):
         f = open("MY.PARTNERS")
         logins = list(map(lambda x: x.replace('\n', '').strip(),
-                          filter(lambda x: x, f.read().split(' '))))
+            filter(lambda x: x, f.read().split(' '))))
         f.close()
     return logins
 
@@ -140,7 +140,7 @@ def upload(path_to_repo, logins, data):
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
             '--rev', hash_str, '--private'))#, "--send_mail"))
-    print("Uploading...")
+        print("Uploading...")
     out, err = utils.run(cmd)
     if "Unhandled exception" in err:
         raise UploadException(str(err))
@@ -211,9 +211,9 @@ def put_in_repo(data):
         data.git_assign = utils.clean_assign(data.git_assign)
         if data.git_assign not in config.ASSIGN_TO_NAME_MAP:
             pass
-            #path_to_template += data.git_assign + "/"
-        else:
-            path_to_template += config.ASSIGN_TO_NAME_MAP[data.git_assign] + "/"
+        #path_to_template += data.git_assign + "/"
+    else:
+        path_to_template += config.ASSIGN_TO_NAME_MAP[data.git_assign] + "/"
         copy_important_files(data, path_to_template, path_to_repo, template=True)
         git_init(path_to_repo)
         git.add(None, path=path_to_repo)
@@ -282,12 +282,12 @@ class Data:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
-     submission for the given assignment to the code review system.")
+            submission for the given assignment to the code review system.")
     parser.add_argument('assign', type=str,
-                        help='the assignment to look at')
+            help='the assignment to look at')
     parser.add_argument('login', type=str,
-                        help='the login to add')
+            help='the login to add')
     parser.add_argument('gmails', default=None,type=str,
-                        nargs="*", help="Optional gmails to force the student to have.")
+            nargs="*", help="Optional gmails to force the student to have.")
     args = parser.parse_args()
     add(args.login, args.assign, args.gmails)
