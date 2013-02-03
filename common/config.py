@@ -2,6 +2,7 @@ import os
 import utils
 import sys
 
+
 #hard coded configs for now. Can move to a config file if we want to.
 class Config_Class:
     def __init__(self):
@@ -22,8 +23,8 @@ class Config_Class:
             "LOGINS_FILE" : None, # "MY.PARTNERS"
             "IMPORTANT_FILES" : None, # (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
             "ASSIGN_TO_NAME_MAP" : {
-                    "proj1" : "hog",
-                    "proj3" : "ants"
+                    "proj01" : "hog",
+                    "proj03" : "ants"
                 },
             "DB_PATH" : None #CODE_REVIEW_DIR + "codereview_db.sqlite"
         }
