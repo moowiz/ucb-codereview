@@ -179,12 +179,7 @@ var publish_link = "{%url codereview.views.publish issue.key.id%}";
 </div>
 
 <div class="counter">({{counter}})</div>
-<div class="mainmenu">
-  {%block mainmenu%}
-  <a href="{%url codereview.views.index %}">Issues</a>
-  {%endblock%}
-</div>
-<div class="mainmenu2">
+<div name = 'mainmenu2' class="mainmenu2">
   {%block mainmenu2%}{%endblock%}
 </div>
 
