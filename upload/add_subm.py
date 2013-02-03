@@ -111,7 +111,7 @@ def get_gmails(logins):
     for login in logins:
         f = open(config.GRADING_DIR + "register/" + login)
         email = f.read().split("\n")[-2].strip()
-        email = email[5:].strip()
+        email = email[6:].strip()
         f.close()
         gmails.append(email)
     return gmails
