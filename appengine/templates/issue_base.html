@@ -1,12 +1,8 @@
 {%extends "base.html"%}
 
-{%block mainmenu%}
-<a href="{%url codereview.views.index%}" class="active">Issues</a>
-{%endblock%}
-
-
 {%block mainmenu2%}
 {%if user%}
+{%if is_staff%}
 <a href="{%url codereview.views.mine%}">My Issues</a>
 |
 <a href="{%url codereview.views.starred%}">Starred</a>
@@ -16,6 +12,11 @@
 <a href="{%url codereview.views.all%}?closed=1">Closed</a>
 |
 <a href="{%url codereview.views.all%}">All</a>
+{%else%}
+<script>
+    document.getElementsByName("mainmenu2")[0].style.visibility="hidden";
+</script>
+{%endif%}
 {%else%}
 <a class="novisit" href="{{sign_in}}">Sign in</a>
 with your <a href="https://www.google.com/accounts/NewAccount">Google

@@ -16,9 +16,9 @@ def auth_func():
 
 parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
 parser.add_argument('mapping', type=str,
-        help='the path to the csv file containing email to section mappings')
+                    help='the path to the csv file containing email to section mappings')
 parser.add_argument('host', type=str,
-        help='the URL of the server we want to upload info to')
+                    help='the URL of the server we want to upload info to')
 args = parser.parse_args()
 remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host)
 from codereview.models import Account
@@ -39,8 +39,11 @@ def main(filename):
     for it in split:
         if count % 10 == 0:
             print 'counter {}'.format(count)
+        if count > 20:
+            return
         make_acc(it[0], it[1])
         count += 1
+        break
 
 if __name__ == "__main__":
     main(args.mapping)
