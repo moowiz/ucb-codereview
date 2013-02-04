@@ -925,7 +925,7 @@ class SubversionVCS(VersionControlSystem):
     self.svnls_cache = {}
     # Base URL is required to fetch files deleted in an older revision.
     # Result is cached to not guess it over and over again in GetBaseFile().
-    required = self.options.download_base or self.options.revision is not None
+    required = False or self.options.revision is not None
     self.svn_base = self._GuessBase(required)
 
   def GetGUID(self):
@@ -1898,8 +1898,7 @@ def UploadSeparatePatches(issue, rpc_server, patchset, data, options):
              " because the file is too large.")
       continue
     form_fields = [("filename", patch[0])]
-    if not options.download_base:
-      form_fields.append(("content_upload", "1"))
+    form_fields.append(("content_upload", "1"))
     files = [("data", "data.diff", patch[1])]
     ctype, body = EncodeMultipartFormData(form_fields, files)
     url = "/%d/upload_patch/%d" % (int(issue), int(patchset))
@@ -2173,21 +2172,6 @@ def RealMain(argv, data=None):
 
   vcs = GuessVCS(options)
 
-  base = options.base_url
-  if isinstance(vcs, SubversionVCS):
-    # Guessing the base field is only supported for Subversion.
-    # Note: Fetching base files may become deprecated in future releases.
-    guessed_base = vcs.GuessBase(options.download_base)
-    if base:
-      if guessed_base and base != guessed_base:
-        print "Using base URL \"%s\" from --base_url instead of \"%s\"" % \
-            (base, guessed_base)
-    else:
-      base = guessed_base
-
-  if not base and options.download_base:
-    options.download_base = True
-    logging.info("Enabled upload of base file")
   if not options.assume_yes:
     vcs.CheckForUnknownFiles()
   if data is None:
@@ -2259,8 +2243,7 @@ def RealMain(argv, data=None):
   form_fields.append(("base_hashes", base_hashes))
   if options.send_patch:
     options.send_mail = True
-  if not options.download_base:
-    form_fields.append(("content_upload", "1"))
+  form_fields.append(("content_upload", "1"))
   if len(data) > MAX_UPLOAD_SIZE:
     print "Patch is large, so uploading file patches separately."
     uploaded_diff_file = []
@@ -2270,14 +2253,11 @@ def RealMain(argv, data=None):
   ctype, body = EncodeMultipartFormData(form_fields, uploaded_diff_file)
   response_body = rpc_server.Send("/upload", body, content_type=ctype)
   patchset = None
-  if not options.download_base or not uploaded_diff_file:
-    lines = response_body.splitlines()
-    if len(lines) >= 2:
-      msg = lines[0]
-      patchset = lines[1].strip()
-      patches = [x.split(" ", 1) for x in lines[2:]]
-    else:
-      msg = response_body
+  lines = response_body.splitlines()
+  if len(lines) >= 2:
+    msg = lines[0]
+    patchset = lines[1].strip()
+    patches = [x.split(" ", 1) for x in lines[2:]]
   else:
     msg = response_body
   StatusUpdate(msg)
@@ -2288,11 +2268,9 @@ def RealMain(argv, data=None):
 
   if not uploaded_diff_file:
     result = UploadSeparatePatches(issue, rpc_server, patchset, data, options)
-    if not options.download_base:
-      patches = result
+    patches = result
 
-  if not options.download_base:
-    vcs.UploadBaseFiles(issue, rpc_server, patches, patchset, options, files)
+  vcs.UploadBaseFiles(issue, rpc_server, patches, patchset, options, files)
 
   payload = {}  # payload for final request
   if options.send_mail:
