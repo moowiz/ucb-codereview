@@ -979,20 +979,13 @@ def _show_user(request):
           'ORDER BY modified DESC',
           user.email().lower())
       if checker(issue)]
-  review_issues = [None]*len(all_issues)
-  closed_issues = [None]*len(all_issues)
-  i, j = 0, 0
+  review_issues = []
+  closed_issues = []
   for iss in all_issues:
       if issue.closed:
-          closed_issues[i] = iss
-          i += 1
+          closed_issues.append(iss)
       else:
-          review_issues[j] = iss
-          j += 1
-  while review_issues and review_issues[-1] is None:
-    review_issues.pop()
-  while closed_issues and closed_issues[-1] is None:
-    closed_issues.pop()
+          review_issues.append(iss)
   _load_users_for_issues(all_issues)
   _optimize_draft_counts(all_issues)
   return respond(request, 'user.html',

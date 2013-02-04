@@ -145,7 +145,6 @@ def upload(path_to_repo, logins, data):
     if "Unhandled exception" in err:
         raise UploadException(str(err))
     print("Done uploading")
-    print("out is " + str(out) + " err is " + str(err))
     line = ""
     for l in out.split('\n'):
         if l.startswith("Issue created"):
