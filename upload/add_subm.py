@@ -135,11 +135,11 @@ def upload(path_to_repo, logins, data):
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", data.git_assign, '-r', ",".join(data.gmails), '-e', ROBOT_EMAIL,
-            '--rev', hash_str, '--private'))#, "--send_mail"))
+            '--rev', hash_str))#, "--send_mail"))
     else:
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
-            '--rev', hash_str, '--private'))#, "--send_mail"))
+            '--rev', hash_str))#, "--send_mail"))
         print("Uploading...")
     out, err = utils.run(cmd)
     if "Unhandled exception" in err:
