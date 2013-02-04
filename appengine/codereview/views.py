@@ -1416,10 +1416,8 @@ def _add_patchset_from_form(request, issue, form, message_key='message',
     emails = _get_emails(form, 'cc')
     if not form.is_valid():
       return None
-    issue.cc += [cc for cc in emails if cc not in issue.cc]
   else:
     issue.reviewers = _get_emails(form, 'reviewers')
-    issue.cc = _get_emails(form, 'cc')
   issue.put()
 
   if form.cleaned_data.get('send_mail'):
@@ -3281,7 +3279,7 @@ def _process_incoming_mail(raw_message, recipients):
 
   # Add sender to reviewers if needed.
   all_emails = [str(x).lower()
-                for x in issue.reviewers+issue.cc]
+                for x in issue.reviewers]
   if sender.lower() not in all_emails:
     query = models.Account.all().filter('lower_email =', sender.lower())
     account = query.get()
