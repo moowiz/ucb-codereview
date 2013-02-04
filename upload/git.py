@@ -17,7 +17,9 @@ def add(files, path=None):
     oldpath = os.getcwd()
     os.chdir(path)
     command = "git add " + " ".join(files)
-    out = utils.run(command) 
+    out, err = utils.run(command)
+    if err:
+        raise Exception("Error while running git init: {}".format(err))
     os.chdir(oldpath)
 
 def init(path=None):
@@ -26,14 +28,24 @@ def init(path=None):
     oldpath = os.getcwd()
     os.chdir(path)
     command = "git init"
-    out = utils.run(command) 
+    out, err = utils.run(command)
+    if err:
+        raise Exception("Error while running git init: {}".format(err))
+    command = 'git config user.email "cs61a.robot@gmail.com"'
+    out, err = utils.run(command)
+    if err:
+        raise Exception("Error while running git config: {}".format(err))
+    command = 'git config user.name "CS61A robot"'
+    out, err = utils.run(command)
+    if err:
+        raise Exception("Error while running git config: {}".format(err))
     os.chdir(oldpath)
 
 GIT_COMMIT_FILE_NAME = 'tmp_git_commit_file'
 
 def commit(message, path=None):
     """
-    Commits with the given message in the git repo in the given path. 
+    Commits with the given message in the git repo in the given path.
     Message is a string.
     """
     if not path:
@@ -45,11 +57,13 @@ def commit(message, path=None):
     tmp_file.flush()
     tmp_file.close()
     command = "git commit -F " + GIT_COMMIT_FILE_NAME
-    out = utils.run(command)
+    out, err = utils.run(command)
+    if err:
+        raise Exception("Error while running git commit: {}".format(err))
     os.remove(GIT_COMMIT_FILE_NAME)
     os.chdir(oldpath)
 
-def get_revision_hash(path_to_repo=None):    
+def get_revision_hash(path_to_repo=None):
     if not path_to_repo:
         path_to_repo = os.getcwd()
     oldpath = os.getcwd()
@@ -63,4 +77,5 @@ def get_revision_hash(path_to_repo=None):
         rval = out[1] #diff from the last commit
     if type(rval) == bytes:
         rval = rval.decode("utf-8")
-    return rval 
+    os.chdir(oldpath)
+    return rval
