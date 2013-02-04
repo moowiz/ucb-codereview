@@ -982,7 +982,7 @@ def _show_user(request):
   review_issues = []
   closed_issues = []
   for iss in all_issues:
-      if issue.closed:
+      if iss.closed:
           closed_issues.append(iss)
       else:
           review_issues.append(iss)
