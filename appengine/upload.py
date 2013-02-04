@@ -38,7 +38,7 @@ import ConfigParser
 import cookielib
 import errno
 import fnmatch
-import getpass
+#import getpass
 import logging
 import marshal
 import mimetypes
@@ -58,10 +58,10 @@ try:
 except ImportError:
   from md5 import md5
 
-try:
-  import readline
-except ImportError:
-  pass
+#try:
+  #import readline
+#except ImportError:
+  #pass
 
 try:
   import keyring
@@ -126,7 +126,7 @@ def GetEmail(prompt):
       last_email = last_email_file.readline().strip("\n")
       last_email_file.close()
       prompt += " [%s]" % last_email
-    except IOError, e:
+    except IOError:
       pass
   email = raw_input(prompt + ": ").strip()
   if email:
@@ -134,7 +134,7 @@ def GetEmail(prompt):
       last_email_file = open(last_email_file_name, "w")
       last_email_file.write(email)
       last_email_file.close()
-    except IOError, e:
+    except IOError:
       pass
   else:
     email = last_email
@@ -542,25 +542,11 @@ group.add_option("-F", "--file", action="store", dest="file",
 group.add_option("-r", "--reviewers", action="store", dest="reviewers",
                  metavar="REVIEWERS", default=None,
                  help="Add reviewers (comma separated email addresses).")
-group.add_option("--cc", action="store", dest="cc",
-                 metavar="CC", default=None,
-                 help="Add CC (comma separated email addresses).")
-group.add_option("--private", action="store_true", dest="private",
-                 default=False,
-                 help="Make the issue restricted to reviewers and those CCed")
 # Upload options
 group = parser.add_option_group("Patch options")
 group.add_option("-i", "--issue", type="int", action="store",
                  metavar="ISSUE", default=None,
                  help="Issue number to which to add. Defaults to new issue.")
-group.add_option("--base_url", action="store", dest="base_url", default=None,
-                 help="Base URL path for files (listed as \"Base URL\" when "
-                 "viewing issue).  If omitted, will be guessed automatically "
-                 "for SVN repos and left blank for others.")
-group.add_option("--download_base", action="store_true",
-                 dest="download_base", default=False,
-                 help="Base files will be downloaded by the server "
-                 "(side-by-side diffs may not work on files with CRs).")
 group.add_option("--rev", action="store", dest="revision",
                  metavar="REV", default=None,
                  help="Base revision/branch/tree to diff against. Use "
@@ -1488,7 +1474,6 @@ class MercurialVCS(VersionControlSystem):
 
   def GetUnknownFiles(self):
     """Return a list of files unknown to the VCS."""
-    args = []
     status = RunShell(["hg", "status", "--rev", self.base_rev, "-u", "."],
         silent_ok=True)
     unknown_files = []
@@ -2222,17 +2207,6 @@ def RealMain(argv, data=None):
                             options.account_type)
   form_fields = []
 
-  repo_guid = vcs.GetGUID()
-  if repo_guid:
-    form_fields.append(("repo_guid", repo_guid))
-  if base:
-    b = urlparse.urlparse(base)
-    username, netloc = urllib.splituser(b.netloc)
-    if username:
-      logging.info("Removed username from base URL")
-      base = urlparse.urlunparse((b.scheme, netloc, b.path, b.params,
-                                  b.query, b.fragment))
-    form_fields.append(("base", base))
   if options.issue:
     form_fields.append(("issue", str(options.issue)))
   if options.email:
@@ -2241,10 +2215,6 @@ def RealMain(argv, data=None):
     for reviewer in options.reviewers.split(','):
       CheckReviewer(reviewer)
     form_fields.append(("reviewers", options.reviewers))
-  if options.cc:
-    for cc in options.cc.split(','):
-      CheckReviewer(cc)
-    form_fields.append(("cc", options.cc))
 
   # Process --message, --title and --file.
   message = options.message or ""
@@ -2287,11 +2257,6 @@ def RealMain(argv, data=None):
         base_hashes += "|"
       base_hashes += checksum + ":" + file
   form_fields.append(("base_hashes", base_hashes))
-  if options.private:
-    if options.issue:
-      print "Warning: Private flag ignored when updating an existing issue."
-    else:
-      form_fields.append(("private", "1"))
   if options.send_patch:
     options.send_mail = True
   if not options.download_base:
