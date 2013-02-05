@@ -200,7 +200,7 @@ def put_in_repo(data):
     path_to_subm, timestamp = get_subm(data)
     logins = get_logins(data.login)
     path_to_repo = find_path(logins, data)
-    issue_num = model.get_issue_number(logins, data.git_assign)
+    issue_num = model.get_issue_number(logins, data.assign)
     if not issue_num:
         path_to_template = config.TEMPLATE_DIR
         if "hw" in data.assign:
