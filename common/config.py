@@ -23,8 +23,8 @@ class Config_Class:
             "LOGINS_FILE" : None, # "MY.PARTNERS"
             "IMPORTANT_FILES" : None, # (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
             "ASSIGN_TO_NAME_MAP" : {
-                    "proj01" : "hog",
-                    "proj03" : "ants"
+                    "proj1" : "hog",
+                    "proj3" : "ants"
                 },
             "DB_PATH" : None #CODE_REVIEW_DIR + "codereview_db.sqlite"
         }
