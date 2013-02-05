@@ -960,15 +960,14 @@ def _show_user(request):
     draft_issues = models.Issue.get(draft_keys)
   else:
     draft_issues = draft_keys = []
-  checker = lambda issue: issue.key() not in draft_keys and _can_view_issue(request.user, issue)
   all_issues = []
   if acc.is_staff:
       for num in acc.sections:
           section = models.Section.get_by_key_name("<{}>".format(num))
           if section:
               for stu in section.accounts:
-                  lower_email = models.Account.get(stu).lower_email
-                  for issue in models.Issue.all().filter('reviewers =', lower_email).order('modified').run():
+                  email = models.Account.get(stu).email
+                  for issue in models.Issue.all().filter('reviewers =', email).order('modified').run():
                       if issue.key() not in draft_keys:
                         all_issues.append(issue)
   else:
@@ -977,8 +976,8 @@ def _show_user(request):
           'SELECT * FROM Issue '
           'WHERE reviewers = :1 '
           'ORDER BY modified DESC',
-          user.email().lower())
-      if checker(issue)]
+          user.email())
+      if _can_view_issue(request.user, issue)]
   review_issues = []
   closed_issues = []
   for iss in all_issues:
