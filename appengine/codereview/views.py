@@ -370,10 +370,7 @@ def respond(request, template, params=None):
   params['counter'] = counter
   params['user'] = request.user
   params['is_admin'] = request.user_is_admin
-  if request.user and account.is_staff:
-      params['is_staff'] = True
-  else:
-      params['is_staff'] = False
+  params['is_staff'] = request.user and account.is_staff
   params['is_dev'] = IS_DEV
   params['media_url'] = django_settings.MEDIA_URL
   params['special_banner'] = getattr(django_settings, 'SPECIAL_BANNER', None)
