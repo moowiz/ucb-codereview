@@ -7,9 +7,6 @@
     4. Upload their code.
 """
 import argparse
-import sys
-import tempfile
-from functools import reduce
 import shutil
 import os
 import glob
@@ -200,6 +197,7 @@ def put_in_repo(data):
     path_to_subm, timestamp = get_subm(data)
     logins = get_logins(data.login)
     path_to_repo = find_path(logins, data)
+    data.git_assign = utils.dirty_assign(data.git_assign)
     issue_num = model.get_issue_number(logins, data.assign)
     if not issue_num:
         path_to_template = config.TEMPLATE_DIR
@@ -207,10 +205,9 @@ def put_in_repo(data):
             path_to_template += "hw/"
         else:
             path_to_template += "projects/"
-        data.git_assign = utils.clean_assign(data.git_assign)
         if data.git_assign not in config.ASSIGN_TO_NAME_MAP:
             pass
-        #path_to_template += data.git_assign + "/"
+            #path_to_template += data.git_assign + "/"
         else:
             path_to_template += config.ASSIGN_TO_NAME_MAP[data.git_assign] + "/"
         copy_important_files(data, path_to_template, path_to_repo, template=True)
@@ -257,7 +254,7 @@ def add(login, assign, gmails=None):
         upload(path_to_repo, logins, data)
     except IOError as e:
         if "No such file " in str(e):
-            print("ERROR:{}. Ignoring...".format(str(e)), file=sys.stderr)
+            print("ERROR:{}. Ignoring...".format(str(e)))
             return
         raise e
     except SubmissionException as e:
