@@ -38,7 +38,6 @@ def get_subm(data):
     Gets the submission for the given login and assignment
     and moves the current directory to be in the temp directory they're stored in
     """
-    print('Unpacking submission...')
     tempdir = config.TEMP_DIR
     files = glob.glob(config.TEMP_DIR + "*")
     for f in files:
@@ -137,7 +136,7 @@ def upload(path_to_repo, logins, data):
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
             '--rev', hash_str))#, "--send_mail"))
-        print("Uploading...")
+    print("Uploading...")
     out, err = utils.run(cmd)
     if "Unhandled exception" in err:
         raise UploadException(str(err))
@@ -150,7 +149,7 @@ def upload(path_to_repo, logins, data):
     if line:
         line = line[line.rfind('/') + 1:].strip()
         issue_num = int(line)
-        print("New issue {}; adding to DB".format(issue_num))
+        print("New issue {}".format(issue_num))
         model.set_issue_numbers(logins, data.git_assign, issue_num)
 
 def copy_important_files(data, start_dir, end_dir, template=False):
