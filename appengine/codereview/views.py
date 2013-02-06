@@ -205,7 +205,7 @@ class PublishForm(forms.Form):
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
-  comp_score = forms.IntegerField(required=True, label = 'Composition Score')
+  comp_score = forms.IntegerField(required=False, label = 'Composition Score')
   send_mail = forms.BooleanField(required=False)
   message = forms.CharField(required=False,
                             max_length=MAX_MESSAGE,
