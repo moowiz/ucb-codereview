@@ -73,6 +73,7 @@ class Issue(db.Model):
   n_comments = db.IntegerProperty()
   comp_score = db.IntegerProperty(default=-1)
   closed = db.BooleanProperty(default=False)
+  bug = db.BooleanProperty(default=False)
 
   _is_starred = None
 
@@ -80,8 +81,13 @@ class Issue(db.Model):
     self.closed = self.comp_score > -1
     super(Issue, self).put()
 
-  def set_comp_score(self, new):
-      self.comp_score = new
+  @property
+  def comp_score(self):
+      return self._comp_score
+
+  @comp_score.setter
+  def comp_score(self, val):
+      self._comp_score = val
       self.closed = self.comp_score > -1
 
   @property

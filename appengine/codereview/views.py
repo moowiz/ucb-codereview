@@ -206,6 +206,7 @@ class PublishForm(forms.Form):
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
   comp_score = forms.IntegerField(required=False, label = 'Composition Score')
+  bug_submit = forms.BooleanField(required=False)
   send_mail = forms.BooleanField(required=False)
   message = forms.CharField(required=False,
                             max_length=MAX_MESSAGE,
@@ -699,7 +700,7 @@ def index(request):
     return mine(request)
 
 
-DEFAULT_LIMIT = 10
+DEFAULT_LIMIT = 50
 
 
 def _url(path, **kwargs):
@@ -851,6 +852,20 @@ def _paginate_issues_with_cursor(page_url,
   if extra_template_params:
     params.update(extra_template_params)
   return _inner_paginate(request, issues, template, params)
+
+
+@staff_required
+def bugs(request):
+  """/bugs - Show a list of open bug submits"""
+  query = models.Issue.all()
+  query.filter('bug =', True)
+  query.order('-modified')
+
+  return _paginate_issues(reverse(bugs),
+                          request,
+                          query,
+                          'bugs.html')
+
 
 
 @staff_required
@@ -2682,7 +2697,8 @@ def publish(request):
     tbd = []
     comments = []
   issue.update_comment_count(len(comments))
-  issue.set_comp_score(form.cleaned_data.get('comp_score', -1))
+  issue.comp_score = form.cleaned_data.get('comp_score', -1)
+  issue.bug = form.cleaned_data.get('bug_submit', False)
   tbd.append(issue)
 
   if comments:
@@ -2696,7 +2712,6 @@ def publish(request):
   tbd.append(msg)
 
   for obj in tbd:
-
     db.put(obj)
 
 

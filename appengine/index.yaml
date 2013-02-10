@@ -48,6 +48,12 @@ indexes:
 
 - kind: Issue
   properties:
+  - name: bug
+  - name: modified
+    direction: desc
+
+- kind: Issue
+  properties:
   - name: closed
   - name: modified
     direction: desc
