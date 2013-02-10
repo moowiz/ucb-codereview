@@ -71,11 +71,13 @@ class Issue(db.Model):
   modified = db.DateTimeProperty(auto_now=True)
   reviewers = db.ListProperty(db.Email)
   n_comments = db.IntegerProperty()
+  n_messages = db.IntegerProperty()
   comp_score = db.IntegerProperty(default=-1)
   closed = db.BooleanProperty(default=False)
   bug = db.BooleanProperty(default=False)
 
   _is_starred = None
+  _comp_score = -1
 
   def put(self):
     self.closed = self.comp_score > -1
@@ -121,6 +123,24 @@ class Issue(db.Model):
     if self.n_comments is None:
       self.n_comments = self._get_num_comments()
     self.n_comments += n
+
+  @property
+  def num_messages(self):
+    """The number of non-draft messages for this issue.
+
+    This is almost an alias for self.n_messages, except that if
+    n_messages is None, it is computed through a query, and stored,
+    using n_messages as a cache.
+    """
+    if self.n_messages is None:
+      self.n_messages = self._get_num_messages()
+    return self.n_messages
+
+  def _get_num_messages(self):
+    """Helper to compute the number of messages through a query."""
+    return gql(Message,
+               'WHERE ANCESTOR IS :1 AND draft = FALSE',
+               self).count()
 
   @property
   def num_comments(self):

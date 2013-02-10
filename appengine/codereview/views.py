@@ -130,6 +130,7 @@ class IssueBaseForm(forms.Form):
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
+  bug_submit = forms.BooleanField(required=False)
 
 
 class NewForm(IssueBaseForm):
@@ -1747,6 +1748,7 @@ def edit(request):
 
   issue.subject = cleaned_data['subject']
   issue.reviewers = reviewers
+  issue.bug = cleaned_data.get('bug_submit', False)
   issue.put()
   #TODO modify this to use the score
   """"
