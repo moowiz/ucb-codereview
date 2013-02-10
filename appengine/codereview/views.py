@@ -3126,15 +3126,12 @@ def settings(request):
     form = SettingsForm(initial={'nickname': nickname,
                                  'context': default_context,
                                  'column_width': default_column_width,
-                                 'notify_by_email': account.notify_by_email,
                                  })
   form = SettingsForm(request.POST)
   if form.is_valid():
     account.nickname = form.cleaned_data.get('nickname')
     account.default_context = form.cleaned_data.get('context')
     account.default_column_width = form.cleaned_data.get('column_width')
-    account.notify_by_email = form.cleaned_data.get('notify_by_email')
-    account.fresh = False
     account.put()
   else:
     return respond(request, 'settings.html', {'form': form})
