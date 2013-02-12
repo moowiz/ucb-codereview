@@ -12,7 +12,7 @@ sys.path.append(cwd)
 os.environ['SERVER_SOFTWARE'] = ''
 
 def auth_func():
-    return (u'moowiz2020@gmail.com', u'twyibazqjqpsqvph')
+    return (u'moowiz2020@gmail.com', getpass.getpass("Google One time password:"))
 
 parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
 parser.add_argument('mapping', type=str,
