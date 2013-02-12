@@ -207,10 +207,7 @@ class PublishForm(forms.Form):
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
   comp_score = forms.IntegerField(required=False, label = 'Composition Score')
-<<<<<<< HEAD
-=======
   bug_submit = forms.BooleanField(required=False)
->>>>>>> devel
   send_mail = forms.BooleanField(required=False)
   message = forms.CharField(required=False,
                             max_length=MAX_MESSAGE,
@@ -859,8 +856,6 @@ def _paginate_issues_with_cursor(page_url,
 
 
 @staff_required
-<<<<<<< HEAD
-=======
 def bugs(request):
   """/bugs - Show a list of open bug submits"""
   query = models.Issue.all()
@@ -875,7 +870,6 @@ def bugs(request):
 
 
 @staff_required
->>>>>>> devel
 def all(request, index_call=False):
   """/all - Show a list of up to DEFAULT_LIMIT recent issues."""
   closed = request.GET.get('closed', '')
@@ -2705,12 +2699,9 @@ def publish(request):
     tbd = []
     comments = []
   issue.update_comment_count(len(comments))
-<<<<<<< HEAD
   issue.set_comp_score(form.cleaned_data.get('comp_score', -1))
-=======
   issue.comp_score = form.cleaned_data.get('comp_score', -1)
   issue.bug = form.cleaned_data.get('bug_submit', False)
->>>>>>> devel
   tbd.append(issue)
 
   if comments:

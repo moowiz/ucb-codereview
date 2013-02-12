@@ -24,10 +24,7 @@ urlpatterns = patterns(
         'codereview.views',
         (r'^$', 'index'),
         (r'^all$', 'all'),
-<<<<<<< HEAD
-=======
         (r'^bugs$', 'bugs'),
->>>>>>> devel
         (r'^mine$', 'mine'),
         (r'^starred$', 'starred'),
         (r'^upload$', 'upload'),
