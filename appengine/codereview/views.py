@@ -130,6 +130,7 @@ class IssueBaseForm(forms.Form):
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
+  bug_submit = forms.BooleanField(required=False)
 
 
 class NewForm(IssueBaseForm):
@@ -206,6 +207,10 @@ class PublishForm(forms.Form):
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
   comp_score = forms.IntegerField(required=False, label = 'Composition Score')
+<<<<<<< HEAD
+=======
+  bug_submit = forms.BooleanField(required=False)
+>>>>>>> devel
   send_mail = forms.BooleanField(required=False)
   message = forms.CharField(required=False,
                             max_length=MAX_MESSAGE,
@@ -699,7 +704,7 @@ def index(request):
     return mine(request)
 
 
-DEFAULT_LIMIT = 10
+DEFAULT_LIMIT = 50
 
 
 def _url(path, **kwargs):
@@ -854,6 +859,23 @@ def _paginate_issues_with_cursor(page_url,
 
 
 @staff_required
+<<<<<<< HEAD
+=======
+def bugs(request):
+  """/bugs - Show a list of open bug submits"""
+  query = models.Issue.all()
+  query.filter('bug =', True)
+  query.order('-modified')
+
+  return _paginate_issues(reverse(bugs),
+                          request,
+                          query,
+                          'bugs.html')
+
+
+
+@staff_required
+>>>>>>> devel
 def all(request, index_call=False):
   """/all - Show a list of up to DEFAULT_LIMIT recent issues."""
   closed = request.GET.get('closed', '')
@@ -1732,6 +1754,7 @@ def edit(request):
 
   issue.subject = cleaned_data['subject']
   issue.reviewers = reviewers
+  issue.bug = cleaned_data.get('bug_submit', False)
   issue.put()
   #TODO modify this to use the score
   """"
@@ -2682,7 +2705,12 @@ def publish(request):
     tbd = []
     comments = []
   issue.update_comment_count(len(comments))
+<<<<<<< HEAD
   issue.set_comp_score(form.cleaned_data.get('comp_score', -1))
+=======
+  issue.comp_score = form.cleaned_data.get('comp_score', -1)
+  issue.bug = form.cleaned_data.get('bug_submit', False)
+>>>>>>> devel
   tbd.append(issue)
 
   if comments:
