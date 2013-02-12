@@ -639,7 +639,11 @@ def GetRpcServer(server, email=None, host_override=None, save_cookies=True,
       print "Using password from system keyring."
     else:
       # password = getpass.getpass("Password for %s: " % local_email, stream=sys.stdout) 
-      password = "reviewdatcode"
+      if not os.path.exists('code_review_pass'):
+          raise Exception("Error: couldn't find password file! Exiting")
+      f = open('code_review_pass')
+      password = f.read().strip()
+      f.close()
       if keyring:
         answer = raw_input("Store password in system keyring?(y/N) ").strip()
         if answer == "y":
