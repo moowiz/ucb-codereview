@@ -1,0 +1,16 @@
+{%extends "header.html"%}
+{%block title1%}Edit User -{%endblock%}
+{%block head%}{{form.media}}{%endblock%}
+{%block body%}
+<h2>
+    Edit User {{email}}
+</h2>
+<form action="{{nickname|show_user}}"
+      method="post" id="edit-form">
+<input type="hidden" name="xsrf_token" value="{{xsrf_token}}">
+<table>
+{{form}}
+<tr><td><input type="submit" value="Update User"></td></tr>
+</table>
+</form>
+{%endblock%}

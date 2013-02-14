@@ -1,35 +1,4 @@
-{%extends "base.html"%}
-
-{%block mainmenu2%}
-{%if user%}
-{%if is_staff%}
-<a href="{%url codereview.views.mine%}">My Issues</a>
-|
-<a href="{%url codereview.views.starred%}">Starred</a>
-&nbsp;&nbsp;&nbsp;
-<a href="{%url codereview.views.all%}?closed=0">Open</a>
-|
-<a href="{%url codereview.views.all%}?closed=1">Closed</a>
-=======
-<a href="{%url codereview.views.all%}?closed=0">Ungraded Assignments</a>
-|
-<a href="{%url codereview.views.all%}?closed=1">Graded Assignments</a>
-|
-<a href="{%url codereview.views.bugs%}">Bug Submits</a>
-|
-<a href="{%url codereview.views.all%}">All</a>
-{%else%}
-<script>
-    document.getElementsByName("mainmenu2")[0].style.visibility="hidden";
-</script>
-{%endif%}
-{%else%}
-<a class="novisit" href="{{sign_in}}">Sign in</a>
-with your <a href="https://www.google.com/accounts/NewAccount">Google
-  Account</a> to view your issues. 
-{%endif%}
-{%endblock%}
-
+{%extends "header.html"%}
 
 {%block body%}
 <h2>

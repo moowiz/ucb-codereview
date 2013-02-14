@@ -154,6 +154,10 @@ class AddForm(forms.Form):
                               widget=AccountInput(attrs={'size': 60}))
   send_mail = forms.BooleanField(required=False, initial=True)
 
+class EditUserForm(forms.Form):
+    sections = forms.CharField()
+    is_staff = forms.BooleanField()
+
 
 class UploadForm(forms.Form):
 
@@ -953,6 +957,48 @@ def _load_users_for_issues(issues):
       user_dict[e] = user_dict.setdefault(e, 0) + 1
 
   library.get_links_for_users(user_dict.keys())
+
+@login_required
+@staff_required
+@user_key_required
+@xsrf_required
+def edit_user(request):
+  """ /user/edit - Edit the user's settings """
+  user = request.user_to_show
+  acc = models.Account.get_account_for_user(user)
+  form_class = EditUserForm
+  if request.method != 'POST':
+    form = form_class(initial={'sections': str(acc.sections),
+                               'is_staff': acc.is_staff
+                               })
+    return respond(request, 'edit_user.html', {'form': form,
+                                               'email': acc.email,
+                                             })
+
+  form = form_class(request.POST)
+  if not form.is_valid():
+    return respond(request, 'edit_user.html', {'form': form})
+  data = form.cleaned_data
+  flag = True
+  sections_s = data.get('sections', '')
+  if sections_s:
+      acc.sections = []
+      sections_s = sections_s.strip('[]')
+      for val in sections_s.split(','):
+          val = val.strip()
+          if not val:
+              continue
+          if val[-1] == 'L':
+              val = val[:-1]
+          val = int(val)
+          if val not in acc.sections:
+              acc.sections.append(val)
+      flag = True
+  if 'is_staff' in data:
+      acc.is_staff = data['is_staff']
+  if flag:
+      acc.put()
+  return HttpResponseRedirect(reverse(show_user, args=[user.email()]))
 
 @user_key_required
 def show_user(request):

@@ -16,9 +16,9 @@
   <td><div class="users">{{issue.reviewers|show_users}}</div></td>
   <td>
       {%if issue.comp_score > -1%}
-      {{issue.comp_score}}
+          {{issue.comp_score}}
       {%else%}
-      Not graded yet
+          Not graded yet
       {%endif%}
   </td>
   <td align="center">{%firstof issue.num_comments%}</td>
