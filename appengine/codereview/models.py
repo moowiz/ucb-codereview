@@ -73,28 +73,16 @@ class Issue(db.Model):
   n_comments = db.IntegerProperty()
   n_messages = db.IntegerProperty()
   comp_score = db.IntegerProperty(default=-1)
-  closed = db.BooleanProperty(default=False)
   bug = db.BooleanProperty(default=False)
 
   _is_starred = None
-  _comp_score = -1
 
   @property
-  def comp_score(self):
-      return self._comp_score
-
-  @comp_score.setter
-  def comp_score(self, val):
-      self._comp_score = val
-      self.closed = self.comp_score > -1
+  def closed(self):
+      return self.comp_score > -1
 
   def put(self):
-    self.closed = self.comp_score > -1
     super(Issue, self).put()
-
-  def set_comp_score(self, new):
-      self.comp_score = new
-      self.closed = self.comp_score > -1
 
   @property
   def is_starred(self):
@@ -640,7 +628,7 @@ class Account(db.Model):
   def put(self):
     self.lower_email = str(self.email).lower()
     self.lower_nickname = self.nickname.lower()
-    if not self.is_staff:
+    if not self.is_staff and self.sections:
         for num in self.sections:
             section = Section.get_or_insert('<{}>'.format(num))
             if self.key() not in section.accounts:
