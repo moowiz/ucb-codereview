@@ -962,20 +962,20 @@ def show_user(request):
 
 
 def _show_user(request):
-  user = request.user_to_show
+  user_to_show = request.user_to_show
   acc = models.Account.get_account_for_user(request.user)
-  if (not acc.is_staff) and (user != request.user):
+  acc_to_show = models.Account.get_account_for_user(user_to_show)
+  if (not acc.is_staff) and (user_to_show != request.user):
       return HttpTextResponse("You do not have permission to view this user", status=403)
-  #TODO add some validation so that people can't see other submissions
-  if user == request.user:
+  if user_to_show == request.user:
     query = models.Comment.all().filter('draft =', True)
     query = query.filter('author =', request.user).fetch(100)
     draft_keys = set(d.parent_key().parent().parent() for d in query)
     draft_issues = models.Issue.get(draft_keys)
   else:
     draft_issues = draft_keys = []
-  all_issues = []
-  if acc.is_staff:
+  if acc_to_show.is_staff and acc.is_staff:
+      all_issues = []
       for num in acc.sections:
           section = models.Section.get_by_key_name("<{}>".format(num))
           if section:
@@ -990,8 +990,9 @@ def _show_user(request):
           'SELECT * FROM Issue '
           'WHERE reviewers = :1 '
           'ORDER BY modified DESC',
-          user.email())
+          user_to_show.email())
       if _can_view_issue(request.user, issue)]
+  logging.warn("all {}".format([x.key() for x in all_issues]))
   review_issues = []
   closed_issues = []
   for iss in all_issues:
@@ -1002,7 +1003,7 @@ def _show_user(request):
   _load_users_for_issues(all_issues)
   _optimize_draft_counts(all_issues)
   return respond(request, 'user.html',
-                 {'email': user.email(),
+                 {'email': user_to_show.email(),
                   'review_issues': review_issues,
                   'closed_issues': closed_issues,
                   'draft_issues': draft_issues,
@@ -2692,7 +2693,7 @@ def publish(request):
     tbd = []
     comments = []
   issue.update_comment_count(len(comments))
-  issue.comp_score = form.cleaned_data.get('comp_score', -1)
+  issue.set_comp_score(form.cleaned_data.get('comp_score', -1))
   issue.bug = form.cleaned_data.get('bug_submit', False)
   tbd.append(issue)
 
@@ -3175,14 +3176,16 @@ def settings(request):
   if 'is_staff' in data:
       account.is_staff = data['is_staff']
   account.put()
-  return respond(request, 'settings.html', {'form': form,
-                                            'user_to_show': request.user_to_show})
+  return HttpResponseRedirect(reverse(show_user, args=(request.user_to_show,)))
 
 
 @user_key_required
 @login_required
 @xsrf_required
 def account_delete(request):
+  request_acc = models.Account.get_account_for_user(request.user)
+  if not (request_acc.is_staff or request.user == request.user_to_show):
+      return HttpTextResponse("Invalid permissions to delete this user", status=403)
   account = models.Account.get_account_for_user(request.user_to_show)
   account.delete()
   return HttpResponseRedirect(users.create_logout_url(reverse(index)))
