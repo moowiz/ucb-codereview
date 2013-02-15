@@ -164,7 +164,7 @@ var publish_link = "{%url codereview.views.publish issue.key.id%}";
 |
 {%if must_choose_nickname%}
 <span style="color:red">Please fill in your login information with </span>{%endif%}
-<a class="novisit" href="{%url codereview.views.settings%}">Settings</a>
+<a class="novisit" href="{%url codereview.views.settings user%}">Settings</a>
 |
 {%endif%}
 {%if is_dev%}

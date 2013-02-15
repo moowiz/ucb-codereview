@@ -154,10 +154,6 @@ class AddForm(forms.Form):
                               widget=AccountInput(attrs={'size': 60}))
   send_mail = forms.BooleanField(required=False, initial=True)
 
-class EditUserForm(forms.Form):
-    sections = forms.CharField()
-    is_staff = forms.BooleanField()
-
 
 class UploadForm(forms.Form):
 
@@ -201,10 +197,6 @@ class UploadPatchForm(forms.Form):
     return self.files['data'].read()
 
 
-class EditForm(IssueBaseForm):
-    pass
-
-
 class PublishForm(forms.Form):
 
   reviewers = forms.CharField(required=False,
@@ -230,7 +222,6 @@ FORM_CONTEXT_VALUES.append(('', 'Whole file'))
 
 class SettingsForm(forms.Form):
 
-  nickname = forms.CharField(max_length=30)
   context = forms.IntegerField(
       widget=forms.Select(choices=FORM_CONTEXT_VALUES),
       required=False,
@@ -239,8 +230,9 @@ class SettingsForm(forms.Form):
       initial=django_settings.DEFAULT_COLUMN_WIDTH,
       min_value=django_settings.MIN_COLUMN_WIDTH,
       max_value=django_settings.MAX_COLUMN_WIDTH)
-  notify_by_email = forms.BooleanField(required=False,
-                                       widget=forms.HiddenInput())
+  sections = forms.CharField(required=False)
+  is_staff = forms.BooleanField(required=False)
+
   def clean_nickname(self):
     nickname = self.cleaned_data.get('nickname')
     # Check for allowed characters
@@ -871,8 +863,6 @@ def bugs(request):
                           query,
                           'bugs.html')
 
-
-
 @staff_required
 def all(request, index_call=False):
   """/all - Show a list of up to DEFAULT_LIMIT recent issues."""
@@ -958,47 +948,6 @@ def _load_users_for_issues(issues):
 
   library.get_links_for_users(user_dict.keys())
 
-@login_required
-@staff_required
-@user_key_required
-@xsrf_required
-def edit_user(request):
-  """ /user/edit - Edit the user's settings """
-  user = request.user_to_show
-  acc = models.Account.get_account_for_user(user)
-  form_class = EditUserForm
-  if request.method != 'POST':
-    form = form_class(initial={'sections': str(acc.sections),
-                               'is_staff': acc.is_staff
-                               })
-    return respond(request, 'edit_user.html', {'form': form,
-                                               'email': acc.email,
-                                             })
-
-  form = form_class(request.POST)
-  if not form.is_valid():
-    return respond(request, 'edit_user.html', {'form': form})
-  data = form.cleaned_data
-  flag = True
-  sections_s = data.get('sections', '')
-  if sections_s:
-      acc.sections = []
-      sections_s = sections_s.strip('[]')
-      for val in sections_s.split(','):
-          val = val.strip()
-          if not val:
-              continue
-          if val[-1] == 'L':
-              val = val[:-1]
-          val = int(val)
-          if val not in acc.sections:
-              acc.sections.append(val)
-      flag = True
-  if 'is_staff' in data:
-      acc.is_staff = data['is_staff']
-  if flag:
-      acc.put()
-  return HttpResponseRedirect(reverse(show_user, args=[user.email()]))
 
 @user_key_required
 def show_user(request):
@@ -1772,7 +1721,7 @@ def edit(request):
   """/<issue>/edit - Edit an issue."""
   issue = request.issue
 
-  form_cls = EditForm
+  form_cls = IssueBaseForm
 
   if request.method != 'POST':
     reviewers = [models.Account.get_nickname_for_email(reviewer,
@@ -1796,15 +1745,6 @@ def edit(request):
   issue.reviewers = reviewers
   issue.bug = cleaned_data.get('bug_submit', False)
   issue.put()
-  #TODO modify this to use the score
-  """"
-  if issue.closed == was_closed:
-    message = 'Edited'
-  elif issue.closed:
-    message = 'Closed'
-  else:
-    message = 'Reopened'
-    """
   return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
 
 
@@ -3180,27 +3120,55 @@ def search(request):
 ### User Profiles ###
 
 
+@user_key_required
 @login_required
 @xsrf_required
 def settings(request):
   account = models.Account.current_user_account
+  if not (account.is_staff or account.user == request.user_to_show):
+      return HttpTextResponse("Error: Unable to edit settings for this user", status=404)
   if request.method != 'POST':
     nickname = account.nickname
     default_context = account.default_context
     default_column_width = account.default_column_width
+    s = ""
+    for i in account.sections:
+        tmp = str(i)
+        if tmp[-1] == 'L':
+            tmp = tmp[:-1]
+        s += tmp + ','
+    sections = s[:-1]
+    is_staff = account.is_staff
     form = SettingsForm(initial={'nickname': nickname,
                                  'context': default_context,
                                  'column_width': default_column_width,
+                                 'sections': sections,
+                                 'is_staff': is_staff,
                                  })
+    return respond(request, "settings.html", {'form':form})
   form = SettingsForm(request.POST)
-  if form.is_valid():
-    account.nickname = form.cleaned_data.get('nickname')
-    account.default_context = form.cleaned_data.get('context')
-    account.default_column_width = form.cleaned_data.get('column_width')
-    account.put()
-  else:
-    return respond(request, 'settings.html', {'form': form})
-  return HttpResponseRedirect(reverse(mine))
+  if not form.is_valid():
+    return HttpResponseRedirect(reverse(mine))
+  account.default_context = form.cleaned_data.get('context')
+  account.default_column_width = form.cleaned_data.get('column_width')
+  data = form.cleaned_data
+  sections_s = data.get('sections', '')
+  if sections_s:
+      account.sections = []
+      sections_s = sections_s.strip('[]')
+      for val in sections_s.split(','):
+          val = val.strip()
+          if not val:
+              continue
+          if val[-1] == 'L':
+              val = val[:-1]
+          val = int(val)
+          if val not in account.sections:
+              account.sections.append(val)
+  if 'is_staff' in data:
+      account.is_staff = data['is_staff']
+  account.put()
+  return respond(request, 'settings.html', {'form': form})
 
 
 @post_required
