@@ -3119,13 +3119,13 @@ def search(request):
 
 ### User Profiles ###
 
-
 @user_key_required
 @login_required
 @xsrf_required
 def settings(request):
-  account = models.Account.current_user_account
-  if not (account.is_staff or account.user == request.user_to_show):
+  account = models.Account.get_account_for_user(request.user_to_show)
+  tmp_acc = models.Account.current_user_account.is_staff
+  if not (tmp_acc or tmp_acc == acc_to_view):
       return HttpTextResponse("Error: Unable to edit settings for this user", status=404)
   if request.method != 'POST':
     nickname = account.nickname
@@ -3145,7 +3145,8 @@ def settings(request):
                                  'sections': sections,
                                  'is_staff': is_staff,
                                  })
-    return respond(request, "settings.html", {'form':form})
+    return respond(request, "settings.html", {'form':form,
+                                              'user_to_show': request.user_to_show,})
   form = SettingsForm(request.POST)
   if not form.is_valid():
     return HttpResponseRedirect(reverse(mine))
@@ -3168,14 +3169,15 @@ def settings(request):
   if 'is_staff' in data:
       account.is_staff = data['is_staff']
   account.put()
-  return respond(request, 'settings.html', {'form': form})
+  return respond(request, 'settings.html', {'form': form,
+                                            'user_to_show': request.user_to_show})
 
 
-@post_required
+@user_key_required
 @login_required
 @xsrf_required
-def account_delete(_request):
-  account = models.Account.current_user_account
+def account_delete(request):
+  account = Account.get_account_for_user(request.user_to_show)
   account.delete()
   return HttpResponseRedirect(users.create_logout_url(reverse(index)))
 
