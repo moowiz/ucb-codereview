@@ -196,13 +196,19 @@ class UploadPatchForm(forms.Form):
   def get_uploaded_patch(self):
     return self.files['data'].read()
 
+def validate_comp_score(val):
+    s = "Only numbers between -1 and 3 are allowed"
+    err = forms.ValidationError(s)
+    val = int(val)
+    if val < -1 or val > 3:
+        raise err
 
 class PublishForm(forms.Form):
-
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
-  comp_score = forms.IntegerField(required=False, label = 'Composition Score')
+  comp_score = forms.IntegerField(required=False, label = 'Composition Score',
+           validators=[validate_comp_score])
   bug_submit = forms.BooleanField(required=False)
   send_mail = forms.BooleanField(required=False)
   message = forms.CharField(required=False,
@@ -2661,6 +2667,7 @@ def publish(request):
                                'reviewers': ', '.join(reviewers),
                                'send_mail': True,
                                'message': msg,
+                               'comp_score': issue.comp_score,
                                })
     if not models.Account.get_account_for_user(request.user).is_staff:
         del form.fields['comp_score']
@@ -2685,7 +2692,6 @@ def publish(request):
     tbd = []
     comments = []
   issue.update_comment_count(len(comments))
-  issue.set_comp_score(form.cleaned_data.get('comp_score', -1))
   issue.comp_score = form.cleaned_data.get('comp_score', -1)
   issue.bug = form.cleaned_data.get('bug_submit', False)
   tbd.append(issue)
@@ -3125,7 +3131,7 @@ def search(request):
 def settings(request):
   account = models.Account.get_account_for_user(request.user_to_show)
   tmp_acc = models.Account.current_user_account.is_staff
-  if not (tmp_acc or tmp_acc == acc_to_view):
+  if not (tmp_acc or tmp_acc == account):
       return HttpTextResponse("Error: Unable to edit settings for this user", status=404)
   if request.method != 'POST':
     nickname = account.nickname
@@ -3177,7 +3183,7 @@ def settings(request):
 @login_required
 @xsrf_required
 def account_delete(request):
-  account = Account.get_account_for_user(request.user_to_show)
+  account = models.Account.get_account_for_user(request.user_to_show)
   account.delete()
   return HttpResponseRedirect(users.create_logout_url(reverse(index)))
 
