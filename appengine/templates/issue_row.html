@@ -13,7 +13,13 @@
       id="issue-title-{{issue.key.id}}">{{issue.subject}}</a>
     </div>
   </td>
-  <td><div class="users">{{issue.reviewers|show_users}}</div></td>
+  <td><div class="users">
+          {%if is_staff%}
+          {{issue.reviewers|show_users}}
+          {%else%}
+          {{issue.reviewers|join:" "}}
+          {%endif%}
+  </div></td>
   <td>
       {%if issue.comp_score > -1%}
           {{issue.comp_score}}
