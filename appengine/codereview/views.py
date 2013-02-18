@@ -2090,6 +2090,7 @@ def _get_column_width_for_user(request):
   return column_width
 
 
+@login_required
 @patch_filename_required
 def diff(request):
   """/<issue>/diff/<patchset>/<patch> - View a patch as a side-by-side diff"""
@@ -2303,6 +2304,7 @@ def _get_diff2_data(request, ps_left_id, ps_right_id, patch_id, context,
               ps_left=ps_left, ps_right=ps_right, rows=rows)
 
 
+@login_required
 @issue_required
 def diff2(request, ps_left_id, ps_right_id, patch_filename):
   """/<issue>/diff2/... - View the delta between two different patch sets."""

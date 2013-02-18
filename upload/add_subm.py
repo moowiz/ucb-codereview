@@ -11,7 +11,7 @@ import shutil
 import os
 import glob
 import git
-from config import *
+from config import config
 import utils
 from model import CodeReviewDatabase
 model = CodeReviewDatabase()
@@ -223,18 +223,20 @@ def put_in_repo(data):
             os.chdir(original_path)
             return put_in_repo(data)
         else: #we have a partner who submitted (I think)
-            out, err = utils.run("git log --pretty=oneline --abbrev-commit")
-            if "commit of code" not in out:
+            if not os.path.exists('commits'):
                 raise SubmissionException("Found a git repository that hasn't been committed to yet. Ignoring...")
-            last_line = out[:out.find("\n")]
-            if last_line.find(":") != -1:
-                com_time = last_line[last_line.find(":") + 1:]
-                if com_time in timestamp:
-                    raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
+            with open('commits', 'r') as f:
+                out = f.read()
+                last_line = out[:out.find("\n")]
+                if last_line.find(":") != -1:
+                    com_time = last_line[last_line.find(":") + 1:]
+                    if com_time in timestamp:
+                        raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
         os.chdir(original_path)
     copy_important_files(data, path_to_subm, path_to_repo)
     git.add(None, path=path_to_repo)
-    git.commit("{} commit of code timestamp:{}".format(utils.get_timestamp_str(), timestamp), path=path_to_repo)
+    with open('commits', 'a') as f:
+        f.write('{} : {}\n'.format(utils.get_timestamp_str(), timestamp))
     #shutil.rmtree(path_to_subm)
     files = glob.glob(path_to_repo + "*")
     for f in files:
