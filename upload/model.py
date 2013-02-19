@@ -3,8 +3,7 @@ Data model API for the database.
 """
 #import os
 import sqlite3
-import utils
-from config import *
+from config import config
 
 class CodeReviewDatabase(object):
     """
@@ -96,9 +95,6 @@ class CodeReviewDatabase(object):
         if result:
             # if not empty, then result should be tuple with 1 elem
             return result[0]
-        else:
-            # this clause not really necessary
-            return None
 
     def query_student(self, student):
         """
