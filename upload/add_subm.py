@@ -138,7 +138,7 @@ def upload(path_to_repo, logins, data):
             '--rev', hash_str))#, "--send_mail"))
     print("Uploading...")
     out, err = utils.run(cmd)
-    if "Unhandled exception" in err:
+    if "Traceback" in err or "Unhandled Exception" in err:
         raise UploadException(str(err))
     print("Done uploading")
     line = ""
@@ -234,9 +234,9 @@ def put_in_repo(data):
                         raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
         os.chdir(original_path)
     copy_important_files(data, path_to_subm, path_to_repo)
-    git.add(None, path=path_to_repo)
-    with open('commits', 'a') as f:
+    with open(path_to_repo + 'commits', 'a') as f:
         f.write('{} : {}\n'.format(utils.get_timestamp_str(), timestamp))
+    git.add(None, path=path_to_repo)
     #shutil.rmtree(path_to_subm)
     files = glob.glob(path_to_repo + "*")
     for f in files:
