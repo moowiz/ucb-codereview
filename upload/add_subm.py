@@ -166,14 +166,13 @@ def copy_important_files(data, start_dir, end_dir, template=False):
                     f = files[0]
                 if os.path.isdir(end_dir + f):
                     shutil.rmtree(end_dir + f)
-                else:
+                elif 'commits' not in f:
                     os.remove(end_dir + f)
             if not os.path.exists(end_dir):
                 os.mkdir(end_dir)
         for file in files_to_copy:
-            dumb_template = open(end_dir + file, 'w')
-            dumb_template.write("You were not given a template for this assignment.\nThis is just placeholder text; nothing to freak out about :)\n")
-            dumb_template.close()
+            with open(end_dir + file, 'w') as dumb_template:
+                dumb_template.write("You were not given a template for this assignment.\nThis is just placeholder text; nothing to freak out about :)\n")
     for filename in files_to_copy:
         if os.path.exists(filename):
             if os.path.isdir(start_dir + filename):
@@ -230,8 +229,8 @@ def put_in_repo(data):
                 out = f.read()
                 last_line = out[:out.find("\n")]
                 if last_line.find(":") != -1:
-                    com_time = last_line[last_line.find(":") + 1:]
-                    if com_time in timestamp:
+                    com_time = last_line[last_line.find(":") + 1:].strip()
+                    if timestamp in com_time:
                         raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
         os.chdir(original_path)
     copy_important_files(data, path_to_subm, path_to_repo)
