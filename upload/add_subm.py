@@ -184,7 +184,7 @@ def git_init(path):
     git.init(path=path)
     os.chdir(path)
     gitignore = open('.gitignore', 'w')
-    gitignore.write("MY.*")
+    gitignore.write("MY.*\n")
     gitignore.write("commits")
     gitignore.flush()
     gitignore.close()
