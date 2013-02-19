@@ -5,4 +5,4 @@ export MASTERDIR=/home/ff/cs61a/
 export MASTER=cs61a
 echo "Running"
 ASSIGN="proj1"
-python3 "$MASTERDIR"grading/codereview/61a-codereview/upload/sweep.py -a $ASSIGN > "$MASTERDIR"grading/codereview/logs/$(date +"%d-%H-%M")."$ASSIGN" 2>&1 
+#python3 "$MASTERDIR"grading/codereview/61a-codereview/upload/sweep.py -a $ASSIGN > "$MASTERDIR"grading/codereview/logs/$(date +"%d-%H-%M")."$ASSIGN" 2>&1 
