@@ -992,7 +992,6 @@ def _show_user(request):
           'ORDER BY modified DESC',
           user_to_show.email())
       if _can_view_issue(request.user, issue)]
-  logging.warn("all {}".format([x.key() for x in all_issues]))
   review_issues = []
   closed_issues = []
   for iss in all_issues:
