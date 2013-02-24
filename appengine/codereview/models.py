@@ -82,8 +82,11 @@ class Issue(db.Model):
       self.comp_score = val
       self.closed = self.comp_score > -1
 
-  def put(self):
-    super(Issue, self).put()
+
+  @property
+  def sections(self):
+      """Returns the sections this issue covers"""
+      return list(set(reduce(lambda a, b: a + b, (stu.sections for stu in self.reviewers))))
 
   @property
   def is_starred(self):
