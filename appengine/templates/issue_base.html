@@ -15,7 +15,7 @@
     <td class="meta" width="20%">
       {%block issue_actions%}
       <div>
-        {%if issue.edit_allowed%}
+        {%if is_staff%}
         <a class="novisit"
           href="{%url codereview.views.edit issue.key.id%}">
           Edit Issue
@@ -32,8 +32,18 @@
         {%else%}
         <span class="disabled">Can't Publish+Mail</span>
         {%endif%}
+        {%if is_staff%}
+        <div>
+            {%if not issue.bug_owner%}
+          <a class="novisit" href="{%url codereview.views.claim issue.key.id%}">Claim Issue</a>
+            {%else%}
+          <a class="novisit" href="{%url codereview.views.release issue.key.id%}">Release Bug</a>
+          {%endif%}
+        </div>
+        {%else%}
+        <div> </div>
+        {%endif%}
         {%if last_patchset and first_patch%}
-        <br/>
         <a class="novisit"
           href="{%url codereview.views.diff issue.key.id,last_patchset.key.id,first_patch.filename%}">
           <b>Start Review</b>
@@ -48,6 +58,30 @@
           {%else%}
           Not graded yet.
           {%endif%}
+        </div>
+        {%if is_staff%}
+            {%if issue.bug%}
+            <div><b>Bug Owner:</b><br/>
+            {%if issue.bug_owner%}
+                {{issue.bug_owner|show_user}}
+            {%else%}
+                No one
+            {%endif%}
+            </div>
+            {%endif%}
+        {%else%}
+            {%if issue.bug%}
+            <div><b>Bug Status:</b><br/>
+            {%if issue.bug_owner%}
+                Claimed
+            {%else%}
+                Unclaimed
+            {%endif%}
+            </div>
+            {%endif%}
+        {%endif%}
+        <div><b>Created:</b><br/>
+          {{issue.created|timesince}} ago
         </div>
         <div><b>Created:</b><br/>
           {{issue.created|timesince}} ago

@@ -205,8 +205,7 @@ def put_in_repo(data):
         else:
             path_to_template += "projects/"
         if data.git_assign not in config.ASSIGN_TO_NAME_MAP:
-            pass
-            #path_to_template += data.git_assign + "/"
+            path_to_template += data.git_assign + "/"
         else:
             path_to_template += config.ASSIGN_TO_NAME_MAP[data.git_assign] + "/"
         copy_important_files(data, path_to_template, path_to_repo, template=True)

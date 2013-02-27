@@ -24,13 +24,11 @@ M_addTextResizer_(document.getElementById("edit-form"));
 </ul>
 </p>
 
-{%if issue.edit_allowed%}
 <h2>Delete This Issue</h2>
 
 <form action="{%url codereview.views.delete issue.key.id%}" method="post">
 <input type="hidden" name="xsrf_token" value="{{xsrf_token}}">
 <input type="submit" value="Delete Issue"> There is no undo!
 </form>
-{%endif%}
 
 {%endblock%}
