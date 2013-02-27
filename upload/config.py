@@ -2,8 +2,6 @@ import os
 import utils
 import sys
 
-
-#hard coded configs for now. Can move to a config file if we want to.
 class Config_Class:
     def __init__(self):
         config = {
@@ -21,10 +19,11 @@ class Config_Class:
             "GMAILS_FILE" : None, # "MY.GMAILS"
             "SECTIONS_FILE" : None, # "MY.SECTIONS"
             "LOGINS_FILE" : None, # "MY.PARTNERS"
-            "IMPORTANT_FILES" : None, # (GMAILS_FILE, SECTIONS_FILE, LOGINS_FILE)
+            "IMPORTANT_FILES" : None, # (LOGINS_FILE, )
             "ASSIGN_TO_NAME_MAP" : {
                     "proj1" : "hog",
-                    "proj3" : "ants"
+                    "proj2" : "trends",
+                    "proj3" : "ants",
                 },
             "DB_PATH" : None #CODE_REVIEW_DIR + "codereview_db.sqlite"
         }
@@ -43,7 +42,7 @@ class Config_Class:
         self.GMAILS_FILE = "MY.GMAILS"
         self.SECTIONS_FILE = "MY.SECTIONS"
         self.LOGINS_FILE = "MY.PARTNERS"
-        self.IMPORTANT_FILES = (self.GMAILS_FILE, self.SECTIONS_FILE, self.LOGINS_FILE)
+        self.IMPORTANT_FILES = (self.LOGINS_FILE,)
         self.DB_PATH = self.CODE_REVIEW_DIR + "codereview_db.sqlite"
 
     def get_imp_files(self, assignment):
