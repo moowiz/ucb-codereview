@@ -54,6 +54,13 @@ indexes:
 
 - kind: Issue
   properties:
+  - name: bug
+  - name: modified
+    direction: desc
+  - name: bug_owner
+
+- kind: Issue
+  properties:
   - name: closed
   - name: modified
     direction: desc

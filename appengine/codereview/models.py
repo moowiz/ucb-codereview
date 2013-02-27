@@ -74,6 +74,7 @@ class Issue(db.Model):
   n_messages = db.IntegerProperty()
   comp_score = db.IntegerProperty(default=-1)
   bug = db.BooleanProperty(default=False)
+  bug_owner = db.EmailProperty(required=False)
   closed = db.BooleanProperty(default=False)
 
   _is_starred = None
@@ -86,7 +87,9 @@ class Issue(db.Model):
   @property
   def sections(self):
       """Returns the sections this issue covers"""
-      return list(set(reduce(lambda a, b: a + b, (stu.sections for stu in self.reviewers))))
+      lst = [Account.get_account_for_email(stu) for stu in self.reviewers]
+      lst = [i for i in lst if i]
+      return list(set(reduce(lambda a, b: a + b, (stu.sections for stu in lst)))) if lst else []
 
   @property
   def is_starred(self):

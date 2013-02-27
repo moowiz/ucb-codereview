@@ -88,13 +88,11 @@ class AccountInput(forms.TextInput):
   # when using this html control.
   class Media:
     css = {
-      'all': ('autocomplete/jquery.autocomplete.css',)
+      'all': ('http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css',)
     }
     js = (
-      'autocomplete/lib/jquery.js',
-      'autocomplete/lib/jquery.bgiframe.min.js',
-      'autocomplete/lib/jquery.ajaxQueue.js',
-      'autocomplete/jquery.autocomplete.js'
+      'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js',
+      'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js',
     )
 
   def render(self, name, value, attrs=None):
@@ -107,19 +105,37 @@ class AccountInput(forms.TextInput):
         data['multiple'] = 'false'
       output += mark_safe(u'''
       <script type="text/javascript">
-          jQuery("#id_%(name)s").autocomplete("%(url)s", {
-          max: 10,
-          highlight: false,
-          multiple: %(multiple)s,
-          multipleSeparator: ", ",
-          scroll: true,
-          scrollHeight: 300,
-          matchContains: true,
-          formatResult : function(row) {
-          return row[0].replace(/ .+/gi, '');
-          }
-          });
-      </script>''' % data)
+          $("#id_%(name)s").autocomplete({
+          source: function(request, response){
+              $.ajax({
+                url: "/account",
+                data: {
+                    q: request.term,
+                    limit: 10,
+                },
+                success: function(data) {
+                    response(data.split("\\n").slice(0, -1));
+                }
+          } );
+      } });
+      </script>
+
+              ''' % data)
+     # output += mark_safe(u'''
+     # <script type="text/javascript">
+     #     $("#id_%(name)s").autocomplete("%(url)s", {
+     #     max: 10,
+     #     highlight: false,
+     #     multiple: %(multiple)s,
+     #     multipleSeparator: ", ",
+     #     scroll: true,
+     #     scrollHeight: 300,
+     #     matchContains: true,
+     #     formatResult : function(row) {
+     #     return row[0].replace(/ .+/gi, '');
+     #     }
+     #     });
+     # </script>''' % data)
     return output
 
 
@@ -373,6 +389,9 @@ def respond(request, template, params=None):
   params['request'] = request
   params['counter'] = counter
   params['user'] = request.user
+  if 'issue' in request:
+      logging.info("bug_owner {}".format(request.issue.bug_owner))
+  params['bug_owner'] = request.issue.bug_owner if hasattr(request, 'issue') else None
   params['is_admin'] = request.user_is_admin
   params['is_staff'] = request.user and account.is_staff
   params['is_dev'] = IS_DEV
@@ -863,6 +882,7 @@ def bugs(request):
   query = models.Issue.all()
   query.filter('bug =', True)
   query.order('-modified')
+  query.order('bug_owner')
 
   return _paginate_issues(reverse(bugs),
                           request,
@@ -1688,7 +1708,7 @@ def patchset(request):
 
 @login_required
 def account(request):
-  """/account/?q=blah&limit=10&timestamp=blah - Used for autocomplete."""
+  """/account/?q=blah&limit=10 - Used for autocomplete."""
   def searchAccounts(property, domain, added, response):
     query = request.GET.get('q').lower()
     limit = _clean_int(request.GET.get('limit'), 10, 10, 100)
@@ -1735,6 +1755,7 @@ def edit(request):
                  for reviewer in issue.reviewers]
     form = form_cls(initial={'subject': issue.subject,
                              'reviewers': ', '.join(reviewers),
+                             'bug_submit': issue.bug,
                              })
     return respond(request, 'edit.html', {'issue': issue, 'form': form})
 
@@ -1782,6 +1803,20 @@ def _delete_cached_contents(patch_set):
     logging.info("Updating %d patches", len(patches))
     db.put(patches)
 
+@issue_required
+@staff_required
+def release(request):
+    request.issue.bug_owner = None
+    request.issue.put()
+    return HttpResponseRedirect(reverse(show, args=[request.issue.key().id()]))
+
+@issue_required
+@staff_required
+def claim(request):
+    request.issue.bug_owner = request.user.email()
+    request.issue.bug = True
+    request.issue.put()
+    return HttpResponseRedirect(reverse(show, args=[request.issue.key().id()]))
 
 @post_required
 @issue_required

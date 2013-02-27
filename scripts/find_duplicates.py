@@ -31,8 +31,8 @@ def find_all(assign):
                 #print all_sections
                 if len(set(all_sections)) > 1:
                     val = iss.key().id()
-                    print val
-                    f.write("{}\n".format(val))
+                    print val, iss.sections
+                    f.write("{} {}\n".format(val, iss.sections))
             else:
                 print 'uhoh'
                 print iss.sections
@@ -47,3 +47,4 @@ if __name__ == "__main__":
                         help='the assignment to grade')
     args = parser.parse_args()
     main(args.assign)
+
