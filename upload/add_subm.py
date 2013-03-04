@@ -94,8 +94,8 @@ def get_logins(login):
     logins = [login]
     if os.path.exists(os.getcwd() + "/MY.PARTNERS"):
         f = open("MY.PARTNERS")
-        logins = list(map(lambda x: x.replace('\n', '').strip(),
-            filter(lambda x: x, f.read().split(' '))))
+        logins = list(map(lambda x: x.replace('\n', '').replace('.', '').strip(),f.read().split(' ')))
+        logins = [x for x in logins if x]
         f.close()
     return logins
 
@@ -159,7 +159,7 @@ def copy_important_files(data, start_dir, end_dir, template=False):
         if os.path.exists(end_dir):
             print("Removing files in {} because template.".format(end_dir))
             while os.path.exists(end_dir):
-                files = os.listdir(end_dir)
+                files = [filename for filename in os.listdir(end_dir) if filename != 'commits']
                 if not files:
                     break
                 else:
