@@ -15,7 +15,6 @@ from config import config
 import utils
 from model import CodeReviewDatabase
 model = CodeReviewDatabase()
-
 class SubmissionException(Exception):
     pass
 
@@ -27,8 +26,6 @@ def save_dir(func):
         original_dir = os.getcwd()
         try:
             func(*args, **kwds)
-        except Exception as e:
-            raise e
         finally:
             os.chdir(original_dir)
     return fun
@@ -59,8 +56,7 @@ def find_path(logins, data):
     """
     Finds the path to the given login's assignment git repository
     """
-    logins.sort()
-    logins = list(map(lambda x: x.strip(), logins))
+    logins = sorted(login.strip() for login in logins)
     path = config.REPO_DIR + "".join(logins) + "/" + data.git_assign + "/"
     try:
         os.makedirs(path)
@@ -80,15 +76,14 @@ def get_sections():
     """
     Returns the sections for logins in a list
     """
-    file = open(config.SECTIONS_FILE, 'r')
-    text = file.read().split()
-    rval = []
-    for line in text:
-        if len(line) == 3: #if they entered a 3 digit section code instead of a 2 digit
-            line = line[1:]
-        rval.append(line)
-    file.close()
-    return rval
+    with open(config.SECTIONS_FILE, 'r') as file:
+        text = file.read().split()
+        rval = []
+        for line in text:
+            if len(line) == 3: #if they entered a 3 digit section code instead of a 2 digit
+                line = line[1:]
+            rval.append(line)
+        return rval
 
 def get_logins(login):
     logins = [login]
