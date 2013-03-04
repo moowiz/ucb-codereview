@@ -639,7 +639,7 @@ def GetRpcServer(server, email=None, host_override=None, save_cookies=True,
       print "Using password from system keyring."
     else:
       # password = getpass.getpass("Password for %s: " % local_email, stream=sys.stdout) 
-      path = os.environ['MASTER_DIR'] + '/grading/codereview/code_review_pass'
+      path = os.environ['MASTERDIR'] + '/grading/codereview/code_review_pass'
       if not os.path.exists(path):
           raise Exception("Error: couldn't find password file! Exiting")
       f = open(path)
