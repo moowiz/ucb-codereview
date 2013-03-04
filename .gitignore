@@ -3,3 +3,5 @@
 MY.*
 
 upload/out
+
+*.swp

@@ -121,21 +121,6 @@ class AccountInput(forms.TextInput):
       </script>
 
               ''' % data)
-     # output += mark_safe(u'''
-     # <script type="text/javascript">
-     #     $("#id_%(name)s").autocomplete("%(url)s", {
-     #     max: 10,
-     #     highlight: false,
-     #     multiple: %(multiple)s,
-     #     multipleSeparator: ", ",
-     #     scroll: true,
-     #     scrollHeight: 300,
-     #     matchContains: true,
-     #     formatResult : function(row) {
-     #     return row[0].replace(/ .+/gi, '');
-     #     }
-     #     });
-     # </script>''' % data)
     return output
 
 
