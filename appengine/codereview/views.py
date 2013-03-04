@@ -344,7 +344,6 @@ class InvalidIncomingEmailError(Exception):
 
 ### Helper functions ###
 
-
 # Counter displayed (by respond()) below) on every page showing how
 # many requests the current incarnation has handled, not counting
 # redirects.  Rendered by templates/base.html.
@@ -374,8 +373,6 @@ def respond(request, template, params=None):
   params['request'] = request
   params['counter'] = counter
   params['user'] = request.user
-  if 'issue' in request:
-      logging.info("bug_owner {}".format(request.issue.bug_owner))
   params['bug_owner'] = request.issue.bug_owner if hasattr(request, 'issue') else None
   params['is_admin'] = request.user_is_admin
   params['is_staff'] = request.user and account.is_staff
@@ -428,7 +425,7 @@ def _clean_int(value, default, min_value=None, max_value=None):
 
 
 def _can_view_issue(user, issue):
-  user_email = db.Email(user.email().lower())
+  user_email = user.email().lower()
   return user_email in issue.reviewers or models.Account.get_account_for_user(user).is_staff
 
 
