@@ -985,7 +985,7 @@ def _show_user(request):
                   email = models.Account.get(stu).email
                   for issue in models.Issue.all().filter('reviewers =', email).order('modified').run():
                       if issue.key() not in draft_keys:
-                        all_issues.append(issue)
+                          all_issues.append(issue)
   else:
       all_issues = [
       issue for issue in db.GqlQuery(
@@ -994,6 +994,7 @@ def _show_user(request):
           'ORDER BY modified DESC',
           user_to_show.email())
       if _can_view_issue(request.user, issue)]
+  all_issues = list(set(all_issues))
   review_issues = []
   closed_issues = []
   for iss in all_issues:
