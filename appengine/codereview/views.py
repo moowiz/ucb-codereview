@@ -987,13 +987,14 @@ def _show_user(request):
       all_keys = []
       for num in acc.sections:
           section = models.Section.get_by_key_name("<{}>".format(num))
-          if section:
-              for stu in section.accounts:
-                  email = models.Account.get(stu).email
-                  for issue in query:
-                      if issue.key() not in draft_keys and issue.key() not in all_keys:
-                          all_issues.append(issue)
-                          all_keys.append(issue.key())
+          if not section:
+            continue
+          for stu in section.accounts:
+              email = models.Account.get(stu).email
+              for issue in query:
+                  if issue.key() not in draft_keys and issue.key() not in all_keys:
+                      all_issues.append(issue)
+                      all_keys.append(issue.key())
   else:
       query.filter('reviewers =', user_to_show.email())
       all_issues = [issue for issue in query if _can_view_issue(request.user, issue)]
