@@ -81,6 +81,12 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: Issue
+  properties:
+  - name: reviewers
+  - name: subject
+  - name: modified
+
 - kind: Message
   properties:
   - name: issue
