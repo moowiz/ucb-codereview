@@ -962,7 +962,6 @@ def show_user(request):
   """/user - Show the user's dashboard"""
   return _show_user(request)
 
-
 def _show_user(request):
   user_to_show = request.user_to_show
   acc = models.Account.get_account_for_user(request.user)
@@ -976,7 +975,14 @@ def _show_user(request):
     draft_issues = models.Issue.get(draft_keys)
   else:
     draft_issues = draft_keys = []
+
+  query = models.Issue.all()
+  assign = request.GET.get('assign')
+  if assign:
+    query.filter('subject =', assign)
+  query.order('modified')
   if acc_to_show.is_staff and acc.is_staff:
+      query.filter('reviewers =', email)
       all_issues = []
       all_keys = []
       for num in acc.sections:
@@ -984,18 +990,13 @@ def _show_user(request):
           if section:
               for stu in section.accounts:
                   email = models.Account.get(stu).email
-                  for issue in models.Issue.all().filter('reviewers =', email).order('modified').run():
+                  for issue in query:
                       if issue.key() not in draft_keys and issue.key() not in all_keys:
                           all_issues.append(issue)
                           all_keys.append(issue.key())
   else:
-      all_issues = [
-      issue for issue in db.GqlQuery(
-          'SELECT * FROM Issue '
-          'WHERE reviewers = :1 '
-          'ORDER BY modified DESC',
-          user_to_show.email())
-      if _can_view_issue(request.user, issue)]
+      query.filter('reviewers =', user_to_show.email())
+      all_issues = [issue for issue in query if _can_view_issue(request.user, issue)]
   review_issues = []
   closed_issues = []
   for iss in all_issues:

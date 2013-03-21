@@ -77,13 +77,5 @@ urlpatterns = patterns(
     # patching upload.py on the fly
     (r'^static/upload.py$', 'customized_upload_py'),
     (r'^search$', 'search'),
-(r'^tasks/calculate_delta$', 'calculate_delta'),
+    (r'^tasks/calculate_delta$', 'calculate_delta'),
 )
-
-feed_dict = {
-    'reviews': feeds.ReviewsFeed,
-    'closed': feeds.ClosedFeed,
-    'mine': feeds.MineFeed,
-    'all': feeds.AllFeed,
-    'issue': feeds.OneIssueFeed,
-}
