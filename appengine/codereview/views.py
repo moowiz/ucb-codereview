@@ -976,13 +976,14 @@ def _show_user(request):
   else:
     draft_issues = draft_keys = []
 
-  query = models.Issue.all()
-  assign = request.GET.get('assign')
-  if assign:
-    query.filter('subject =', assign)
-  query.order('modified')
+  def make_query():
+    query = models.Issue.all()
+    assign = request.GET.get('assign')
+    if assign:
+      query.filter('subject =', assign)
+    query.order('modified')
+    return query
   if acc_to_show.is_staff and acc.is_staff:
-      query.filter('reviewers =', email)
       all_issues = []
       all_keys = []
       for num in acc.sections:
@@ -991,12 +992,12 @@ def _show_user(request):
             continue
           for stu in section.accounts:
               email = models.Account.get(stu).email
-              for issue in query:
+              for issue in make_query().filter('reviewers =', email):
                   if issue.key() not in draft_keys and issue.key() not in all_keys:
                       all_issues.append(issue)
                       all_keys.append(issue.key())
   else:
-      query.filter('reviewers =', user_to_show.email())
+      query = make_query().filter('reviewers =', user_to_show.email())
       all_issues = [issue for issue in query if _can_view_issue(request.user, issue)]
   review_issues = []
   closed_issues = []
