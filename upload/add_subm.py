@@ -220,8 +220,8 @@ def put_in_repo(data):
             if not os.path.exists('commits'):
                 raise SubmissionException("Found a git repository that hasn't been committed to yet. Ignoring...")
             with open('commits', 'r') as f:
-                out = f.read()
-                last_line = out[:out.find("\n")]
+                out = f.read().strip()
+                last_line = out[out.rfind("\n"):]
                 if last_line.find(":") != -1:
                     com_time = last_line[last_line.find(":") + 1:].strip()
                     if timestamp in com_time:
