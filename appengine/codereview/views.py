@@ -1712,7 +1712,7 @@ def account(request):
       if len(added) >= limit:
         break
       added.add(account.key())
-      response += '%s (%s)\n' % (account.email, account.nickname)
+      response += '%s\n' % (account.email)
     return added, response
 
   added = set()
