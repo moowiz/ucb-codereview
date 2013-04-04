@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import os
 import sys
 import getpass
@@ -24,10 +25,15 @@ from codereview.models import Issue
 
 grades = {}
 def main():
-    for issue in Issue.all().filter('subject =', 'proj1'):
+    good = seen = 0
+    for issue in Issue.all().filter('subject =', args.assignment):
+        seen += 1
         if issue.comp_score > -1:
             for stu in issue.reviewers:
+                good += 1
                 grades[stu] = issue.comp_score
+        if seen % 50 == 0 or good % 50 == 0:
+            print "good {} seen {}".format(good, seen)
     for k in grades:
         print "{} : {}".format(k, grades[k])
 
