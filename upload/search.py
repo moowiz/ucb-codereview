@@ -1,9 +1,13 @@
 #!/usr/sww/bin/python3
+
 import argparse
 import model
 
-def main(login, assign, issue):
-    db = model.CodeReviewDatabase()
+def main(login, assign, issue, db_file):
+    if db_file:
+        db = model.CodeReviewDatabase(db_file)
+    else:
+        db = model.CodeReviewDatabase()
     res = None
     if issue:
         res = db.query_issue(issue)
@@ -23,9 +27,10 @@ if __name__ == "__main__":
     group.add_argument('-i', '--issue', type=int, default=0, help="The issue number.")
 
     parser.add_argument('-a', '--assign', default=None, type=str, help="The assignment to look at")
+    parser.add_argument('-d', '--db_file', type=str, help='The DB file to look at')
 
     args = parser.parse_args()
     if not any((args.login, args.assign, args.issue)):
         parser.print_usage()
     else:
-        main(args.login, args.assign, args.issue)
+        main(args.login, args.assign, args.issue, args.db_file)

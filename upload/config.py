@@ -1,6 +1,12 @@
 import os
-import utils
 import sys
+
+def dirty_assign(assign):
+    if 'hw' in assign and assign[2] == '0':
+        assign = assign[:2] + assign[3:]
+    elif 'proj' in assign and assign[4] == '0':
+        assign = assign[:4] + assign[5:]
+    return assign
 
 class Config_Class:
     def __init__(self):
@@ -46,7 +52,7 @@ class Config_Class:
         self.DB_PATH = self.CODE_REVIEW_DIR + "codereview_db.sqlite"
 
     def get_imp_files(self, assignment):
-        assignment = utils.dirty_assign(assignment)
+        assignment = dirty_assign(assignment)
         f = open(config.PARAMS_FILE, 'r')
         lines = f.read().split("\n")
         f.close()
