@@ -2,15 +2,15 @@
 import argparse
 
 email_to_login = {}
-for _, __, files in os.walk(os.path.expanduser('~/grading/register/'))
+for path, __, files in os.walk(os.path.expanduser('~/grading/register/')):
 	for file in files:
-		with open(file) as open_file:
-			lines = open_file.split('\n')
+		with open(os.path.join(path, file)) as open_file:
+			lines = open_file.read().split('\n')
 			while 'Email' not in lines[0]:
 				lines = lines[1:]
 			email_line = lines[0]
 			email = email_line[email_line.find(':'):].strip()
-			login_to_email[email] = login
+			email_to_login[email] = login
 
 parser = argparse.ArgumentParser(description="Transforms raw grades into grades that can be put into glookup")
 parser.add_argument('file', type=str)
