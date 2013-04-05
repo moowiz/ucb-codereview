@@ -10,7 +10,8 @@ for path, __, files in os.walk(os.path.expanduser('~/grading/register/')):
 			while 'Email' not in lines[0]:
 				lines = lines[1:]
 			email_line = lines[0]
-			email = email_line[email_line.find(':'):].strip()
+			email = email_line[email_line.find(':')+1:].strip()
+			print('email "{}" login "{}"'.format(email, file))
 			email_to_login[email] = file
 
 parser = argparse.ArgumentParser(description="Transforms raw grades into grades that can be put into glookup")
@@ -24,4 +25,7 @@ with open(args.file) as open_file:
 			email, grade = line.split(':')
 			grade = int(grade.strip())
 			email = email.strip()
-			out_file.write('{} a {}'.format(email_to_login[email], grade))
+			try:
+				out_file.write('{} a {}\n'.format(email_to_login[email], grade))
+			except:
+				print('ERR: couldn\'t write grade for ', email)
