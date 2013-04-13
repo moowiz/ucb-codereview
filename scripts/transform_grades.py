@@ -27,4 +27,4 @@ with open(args.file) as open_file:
 			try:
 				out_file.write('{} a {}\n'.format(email_to_login[email], grade))
 			except:
-				print('ERR: couldn\'t write grade for ', email)
+				print('ERR: couldn\'t write grade for ', email, ' grade was ', grade)
