@@ -1,25 +1,8 @@
-import os
-import sys
-import getpass
-import argparse
-from google.appengine.ext.remote_api import remote_api_stub
-from google.appengine.api.users import User
-
-cwd = os.getcwdu()
-cwd = "/".join(cwd.split("/")[:-1]) + "/appengine"
-sys.path.append(cwd)
-#Idk what this is about....
-os.environ['SERVER_SOFTWARE'] = ''
-
-def auth_func():
-    return (u'moowiz2020@gmail.com', getpass.getpass("Google One time password:"))
-
+import base
 parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
 parser.add_argument('mapping', type=str,
                     help='the path to the csv file containing email to section mappings')
-parser.add_argument('host', type=str,
-                    help='the URL of the server we want to upload info to')
-args = parser.parse_args()
+args = base.init(parser)
 remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host)
 from codereview.models import Account
 
