@@ -1,4 +1,6 @@
 import base
+import argparse
+
 parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
 parser.add_argument('mapping', type=str,
                     help='the path to the csv file containing email to section mappings')
