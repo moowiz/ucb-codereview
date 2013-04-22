@@ -373,6 +373,8 @@ def respond(request, template, params=None):
   params['request'] = request
   params['counter'] = counter
   params['user'] = request.user
+  if request.user:
+    params['user_id'] = request.user.user_id
   params['bug_owner'] = request.issue.bug_owner if hasattr(request, 'issue') else None
   params['is_admin'] = request.user_is_admin
   params['is_staff'] = request.user and account.is_staff
