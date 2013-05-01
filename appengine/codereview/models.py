@@ -83,7 +83,6 @@ class Issue(db.Model):
       self.comp_score = val
       self.closed = self.comp_score > -1
 
-
   @property
   def sections(self):
       """Returns the sections this issue covers"""

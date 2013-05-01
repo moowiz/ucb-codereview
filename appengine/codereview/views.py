@@ -428,7 +428,7 @@ def _clean_int(value, default, min_value=None, max_value=None):
 
 def _can_view_issue(user, issue):
   user_email = user.email().lower()
-  return user_email in issue.reviewers or models.Account.get_account_for_user(user).is_staff
+  return user_email in issue.reviewers or models.Account.get_account_for_user(user).is_staff and issue.subject != 'proj3'
 
 
 class HttpTextResponse(HttpResponse):
