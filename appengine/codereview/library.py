@@ -15,6 +15,7 @@
 """Django template library for Rietveld."""
 
 import cgi
+import settings
 
 from google.appengine.api import memcache
 from google.appengine.api import users
@@ -81,6 +82,19 @@ def get_link_for_user(email):
   links = get_links_for_users([email])
   return links[email]
 
+class UrlTemplateNode(django.template.Node):
+  def __init__(self, url, args, sem):
+    self.url = url
+    self.args = args
+    self.args += [sem.replace('/', '')]
+
+  def render(self, context):
+    return reverse(self.url, args=self.args)
+
+@register.tag
+def url(parser, token):
+  to_use = token.split_contents()
+  return UrlTemplateNode(to_use[1], to_use[2:], settings.CURRENT_SEMESTER)
 
 @register.filter
 def show_user(email, arg=None, _autoescape=None, _memcache_results=None):

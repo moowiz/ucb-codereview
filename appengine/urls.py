@@ -16,6 +16,7 @@
 
 # NOTE: Must import *, since Django looks for things here, e.g. handler500.
 from django.conf.urls.defaults import *
+from views import redirect_to_current_semester
 
 # If you don't want to run Rietveld from the root level, add the
 # subdirectory as shown in the following example:
@@ -24,5 +25,6 @@ from django.conf.urls.defaults import *
 #
 urlpatterns = patterns(
     '',
-    url(r'', include('codereview.urls')),
+    url(r'^(?P<semester>\w+)/', include('codereview.urls')),
+    url(r'', redirect_to_current_semester),
     )

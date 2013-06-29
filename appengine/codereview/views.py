@@ -428,7 +428,7 @@ def _clean_int(value, default, min_value=None, max_value=None):
 
 def _can_view_issue(user, issue):
   user_email = user.email().lower()
-  return user_email in issue.reviewers or models.Account.get_account_for_user(user).is_staff and issue.subject != 'proj3'
+  return (user_email in issue.reviewers and issue.subject != 'proj3') or models.Account.get_account_for_user(user).is_staff
 
 
 class HttpTextResponse(HttpResponse):
@@ -460,6 +460,7 @@ def post_required(func):
 def login_required(func):
   """Decorator that redirects to the login page if you're not logged in."""
 
+  @handle_year
   def login_wrapper(request, *args, **kwds):
     if request.user is None:
       return HttpResponseRedirect(
@@ -531,10 +532,21 @@ def admin_required(func):
 
   return admin_wrapper
 
+def handle_year(func):
+  """Decorator that insists that you're logged in as administratior."""
+
+  def year_wrapper(request, semester=None, *args, **kwds):
+    if semester:
+      request.semester = semester
+    return func(request, *args, **kwds)
+
+  return year_wrapper
+
 
 def issue_required(func):
   """Decorator that processes the issue_id handler argument."""
 
+  @handle_year
   def issue_wrapper(request, issue_id, *args, **kwds):
     issue = models.Issue.get_by_id(int(issue_id))
     if issue is None:
@@ -697,7 +709,7 @@ def json_response(func):
 
 ### Request handlers ###
 
-
+@handle_year
 def index(request):
   """/ - Show a list of review issues"""
   if request.user is None:
@@ -1648,7 +1660,7 @@ def _get_patchset_info(request, patchset_id):
 def show(request, form=None):
   """/<issue> - Show an issue."""
   issue, patchsets, response = _get_patchset_info(request, None)
-  if (request.user.email() not in issue.reviewers) and (not models.Account.get_account_for_user(request.user).is_staff):
+  if not _can_view_issue(request.user, issue):
       return HttpTextResponse(
           'You cannot view this issue.', status=403)
   if response:
