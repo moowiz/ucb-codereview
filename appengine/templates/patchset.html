@@ -40,19 +40,19 @@
         <td style="white-space: nowrap">{%if patch.status%}{{patch.status}}{%endif%}</td>
         <td>
           <a class="noul"
-             href="{%url codereview.views.diff issue.key.id,patchset.key.id,patch.filename%}">
+             href="{%url codereview.views.diff issue.key.id patchset.key.id patch.filename%}">
             {{patch.filename}}
           </a>
         </td>
         <td>
           <a class="noul"
-             href="{%url codereview.views.diff issue.key.id,patchset.key.id,patch.filename%}">
+             href="{%url codereview.views.diff issue.key.id patchset.key.id patch.filename%}">
             View
           </a>
         </td>
         <td style="white-space: nowrap">
         {%for delta in patch.parsed_deltas%}
-          <a href="{%url codereview.views.diff2 issue.key.id,delta.1,patchset.key.id,patch.filename%}"
+          <a href="{%url codereview.views.diff2 issue.key.id delta.1 patchset.key.id patch.filename%}"
              title="Delta from patch set {{delta.0}}">{{delta.0}}</a>
         {%endfor%}
         </td>

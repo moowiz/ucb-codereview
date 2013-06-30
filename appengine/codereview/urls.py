@@ -15,7 +15,7 @@
 """URL mappings for the codereview package."""
 
 # NOTE: Must import *, since Django looks for things here, e.g. handler500.
-from django.conf.urls.defaults import *  # NOQA
+from django.conf.urls import *  # NOQA
 import django.views.defaults
 
 from codereview import feeds

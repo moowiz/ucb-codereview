@@ -15,6 +15,7 @@
 """Minimal Django settings."""
 
 import os
+import common_settings
 
 from google.appengine.api import app_identity
 
@@ -29,7 +30,7 @@ from google.appengine.api import app_identity
 ## """
 
 APPEND_SLASH = False
-DEBUG = os.environ['SERVER_SOFTWARE'].startswith('Dev')
+DEBUG = os.environ['SERVER_SOFTWARE'].startswith('Dev') if 'SERVER_SOFTWARE' in os.environ else True
 INSTALLED_APPS = (
     'codereview',
 )
@@ -48,7 +49,7 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(__file__), 'templates'),
     )
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.filesystem.Loader',
     )
 FILE_UPLOAD_HANDLERS = (
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
@@ -76,6 +77,6 @@ DEFAULT_COLUMN_WIDTH = 80
 MIN_COLUMN_WIDTH = 3
 MAX_COLUMN_WIDTH = 2000
 
-CURRENT_SEMESTER = '/sp12/'
+CURRENT_SEMESTER = common_settings.CURRENT_SEMESTER
 
 SECRET_KEY = '55D39E1997224ED850060A45952F9E6F3F60702BCB1B6258A9AA8BA0D74738FE'

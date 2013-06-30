@@ -87,6 +87,12 @@ indexes:
   - name: subject
   - name: modified
 
+- kind: Issue
+  properties:
+  - name: semester
+  - name: modified
+    direction: desc
+
 - kind: Message
   properties:
   - name: issue

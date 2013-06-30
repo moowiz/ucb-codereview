@@ -15,10 +15,11 @@
 """App Engine data model (schema) definition for Rietveld."""
 
 import logging
-import md5
+import hashlib
 import os
 import re
 import time
+import settings
 
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
@@ -76,6 +77,7 @@ class Issue(db.Model):
   bug = db.BooleanProperty(default=False)
   bug_owner = db.EmailProperty(required=False)
   closed = db.BooleanProperty(default=False)
+  semester = db.StringProperty(required=True, default=settings.CURRENT_SEMESTER)
 
   _is_starred = None
 
@@ -618,6 +620,7 @@ class Account(db.Model):
   stars = db.ListProperty(int)  # Issue ids of all starred issues
   is_staff = db.BooleanProperty(default=False)
   sections = db.ListProperty(int, default = [])
+  semesters = db.ListProperty(str, default=[settings.CURRENT_SEMESTER], required=True)
 
   # Current user's Account.  Updated by middleware.AddUserToRequestMiddleware.
   current_user_account = None
@@ -833,14 +836,15 @@ class Account(db.Model):
     if not self.xsrf_secret:
       self.xsrf_secret = os.urandom(8)
       self.put()
-    m = md5.new(self.xsrf_secret)
+    h = hashlib.md5()
+    h.update(self.xsrf_secret)
     email_str = self.lower_email
     if isinstance(email_str, unicode):
       email_str = email_str.encode('utf-8')
-    m.update(self.lower_email)
+    h.update(self.lower_email)
     when = int(time.time()) // 3600 + offset
-    m.update(str(when))
-    return m.hexdigest()
+    h.update(str(when))
+    return h.hexdigest()
 
 class Section(db.Model):
     """Represents a class.

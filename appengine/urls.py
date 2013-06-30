@@ -15,7 +15,7 @@
 """Top-level URL mappings for Rietveld."""
 
 # NOTE: Must import *, since Django looks for things here, e.g. handler500.
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from views import redirect_to_current_semester
 
 # If you don't want to run Rietveld from the root level, add the
@@ -25,6 +25,6 @@ from views import redirect_to_current_semester
 #
 urlpatterns = patterns(
     '',
-    url(r'^(?P<semester>\w+)/', include('codereview.urls')),
+    url(r'^(?P<semester>[a-zA-z0-9]{4})/', include('codereview.urls')),
     url(r'', redirect_to_current_semester),
     )

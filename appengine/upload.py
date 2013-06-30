@@ -51,6 +51,7 @@ import sys
 import urllib
 import urllib2
 import urlparse
+import common_settings as settings
 
 # The md5 module was deprecated in Python 2.5.
 try:
@@ -165,7 +166,9 @@ class ClientLoginError(urllib2.HTTPError):
   def __init__(self, url, code, msg, headers, args):
     urllib2.HTTPError.__init__(self, url, code, msg, headers, None)
     self.args = args
-    self.reason = args["Error"]
+    print args
+    print self.reason
+    self.__dict__['reason'] = args["Error"]
     self.info = args.get("Info", None)
 
 
@@ -252,6 +255,7 @@ class AbstractRpcServer(object):
         }),
     )
     try:
+      print 'opening', req
       response = self.opener.open(req)
       response_body = response.read()
       response_dict = dict(x.split("=")
@@ -372,6 +376,7 @@ class AbstractRpcServer(object):
     """
     # TODO: Don't require authentication.  Let the server say
     # whether it is necessary.
+    request_path = '/' + settings.CURRENT_SEMESTER  + request_path
     if not self.authenticated:
       self._Authenticate()
 
@@ -396,6 +401,7 @@ class AbstractRpcServer(object):
           f.close()
           return response
         except urllib2.HTTPError, e:
+          print 'error', e
           if tries > 3:
             raise
           elif e.code == 401 or e.code == 302:
@@ -448,7 +454,7 @@ class HttpRpcServer(AbstractRpcServer):
         except (cookielib.LoadError, IOError):
           # Failed to load cookies - just ignore them.
           pass
-      else:
+      else: 
         # Create an empty cookie file with mode 600
         fd = os.open(self.cookie_file, os.O_CREAT, 0600)
         os.close(fd)
@@ -542,6 +548,7 @@ group.add_option("-F", "--file", action="store", dest="file",
 group.add_option("-r", "--reviewers", action="store", dest="reviewers",
                  metavar="REVIEWERS", default=None,
                  help="Add reviewers (comma separated email addresses).")
+
 # Upload options
 group = parser.add_option_group("Patch options")
 group.add_option("-i", "--issue", type="int", action="store",
@@ -602,7 +609,11 @@ def GetRpcServer(server, email=None, host_override=None, save_cookies=True,
 
   # If this is the dev_appserver, use fake authentication.
   host = (host_override or server).lower()
-  if re.match(r'(http://)?localhost([:/]|$)', host):
+  print 'host issss', host
+  val = re.match(r'(http://)?localhost', host)
+  print val.group(0)
+  if re.match(r'(http://)?localhost', host):
+    print 'baah'
     if email is None:
       email = "test@example.com"
       logging.info("Using debug user %s.  Override with --email" % email)
@@ -2230,6 +2241,7 @@ def RealMain(argv, data=None):
   if title and not options.issue:
     message = message or title
 
+  print 'title', title
   form_fields.append(("subject", title))
   # If it's a new issue send message as description. Otherwise a new
   # message is created below on upload_complete.
@@ -2269,7 +2281,7 @@ def RealMain(argv, data=None):
   if not response_body.startswith("Issue created.") and \
   not response_body.startswith("Issue updated."):
     sys.exit(0)
-  issue = msg[msg.rfind("/")+1:]
+  issue = msg[msg.rfind("/", 0, -2)+1:].replace('/','')
 
   if not uploaded_diff_file:
     result = UploadSeparatePatches(issue, rpc_server, patchset, data, options)

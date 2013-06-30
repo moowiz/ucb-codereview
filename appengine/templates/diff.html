@@ -92,10 +92,10 @@ login_warned = false;
   </div>
   {%if patch%}
   <div style="margin-top: 5px;">
-    <a href="{%url codereview.views.patch issue.key.id,patchset.key.id,patch.key.id%}{%urlappend_view_settings%}">
+    <a href="{%url codereview.views.patch issue.key.id patchset.key.id patch.key.id%}{%urlappend_view_settings%}">
     View unified diff</a>
     |
-    <a href="{%url codereview.views.download_patch issue.key.id,patchset.key.id,patch.key.id%}"
+    <a href="{%url codereview.views.download_patch issue.key.id patchset.key.id patch.key.id%}"
        title="Download patch for {{patch.filename}}">
       Download patch
     </a>
@@ -138,10 +138,10 @@ login_warned = false;
 {%if patch.is_binary %}
 <tr>
 <td style="width:50%" align="center">
-  <img src="{%url codereview.views.image issue.key.id,patchset.key.id,patch.key.id,0%}" />
+  <img src="{%url codereview.views.image issue.key.id patchset.key.id patch.key.id 0%}" />
 </td>
 <td style="width:50%" align="center">
-  <img src="{%url codereview.views.image issue.key.id,patchset.key.id,patch.key.id,1%}" />
+  <img src="{%url codereview.views.image issue.key.id patchset.key.id patch.key.id 1%}" />
 </td>
 </tr>
 {%else%}
@@ -163,7 +163,7 @@ var intraLineDiff = new M_IntraLineDiff();
 var hookState = new M_HookState(window);
 hookState.updateHooks();
 
-var skipped_lines_url = ('{%url diff_skipped_lines_prefix issue.key.id,patchset.key.id,patch.key.id%}');
+var skipped_lines_url = ('{%url diff_skipped_lines_prefix issue.key.id patchset.key.id patch.key.id%}');
 ;
 
 // -->
