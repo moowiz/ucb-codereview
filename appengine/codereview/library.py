@@ -66,7 +66,7 @@ def get_links_for_users(user_emails):
   for account in accounts:
     if account:
       ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
-             (reverse('codereview.views.show_user', args=[account.nickname]),
+             (reverse('codereview.views.show_user', args=[account.semesters[0], account.nickname]),
               cgi.escape(account.nickname)))
       link_dict[account.email] = ret
 
@@ -83,18 +83,19 @@ def get_link_for_user(email):
   return links[email]
 
 class UrlTemplateNode(django.template.Node):
-  def __init__(self, url, args, sem):
+  def __init__(self, url, args):
+    super(UrlTemplateNode, self).__init__()
     self.url = url
-    self.args = args
-    self.args += [sem.replace('/', '')]
+    self.args = [django.template.Variable(x) for x in args]
 
   def render(self, context):
-    return reverse(self.url, args=self.args)
+    return reverse(self.url, args=[context['semester']] + [x.resolve(context) for x in self.args])
 
 @register.tag
 def url(parser, token):
+  #print token
   to_use = token.split_contents()
-  return UrlTemplateNode(to_use[1], to_use[2:], settings.CURRENT_SEMESTER)
+  return UrlTemplateNode(to_use[1], to_use[2:])
 
 @register.filter
 def show_user(email, arg=None, _autoescape=None, _memcache_results=None):

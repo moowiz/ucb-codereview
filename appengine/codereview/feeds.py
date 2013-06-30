@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import md5
+import hashlib
 
-from django.contrib.syndication.feeds import Feed
+from django.contrib.syndication.views import Feed
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.utils.feedgenerator import Atom1Feed
@@ -35,7 +35,9 @@ class BaseFeed(Feed):
     return 'rietveld'
 
   def item_guid(self, item):
-    return 'urn:md5:%s' % (md5.new(str(item.key())).hexdigest())
+    h = hashlib.md5()
+    h.update(str(item.key()))
+    return 'urn:md5:%s' % (h.hexdigest())
 
   def item_link(self, item):
     if isinstance(item, models.PatchSet):

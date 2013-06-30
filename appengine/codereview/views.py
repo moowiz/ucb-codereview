@@ -19,7 +19,7 @@ import binascii
 import datetime
 import email.utils as _email_utils
 import logging
-import md5
+import hashlib
 import mimetypes
 import os
 import random
@@ -48,7 +48,7 @@ from django.template import RequestContext
 from django.utils import encoding
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse as _reverse
 
 from codereview import engine
 from codereview import library
@@ -76,6 +76,13 @@ MAX_MESSAGE = 10000
 MAX_FILENAME = 255
 MAX_DB_KEY_LENGTH = 1000
 
+def reverse(request, url, *args, **kwds):
+  _args = kwds.pop('args', [])
+  _args.insert(0, request.semester)
+  kwds['args'] = _args
+  #print 'reverse %s %s' %(str(args), str(kwds))
+  return _reverse(url, *args, **kwds)
+
 
 ### Form classes ###
 
@@ -99,7 +106,7 @@ class AccountInput(forms.TextInput):
     output = super(AccountInput, self).render(name, value, attrs)
     if models.Account.current_user_account is not None:
       # TODO(anatoli): move this into .js media for this form
-      data = {'name': name, 'url': reverse(account),
+      data = {'name': name, 
               'multiple': 'true'}
       if self.attrs.get('multiple', True) == False:
         data['multiple'] = 'false'
@@ -373,6 +380,7 @@ def respond(request, template, params=None):
   params['request'] = request
   params['counter'] = counter
   params['user'] = request.user
+  params['semester'] = getattr(request, 'semester', '')
   if request.user:
     params['user_id'] = request.user.user_id
   params['bug_owner'] = request.issue.bug_owner if hasattr(request, 'issue') else None
@@ -426,9 +434,14 @@ def _clean_int(value, default, min_value=None, max_value=None):
   return value
 
 
-def _can_view_issue(user, issue):
+def _can_view_issue(request, issue):
+  user = request.user
+  if models.Account.get_account_for_user(user).is_staff:
+    return True
+  if not issue.semester in request.semester:
+    return False
   user_email = user.email().lower()
-  return (user_email in issue.reviewers and issue.subject != 'proj3') or models.Account.get_account_for_user(user).is_staff
+  return (user_email in issue.reviewers)
 
 
 class HttpTextResponse(HttpResponse):
@@ -449,6 +462,7 @@ class HttpHtmlResponse(HttpResponse):
 def post_required(func):
   """Decorator that returns an error unless request.method == 'POST'."""
 
+  @handle_year
   def post_wrapper(request, *args, **kwds):
     if request.method != 'POST':
       return HttpTextResponse('This requires a POST request.', status=405)
@@ -535,9 +549,11 @@ def admin_required(func):
 def handle_year(func):
   """Decorator that insists that you're logged in as administratior."""
 
-  def year_wrapper(request, semester=None, *args, **kwds):
-    if semester:
-      request.semester = semester
+  def year_wrapper(request, *args, **kwds):
+    if 'semester' in kwds:
+      request.semester = kwds.pop('semester')
+    else:
+      print 'uhoh'
     return func(request, *args, **kwds)
 
   return year_wrapper
@@ -561,6 +577,7 @@ def issue_required(func):
 def user_key_required(func):
   """Decorator that processes the user handler argument."""
 
+  @handle_year
   def user_key_wrapper(request, user_key, *args, **kwds):
     user_key = urllib.unquote(user_key)
     if '@' in user_key:
@@ -758,7 +775,7 @@ def _inner_paginate(request, issues, template, extra_template_params):
   Returns:
     Response for sending back to browser.
   """
-  visible_issues = [i for i in issues if _can_view_issue(request.user, i)]
+  visible_issues = [i for i in issues if _can_view_issue(request, i)]
   _optimize_draft_counts(visible_issues)
   _load_users_for_issues(visible_issues)
   params = {
@@ -880,7 +897,7 @@ def bugs(request):
   query.order('-modified')
   query.order('bug_owner')
 
-  return _paginate_issues(reverse(bugs),
+  return _paginate_issues(reverse(request, bugs),
                           request,
                           query,
                           'bugs.html')
@@ -909,7 +926,7 @@ def all(request, index_call=False):
     query.filter('closed =', closed)
   query.order('-modified')
 
-  return _paginate_issues(reverse(all),
+  return _paginate_issues(reverse(request, all),
                           request,
                           query,
                           'all.html',
@@ -955,7 +972,7 @@ def starred(request):
   else:
     issues = [issue for issue in models.Issue.get_by_id(stars)
                     if issue is not None
-                    and _can_view_issue(request.user, issue)]
+                    and _can_view_issue(request, issue)]
     _load_users_for_issues(issues)
     _optimize_draft_counts(issues)
   return respond(request, 'starred.html', {'issues': issues})
@@ -980,8 +997,12 @@ def _show_user(request):
   user_to_show = request.user_to_show
   acc = models.Account.get_account_for_user(request.user)
   acc_to_show = models.Account.get_account_for_user(user_to_show)
-  if (not acc.is_staff) and (user_to_show != request.user):
+  if not acc.is_staff:
+    if user_to_show != request.user:
       return HttpTextResponse("You do not have permission to view this user", status=403)
+    if request.semester not in acc_to_show.semesters:
+      return HttpTextResponse("You do not have permission to view a user", status=403)
+
   if user_to_show == request.user:
     query = models.Comment.all().filter('draft =', True)
     query = query.filter('author =', request.user).fetch(100)
@@ -1012,7 +1033,7 @@ def _show_user(request):
                       all_keys.append(issue.key())
   else:
       query = make_query().filter('reviewers =', user_to_show.email())
-      all_issues = [issue for issue in query if _can_view_issue(request.user, issue)]
+      all_issues = [issue for issue in query if _can_view_issue(request, issue)]
   review_issues = []
   closed_issues = []
   for iss in all_issues:
@@ -1048,7 +1069,7 @@ def new(request):
   if issue is None:
     return respond(request, 'new.html', {'form': form})
   else:
-    return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
+    return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
 
 
 @login_required
@@ -1059,9 +1080,9 @@ def use_uploadpy(request):
     if 'disable_msg' in request.POST:
       models.Account.current_user_account.put()
     if 'download' in request.POST:
-      url = reverse(customized_upload_py)
+      url = reverse(request, customized_upload_py)
     else:
-      url = reverse(new)
+      url = reverse(request, new)
     return HttpResponseRedirect(url)
   return respond(request, 'use_uploadpy.html')
 
@@ -1073,6 +1094,7 @@ def upload(request):
 
   This generates a text/plain response.
   """
+  print 'DOING UPLOAD '
   if request.user is None:
     if IS_DEV:
       request.user = users.User(request.POST.get('user', 'test@example.com'))
@@ -1082,11 +1104,13 @@ def upload(request):
   if request.POST.get('num_parts') > 1:
     return HttpTextResponse('Upload.py is too old, get the latest version.')
   form = UploadForm(request.POST, request.FILES)
+  print 'valid', form.is_valid()
   issue = None
   patchset = None
   if form.is_valid():
     issue_id = form.cleaned_data['issue']
     if issue_id:
+      print 'bam'
       action = 'updated'
       issue = models.Issue.get_by_id(issue_id)
       if issue is None:
@@ -1102,14 +1126,16 @@ def upload(request):
             issue = None
     else:
       action = 'created'
+      print 'bar'
       issue, patchset = _make_new(request, form)
   if issue is None:
     msg = 'Issue creation errors: %s' % repr(form.errors)
   else:
+    print issue.reviewers
     msg = ('Issue %s. URL: %s' %
            (action,
             request.build_absolute_uri(
-              reverse('show_bare_issue_number', args=[issue.key().id()]))))
+              _reverse(show, args=[django_settings.CURRENT_SEMESTER, issue.key().id()]))))
     if (form.cleaned_data.get('content_upload') or
         form.cleaned_data.get('separate_patches')):
       # Extend the response message: 2nd line is patchset id.
@@ -1176,6 +1202,7 @@ def upload_content(request):
 
   Used by upload.py to upload base files.
   """
+  print "DOING CONTENT"
   form = UploadContentForm(request.POST, request.FILES)
   if not form.is_valid():
     return HttpTextResponse(
@@ -1204,7 +1231,9 @@ def upload_content(request):
     content.file_too_large = True
   else:
     data = form.get_uploaded_content()
-    checksum = md5.new(data).hexdigest()
+    h = hashlib.md5()
+    h.update(data)
+    checksum = h.hexdigest()
     if checksum != request.POST.get('checksum'):
       content.is_bad = True
       content.put()
@@ -1274,7 +1303,7 @@ def upload_complete(request, patchset_id=None):
       return HttpTextResponse(
           'No patch set exists with that id (%s)' % patchset_id, status=403)
     # Add delta calculation task.
-    taskqueue.add(url=reverse(calculate_delta),
+    taskqueue.add(url=reverse(request, calculate_delta),
                   params={'key': str(patchset.key())},
                   queue_name='deltacalculation')
   else:
@@ -1408,7 +1437,7 @@ def add(request):
   form = AddForm(request.POST, request.FILES)
   if not _add_patchset_from_form(request, issue, form):
     return show(request, issue.key().id(), form)
-  return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
+  return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
 
 
 def _add_patchset_from_form(request, issue, form, message_key='message',
@@ -1487,6 +1516,7 @@ def _get_emails_from_raw(raw_emails, form=None, label=None):
   return emails
 
 
+@handle_year
 def _calculate_delta(patch, patchset_id, patchsets):
   """Calculates which files in earlier patchsets this file differs from.
 
@@ -1660,7 +1690,7 @@ def _get_patchset_info(request, patchset_id):
 def show(request, form=None):
   """/<issue> - Show an issue."""
   issue, patchsets, response = _get_patchset_info(request, None)
-  if not _can_view_issue(request.user, issue):
+  if not _can_view_issue(request, issue):
       return HttpTextResponse(
           'You cannot view this issue.', status=403)
   if response:
@@ -1773,7 +1803,7 @@ def edit(request):
   issue.reviewers = reviewers
   issue.bug = cleaned_data.get('bug_submit', False)
   issue.put()
-  return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
+  return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
 
 
 def _delete_cached_contents(patch_set):
@@ -1809,7 +1839,7 @@ def _delete_cached_contents(patch_set):
 def release(request):
     request.issue.bug_owner = None
     request.issue.put()
-    return HttpResponseRedirect(reverse(show, args=[request.issue.key().id()]))
+    return HttpResponseRedirect(reverse(request, show, args=[request.issue.key().id()]))
 
 @issue_required
 @staff_required
@@ -1817,7 +1847,7 @@ def claim(request):
     request.issue.bug_owner = request.user.email()
     request.issue.bug = True
     request.issue.put()
-    return HttpResponseRedirect(reverse(show, args=[request.issue.key().id()]))
+    return HttpResponseRedirect(reverse(request, show, args=[request.issue.key().id()]))
 
 @post_required
 @issue_required
@@ -1830,7 +1860,7 @@ def delete(request):
               models.Message, models.Content]:
     tbd += cls.gql('WHERE ANCESTOR IS :1', issue)
   db.delete(tbd)
-  return HttpResponseRedirect(reverse(mine))
+  return HttpResponseRedirect(reverse(request, mine))
 
 
 @post_required
@@ -1851,7 +1881,7 @@ def delete_patchset(request):
         if ps_id in patch.delta:
           patches.append(patch)
   db.run_in_transaction(_patchset_delete, ps_delete, patches)
-  return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
+  return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
 
 
 def _patchset_delete(ps_delete, patches):
@@ -2753,7 +2783,7 @@ def publish(request):
   models.Account.current_user_account.update_drafts(issue, 0)
   if form.cleaned_data.get('no_redirect', False):
     return HttpTextResponse('OK')
-  return HttpResponseRedirect(reverse(show, args=[issue.key().id()]))
+  return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
 
 
 def _encode_safely(s):
@@ -2831,7 +2861,7 @@ def _get_draft_details(request, comments):
   for c in comments:
     if (c.patch.key(), c.left) != last_key:
       url = request.build_absolute_uri(
-        reverse(diff, args=[request.issue.key().id(),
+        reverse(request, request, diff, args=[request.issue.key().id(),
                             c.patch.patchset.key().id(),
                             c.patch.filename]))
       output.append('\n%s\nFile %s (%s):' % (url, c.patch.filename,
@@ -2854,7 +2884,7 @@ def _get_draft_details(request, comments):
             patching.ParsePatchToLines(patch.lines), c.left)
     context = linecache[last_key].get(c.lineno, '').strip()
     url = request.build_absolute_uri(
-      '%s#%scode%d' % (reverse(diff, args=[request.issue.key().id(),
+      '%s#%scode%d' % (reverse(request, diff, args=[request.issue.key().id(),
                                            c.patch.patchset.key().id(),
                                            c.patch.filename]),
                        c.left and "old" or "new",
@@ -2925,13 +2955,13 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
       num_trimmed = len(context['files']) - 200
       del context['files'][200:]
       context['files'].append('[[ %d additional files ]]' % num_trimmed)
-    url = request.build_absolute_uri(reverse(show, args=[issue.key().id()]))
+    url = request.build_absolute_uri(reverse(request, show, args=[issue.key().id()]))
     reviewer_nicknames = ', '.join(library.get_nickname(rev_temp, True,
                                                         request)
                                    for rev_temp in issue.reviewers)
     my_nickname = library.get_nickname(request.user, True, request)
     reply_to = ', '.join(reply_to)
-    home = request.build_absolute_uri(reverse(index))
+    home = request.build_absolute_uri(reverse(request, index))
     context.update({'reviewer_nicknames': reviewer_nicknames,
                     'my_nickname': my_nickname, 'url': url,
                     'message': message, 'details': details,
@@ -3136,7 +3166,7 @@ def search(request):
     nav_params = dict(
         (k, v) for k, v in form.cleaned_data.iteritems() if v is not None)
     return _paginate_issues_with_cursor(
-        reverse(search),
+        reverse(request, search),
         request,
         q,
         limit,
@@ -3150,7 +3180,7 @@ def search(request):
     # the issue's key.
     filtered_results = results
   else:
-    filtered_results = [i for i in results if _can_view_issue(request.user, i)]
+    filtered_results = [i for i in results if _can_view_issue(request, i)]
   data = {
     'cursor': form.cleaned_data['cursor'],
   }
@@ -3193,7 +3223,7 @@ def settings(request):
                                               'user_to_show': request.user_to_show,})
   form = SettingsForm(request.POST)
   if not form.is_valid():
-    return HttpResponseRedirect(reverse(mine))
+    return HttpResponseRedirect(reverse(request, mine))
   account.default_context = form.cleaned_data.get('context')
   account.default_column_width = form.cleaned_data.get('column_width')
   data = form.cleaned_data
@@ -3213,7 +3243,7 @@ def settings(request):
   if 'is_staff' in data:
       account.is_staff = data['is_staff']
   account.put()
-  return HttpResponseRedirect(reverse(show_user, args=(request.user_to_show,)))
+  return HttpResponseRedirect(reverse(request, show_user, args=(request.user_to_show,)))
 
 
 @user_key_required
@@ -3225,7 +3255,7 @@ def account_delete(request):
       return HttpTextResponse("Invalid permissions to delete this user", status=403)
   account = models.Account.get_account_for_user(request.user_to_show)
   account.delete()
-  return HttpResponseRedirect(users.create_logout_url(reverse(index)))
+  return HttpResponseRedirect(users.create_logout_url(reverse(request, index)))
 
 
 @user_key_required
