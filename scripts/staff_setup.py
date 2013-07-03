@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser(description="Creates the email->section mapping
 parser.add_argument('mapping', type=str,
                     help='the path to the csv file containing email to section mappings')
 args = base.init(parser)
-remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host)
+#remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host)
 from codereview.models import Account
 
 def make_acc(email, section):
