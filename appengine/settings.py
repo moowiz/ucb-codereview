@@ -58,6 +58,8 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1 MB
 
 MEDIA_URL = '/static/'
 
+ALLOWED_HOSTS = ['.appspot.com']
+
 appid = app_identity.get_application_id()
 RIETVELD_INCOMING_MAIL_ADDRESS = ('reply@%s.appspotmail.com' % appid)
 RIETVELD_INCOMING_MAIL_MAX_SIZE = 500 * 1024  # 500K
