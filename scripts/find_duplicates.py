@@ -1,7 +1,5 @@
 import base
-parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
-parser.add_argument('assign', type=str,
-                    help='the assignment to grade')
+parser = argparse.ArgumentParser(description="Upgrade old schema to add a semester field")
 args = base.init(parser)
 
 from codereview.models import Issue, Account

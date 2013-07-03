@@ -78,7 +78,10 @@ MAX_DB_KEY_LENGTH = 1000
 
 def reverse(request, url, *args, **kwds):
   _args = kwds.pop('args', [])
-  _args.insert(0, request.semester)
+  if type(_args) is tuple:
+    _args = (request.semester,) + _args
+  else:
+    _args.insert(0, request.semester)
   kwds['args'] = _args
   #print 'reverse %s %s' %(str(args), str(kwds))
   return _reverse(url, *args, **kwds)
@@ -829,6 +832,7 @@ def _paginate_issues(page_url,
     'nexttext': 'Older',
   }
   # Fetch one more to see if there should be a 'next' link
+  query.filter('semester =', request.semester)
   issues = query.fetch(limit+1, offset)
   if len(issues) > limit:
     del issues[limit:]
@@ -869,6 +873,7 @@ def _paginate_issues_with_cursor(page_url,
   Returns:
     Response for sending back to browser.
   """
+  query.filter('semester =', semester)
   issues = query.fetch(limit)
   nav_parameters = {}
   if extra_nav_parameters:
@@ -1012,7 +1017,7 @@ def _show_user(request):
     draft_issues = draft_keys = []
 
   def make_query():
-    query = models.Issue.all()
+    query = models.Issue.all().filter('semester =', request.semester)
     assign = request.GET.get('assign')
     if assign:
       query.filter('subject =', assign)
@@ -3106,6 +3111,7 @@ def _delete_draft_message(draft):
 
 
 @json_response
+@handle_year
 def search(request):
   """/search - Search for issues or patchset.
 
@@ -3138,7 +3144,7 @@ def search(request):
       else:
         limit = 100
 
-  q = models.Issue.all(keys_only=keys_only)
+  q = models.Issue.all(keys_only=keys_only).filter('semester = ', request.semester)
   if form.cleaned_data['cursor']:
     q.with_cursor(form.cleaned_data['cursor'])
   if form.cleaned_data['reviewer']:

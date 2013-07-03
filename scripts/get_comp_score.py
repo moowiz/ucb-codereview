@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import base
+import argparse
 parser = argparse.ArgumentParser(description="Gets the composition scores for an assignment")
 parser.add_argument('assignment', type=str,
                     help='the assignment to grade')

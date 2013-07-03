@@ -22,39 +22,17 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: Comment
-  properties:
-  - name: left
-  - name: lineno
-  - name: patch
-  - name: date
-
-- kind: Comment
-  properties:
-  - name: left
-  - name: patch
-  - name: date
-
-- kind: Comment
-  properties:
-  - name: patch
-  - name: date
-
-- kind: Comment
-  ancestor: yes
-  properties:
-  - name: author
-  - name: draft
-
 - kind: Issue
   properties:
   - name: bug
   - name: modified
     direction: desc
+  - name: bug_owner
 
 - kind: Issue
   properties:
   - name: bug
+  - name: semester
   - name: modified
     direction: desc
   - name: bug_owner
@@ -67,24 +45,15 @@ indexes:
 
 - kind: Issue
   properties:
-  - name: reviewers
-  - name: created
-
-- kind: Issue
-  properties:
-  - name: reviewers
-  - name: modified
-
-- kind: Issue
-  properties:
-  - name: reviewers
+  - name: closed
+  - name: semester
   - name: modified
     direction: desc
 
 - kind: Issue
   properties:
   - name: reviewers
-  - name: subject
+  - name: semester
   - name: modified
 
 - kind: Issue
