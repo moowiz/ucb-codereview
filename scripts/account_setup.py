@@ -22,11 +22,8 @@ def main(filename):
     for it in split:
         if count % 10 == 0:
             print 'counter {}'.format(count)
-        if count > 20:
-            return
         make_acc(it[0], it[1])
         count += 1
-        break
 
 if __name__ == "__main__":
     main(args.mapping)
