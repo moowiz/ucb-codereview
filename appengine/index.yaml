@@ -22,6 +22,18 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Comment
+  properties:
+  - name: left
+  - name: lineno
+  - name: patch
+  - name: date
+
+- kind: Comment
+  properties:
+  - name: patch
+  - name: date
+
 - kind: Issue
   properties:
   - name: bug

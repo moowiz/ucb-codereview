@@ -555,8 +555,6 @@ def handle_year(func):
   def year_wrapper(request, *args, **kwds):
     if 'semester' in kwds:
       request.semester = kwds.pop('semester')
-    else:
-      print 'uhoh'
     return func(request, *args, **kwds)
 
   return year_wrapper
