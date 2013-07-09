@@ -695,8 +695,10 @@ def _ExpandTemplate(name, request, **params):
 
   For convenience, this takes keyword arguments instead of a dict.
   """
+  context = RequestContext(request)
+  context['semester'] = request.semester
   rslt = loader.render_to_string(name, params,
-                                 context_instance=RequestContext(request))
+                                 context_instance=context)
   return rslt.encode('utf-8')
 
 
