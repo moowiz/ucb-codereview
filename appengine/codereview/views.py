@@ -106,18 +106,20 @@ class AccountInput(forms.TextInput):
 
   def render(self, name, value, attrs=None):
     output = super(AccountInput, self).render(name, value, attrs)
+    print output
     if models.Account.current_user_account is not None:
       # TODO(anatoli): move this into .js media for this form
       data = {'name': name, 
               'multiple': 'true'}
       if self.attrs.get('multiple', True) == False:
         data['multiple'] = 'false'
+      data['semester'] = models.Account.current_user_account.semesters[0]
       output += mark_safe(u'''
       <script type="text/javascript">
           $("#id_%(name)s").autocomplete({
           source: function(request, response){
               $.ajax({
-                url: "/account",
+                url: "/%(semester)s/account",
                 data: {
                     q: request.term,
                     limit: 10,
@@ -3110,11 +3112,11 @@ def search(request):
   Returns HTTP 500 if the corresponding index is missing.
   """
   if request.method == 'GET':
-    form = SearchForm(request.GET)
+    form = SearchForm(request.GET, request.semester)
     if not form.is_valid() or not request.GET:
       return respond(request, 'search.html', {'form': form})
   else:
-    form = SearchForm(request.POST)
+    form = SearchForm(request.POST, request.semester)
     if not form.is_valid():
       return HttpTextResponse('Invalid arguments', status=400)
   logging.info('%s' % form.cleaned_data)
