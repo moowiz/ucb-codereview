@@ -83,7 +83,6 @@ def reverse(request, url, *args, **kwds):
   else:
     _args.insert(0, request.semester)
   kwds['args'] = _args
-  #print 'reverse %s %s' %(str(args), str(kwds))
   return _reverse(url, *args, **kwds)
 
 
@@ -1097,7 +1096,6 @@ def upload(request):
 
   This generates a text/plain response.
   """
-  print 'DOING UPLOAD '
   if request.user is None:
     if IS_DEV:
       request.user = users.User(request.POST.get('user', 'test@example.com'))
@@ -1107,13 +1105,11 @@ def upload(request):
   if request.POST.get('num_parts') > 1:
     return HttpTextResponse('Upload.py is too old, get the latest version.')
   form = UploadForm(request.POST, request.FILES)
-  print 'valid', form.is_valid()
   issue = None
   patchset = None
   if form.is_valid():
     issue_id = form.cleaned_data['issue']
     if issue_id:
-      print 'bam'
       action = 'updated'
       issue = models.Issue.get_by_id(issue_id)
       if issue is None:
@@ -1129,7 +1125,6 @@ def upload(request):
             issue = None
     else:
       action = 'created'
-      print 'bar'
       issue, patchset = _make_new(request, form)
   if issue is None:
     msg = 'Issue creation errors: %s' % repr(form.errors)
@@ -2639,9 +2634,7 @@ def _inline_draft(request):
       'ORDER BY date',
       patch=patch, lineno=lineno, left=left)
   comments = list(c for c in query if not c.draft or c.author == request.user)
-  if comment is not None and comment.author is None:
-    # Show anonymous draft even though we don't save it
-    comments.append(comment)
+  comments.append(comment)
   if not comments:
     return HttpTextResponse(' ')
   for c in comments:
@@ -2655,6 +2648,7 @@ def _inline_draft(request):
                              'lineno': lineno,
                              'snapshot': snapshot,
                              'side': side,
+                             'semester': request.semester,
                              },
                             context_instance=RequestContext(request))
 
@@ -2864,7 +2858,7 @@ def _get_draft_details(request, comments):
   for c in comments:
     if (c.patch.key(), c.left) != last_key:
       url = request.build_absolute_uri(
-        reverse(request, request, diff, args=[request.issue.key().id(),
+        reverse(request, diff, args=[request.issue.key().id(),
                             c.patch.patchset.key().id(),
                             c.patch.filename]))
       output.append('\n%s\nFile %s (%s):' % (url, c.patch.filename,

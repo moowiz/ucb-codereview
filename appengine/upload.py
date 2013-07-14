@@ -166,8 +166,6 @@ class ClientLoginError(urllib2.HTTPError):
   def __init__(self, url, code, msg, headers, args):
     urllib2.HTTPError.__init__(self, url, code, msg, headers, None)
     self.args = args
-    print args
-    print self.reason
     self.__dict__['reason'] = args["Error"]
     self.info = args.get("Info", None)
 
@@ -255,7 +253,6 @@ class AbstractRpcServer(object):
         }),
     )
     try:
-      print 'opening', req
       response = self.opener.open(req)
       response_body = response.read()
       response_dict = dict(x.split("=")
@@ -609,11 +606,8 @@ def GetRpcServer(server, email=None, host_override=None, save_cookies=True,
 
   # If this is the dev_appserver, use fake authentication.
   host = (host_override or server).lower()
-  print 'host issss', host
   val = re.match(r'(http://)?localhost', host)
-  print val.group(0)
   if re.match(r'(http://)?localhost', host):
-    print 'baah'
     if email is None:
       email = "test@example.com"
       logging.info("Using debug user %s.  Override with --email" % email)
@@ -2241,7 +2235,6 @@ def RealMain(argv, data=None):
   if title and not options.issue:
     message = message or title
 
-  print 'title', title
   form_fields.append(("subject", title))
   # If it's a new issue send message as description. Otherwise a new
   # message is created below on upload_complete.
