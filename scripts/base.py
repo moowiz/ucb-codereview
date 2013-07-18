@@ -17,6 +17,8 @@ def init(parser):
 
 	parser.add_argument('host', type=str,
 	                    help='the URL of the server we want to upload info to')
+	parser.add_argument('semester', type=str,
+						help='the semester to look at.')
 	args = parser.parse_args()
 	remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host)
 	return args
