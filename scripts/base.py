@@ -13,7 +13,7 @@ def init(parser):
 	os.environ['SERVER_SOFTWARE'] = ''
 
 	def auth_func():
-	    return (u'moowiz2020@gmail.com', getpass.getpass("Google One time password:"))
+	    return (u'cs61a.robot@gmail.com', getpass.getpass("Google One time password:"))
 
 	parser.add_argument('host', type=str,
 	                    help='the URL of the server we want to upload info to')
