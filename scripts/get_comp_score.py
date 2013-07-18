@@ -12,7 +12,7 @@ from codereview.models import Issue
 grades = {}
 def main():
     good = seen = 0
-    for issue in Issue.all().filter('subject =', args.assignment):
+    for issue in Issue.all().filter('subject =', args.assignment).filter('semester =', args.semester):
         seen += 1
         if issue.comp_score > -1:
             for stu in issue.reviewers:
