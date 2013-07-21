@@ -38,9 +38,6 @@ class CodeReviewDatabase(object):
         if result:
             # if not empty, then result should be tuple with 1 elem
             return result[0]
-        else:
-            # this clause not really necessary
-            return None
 
     def set_last_uploaded(self, time_int, assign):
         """
