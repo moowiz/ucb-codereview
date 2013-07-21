@@ -5,6 +5,7 @@ import os
 parser = argparse.ArgumentParser(description="Transforms raw grades into grades that can be put into glookup")
 parser.add_argument('file', type=str)
 parser.add_argument('out_file', type=str)
+parser.add_argument('assignment', type=str)
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -15,7 +16,7 @@ if __name__ == "__main__":
                 lines = open_file.read().split('\n')
                 while 'Email' not in lines[0]:
                     lines = lines[1:]
-                email_line = lines[0]
+                email_line = lines[0].lower()
                 email = email_line[email_line.find(':')+1:].strip()
                 email_to_login[email] = file
 
@@ -26,6 +27,6 @@ if __name__ == "__main__":
                 grade = int(grade.strip())
                 email = email.strip()
                 try:
-                    out_file.write('{} a {}\n'.format(email_to_login[email], grade))
+                    out_file.write('{} {} {}\n'.format(email_to_login[email], args.assignment, grade))
                 except:
                     print('ERR: couldn\'t write grade for', email, ' grade was', grade)
