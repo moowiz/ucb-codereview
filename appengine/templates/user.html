@@ -6,6 +6,9 @@ document.onkeydown = M_dashboardKeyDown;
 -->
 </script>
 <h2>Issues for {%nickname email%}</h2>
+{% if is_admin %}
+<h4><a href = "{%url codereview.views.settings user%}">Settings</a></h4>
+{% endif %}
 <div class="issue-list">
   <table id="queues">
 
