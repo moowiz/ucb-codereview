@@ -106,7 +106,6 @@ class AccountInput(forms.TextInput):
 
   def render(self, name, value, attrs=None):
     output = super(AccountInput, self).render(name, value, attrs)
-    print output
     if models.Account.current_user_account is not None:
       # TODO(anatoli): move this into .js media for this form
       data = {'name': name, 
@@ -1131,7 +1130,6 @@ def upload(request):
   if issue is None:
     msg = 'Issue creation errors: %s' % repr(form.errors)
   else:
-    print issue.reviewers
     msg = ('Issue %s. URL: %s' %
            (action,
             request.build_absolute_uri(
@@ -1202,7 +1200,6 @@ def upload_content(request):
 
   Used by upload.py to upload base files.
   """
-  print "DOING CONTENT"
   form = UploadContentForm(request.POST, request.FILES)
   if not form.is_valid():
     return HttpTextResponse(
