@@ -871,7 +871,7 @@ def _paginate_issues_with_cursor(page_url,
   Returns:
     Response for sending back to browser.
   """
-  query.filter('semester =', semester)
+  query.filter('semester =', request.semester)
   issues = query.fetch(limit)
   nav_parameters = {}
   if extra_nav_parameters:
@@ -1024,8 +1024,7 @@ def _show_user(request):
   if acc_to_show.is_staff and acc.is_staff:
       all_issues = []
       all_keys = []
-      for num in acc.sections:
-          section = models.Section.get_by_key_name("<{}>".format(num))
+      for section in models.Section.get_by_key_name("<{}>".format(num) for num in acc.sections) :
           if not section:
             continue
           for stu in section.accounts:

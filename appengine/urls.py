@@ -26,5 +26,5 @@ from views import redirect_to_current_semester
 urlpatterns = patterns(
     '',
     url(r'^(?P<semester>[a-zA-z0-9]{4})/', include('codereview.urls')),
-    url(r'', redirect_to_current_semester),
+    url(r'.*', redirect_to_current_semester),
     )
