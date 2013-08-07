@@ -31,12 +31,12 @@ handlers:
   script: main.application
   login: admin
 
-- url: /.*
-  script: main.application
-
 - url: /remoteapi.*
   script: google.appengine.ext.remote_api.handler.app
   login: admin
+
+- url: /.*
+  script: main.application
 
 inbound_services:
 - mail
