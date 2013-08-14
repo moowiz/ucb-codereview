@@ -1011,7 +1011,6 @@ def _load_users_for_issues(issues):
   library.get_links_for_users(user_dict.keys())
 
 @user_key_required
-@last_modified(last_mod_user)
 def show_user(request):
   """/user - Show the user's dashboard"""
   return _show_user(request)
