@@ -33,7 +33,7 @@ class AddUserToRequestMiddleware(object):
   def process_request(self, request):
     request.user = users.get_current_user()
     request.user_is_admin = users.is_current_user_admin()
-    request.is_staff = models.Account.get_account_for_user(request.user).is_staff
+    request.is_staff = models.Account.get_account_for_user(request.user).is_staff if request.user else False
 
     # Update the cached value of the current user's Account
     account = None
