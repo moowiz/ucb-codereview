@@ -81,6 +81,13 @@ class Issue(db.Model):
 
   _is_starred = None
 
+  def put(self):
+    memcache.delete('all.c')
+    memcache.delete('all.o')
+    val = super(Issue, self).put()
+    memcache.set('l_iss', self.modified)
+    return val
+
   def set_comp_score(self, val):
       self.comp_score = val
       self.closed = self.comp_score > -1

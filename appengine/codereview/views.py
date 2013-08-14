@@ -49,6 +49,7 @@ from django.utils import encoding
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse as _reverse
+from django.views.decorators.http import last_modified
 
 from codereview import engine
 from codereview import library
@@ -600,7 +601,7 @@ def staff_required(func):
 
     @login_required
     def staff_required_wrapper(request, *args, **kwds):
-        if not models.Account.get_account_for_user(request.user).is_staff:
+        if not request.is_staff:
             return HttpTextResponse('You do not have permission to view this page', status=403)
         return func(request, *args, **kwds)
     return staff_required_wrapper
@@ -905,7 +906,15 @@ def bugs(request):
                           query,
                           'bugs.html')
 
+def last_modified_issue(request):
+  last = memcache.get('l_iss')
+  if not last:
+    last = models.Issue.all().order('-modified').fetch(1)[0].modified
+    memcache.set('l_iss', last)
+  return last
+
 @staff_required
+@last_modified(last_modified_issue)
 def all(request, index_call=False):
   """/all - Show a list of up to DEFAULT_LIMIT recent issues."""
   closed = request.GET.get('closed', '')
@@ -919,22 +928,33 @@ def all(request, index_call=False):
   else:
     closed = None
 
-  nav_parameters = {}
+  key = 'all'
   if closed is not None:
-    nav_parameters['closed'] = int(closed)
+    key += '.c' if closed else '.o'
+  if 'offset' in request.GET:
+    key += '.off:%s' % request.GET['offset']
+  if 'limit' in request.GET:
+    key += '.key:%s' % request.GET['limit']
+  val = memcache.get(key)
+  if not val:
+    nav_parameters = {}
+    if closed is not None:
+      nav_parameters['closed'] = int(closed)
 
-  query = models.Issue.all()
-  if closed is not None:
-    # return only opened or closed issues
-    query.filter('closed =', closed)
-  query.order('-modified')
+    query = models.Issue.all()
+    if closed is not None:
+      # return only opened or closed issues
+      query.filter('closed =', closed)
+    query.order('-modified')
 
-  return _paginate_issues(reverse(request, all),
-                          request,
-                          query,
-                          'all.html',
-                          extra_nav_parameters=nav_parameters,
-                          extra_template_params=dict(closed=closed))
+    val = _paginate_issues(reverse(request, all),
+                            request,
+                            query,
+                            'all.html',
+                            extra_nav_parameters=nav_parameters,
+                            extra_template_params=dict(closed=closed))
+    memcache.set(key, val)
+  return val
 
 
 def _optimize_draft_counts(issues):
@@ -990,8 +1010,8 @@ def _load_users_for_issues(issues):
 
   library.get_links_for_users(user_dict.keys())
 
-
 @user_key_required
+@last_modified(last_mod_user)
 def show_user(request):
   """/user - Show the user's dashboard"""
   return _show_user(request)
@@ -1016,15 +1036,16 @@ def _show_user(request):
 
   def make_query():
     query = models.Issue.all().filter('semester =', request.semester)
-    assign = request.GET.get('assign')
+    assign = request.GET.get('assign', None)
     if assign:
       query.filter('subject =', assign)
     query.order('modified')
     return query
+
   if acc_to_show.is_staff and acc.is_staff:
       all_issues = []
       all_keys = []
-      for section in models.Section.get_by_key_name("<{}>".format(num) for num in acc.sections) :
+      for section in models.Section.get_by_key_name("<%s>" % num for num in acc.sections) :
           if not section:
             continue
           for stu in section.accounts:
