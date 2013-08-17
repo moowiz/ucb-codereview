@@ -25,6 +25,7 @@ import os
 import random
 import re
 import urllib
+import json
 from cStringIO import StringIO
 from xml.etree import ElementTree
 
@@ -38,7 +39,6 @@ from google.appengine.ext import db
 from google.appengine.runtime import DeadlineExceededError
 from google.appengine.runtime import apiproxy_errors
 
-from django import forms
 # Import settings as django_settings to avoid name conflict with settings().
 from django.conf import settings as django_settings
 from django.http import HttpResponse, HttpResponseRedirect
@@ -46,7 +46,6 @@ from django.shortcuts import render_to_response
 import django.template
 from django.template import RequestContext
 from django.utils import encoding
-from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse as _reverse
 from django.views.decorators.http import last_modified
@@ -56,6 +55,7 @@ from codereview import library
 from codereview import models
 from codereview import patching
 from codereview import utils
+from codereview import forms
 from codereview.exceptions import FetchError
 
 
@@ -67,15 +67,6 @@ django.template.add_to_builtins('codereview.library')
 
 
 IS_DEV = os.environ['SERVER_SOFTWARE'].startswith('Dev')  # Development server
-# Maximum forms fields length
-MAX_SUBJECT = 100
-MAX_DESCRIPTION = 10000
-MAX_URL = 2083
-MAX_REVIEWERS = 1000
-MAX_CC = 2000
-MAX_MESSAGE = 10000
-MAX_FILENAME = 255
-MAX_DB_KEY_LENGTH = 1000
 
 def reverse(request, url, *args, **kwds):
   _args = kwds.pop('args', [])
@@ -87,279 +78,12 @@ def reverse(request, url, *args, **kwds):
   return _reverse(url, *args, **kwds)
 
 
-### Form classes ###
-
-
-class AccountInput(forms.TextInput):
-  # Associates the necessary css/js files for the control.  See
-  # http://docs.djangoproject.com/en/dev/topics/forms/media/.
-  #
-  # Don't forget to place {{formname.media}} into html header
-  # when using this html control.
-  class Media:
-    css = {
-      'all': ('http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css',)
-    }
-    js = (
-      'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js',
-      'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js',
-    )
-
-  def render(self, name, value, attrs=None):
-    output = super(AccountInput, self).render(name, value, attrs)
-    if models.Account.current_user_account is not None:
-      # TODO(anatoli): move this into .js media for this form
-      data = {'name': name, 
-              'multiple': 'true'}
-      if self.attrs.get('multiple', True) == False:
-        data['multiple'] = 'false'
-      data['semester'] = models.Account.current_user_account.semesters[0]
-      output += mark_safe(u'''
-      <script type="text/javascript">
-          $("#id_%(name)s").autocomplete({
-          source: function(request, response){
-              $.ajax({
-                url: "/%(semester)s/account",
-                data: {
-                    q: request.term,
-                    limit: 10,
-                },
-                success: function(data) {
-                    response(data.split("\\n").slice(0, -1));
-                }
-          } );
-      } });
-      </script>
-
-              ''' % data)
-    return output
-
-
-class IssueBaseForm(forms.Form):
-
-  subject = forms.CharField(max_length=MAX_SUBJECT,
-                            widget=forms.TextInput(attrs={'size': 60}))
-  reviewers = forms.CharField(required=False,
-                              max_length=MAX_REVIEWERS,
-                              widget=AccountInput(attrs={'size': 60}))
-  bug_submit = forms.BooleanField(required=False)
-
-
-class NewForm(IssueBaseForm):
-
-  data = forms.FileField(required=False)
-  url = forms.URLField(required=False,
-                       max_length=MAX_URL,
-                       widget=forms.TextInput(attrs={'size': 60}))
-  send_mail = forms.BooleanField(required=False, initial=True)
-
-
-class AddForm(forms.Form):
-
-  message = forms.CharField(max_length=MAX_SUBJECT,
-                            widget=forms.TextInput(attrs={'size': 60}))
-  data = forms.FileField(required=False)
-  url = forms.URLField(required=False,
-                       max_length=MAX_URL,
-                       widget=forms.TextInput(attrs={'size': 60}))
-  reviewers = forms.CharField(max_length=MAX_REVIEWERS, required=False,
-                              widget=AccountInput(attrs={'size': 60}))
-  send_mail = forms.BooleanField(required=False, initial=True)
-
-
-class UploadForm(forms.Form):
-
-  subject = forms.CharField(max_length=MAX_SUBJECT)
-  description = forms.CharField(max_length=MAX_DESCRIPTION, required=False)
-  content_upload = forms.BooleanField(required=False)
-  separate_patches = forms.BooleanField(required=False)
-  data = forms.FileField(required=False)
-  issue = forms.IntegerField(required=False)
-  reviewers = forms.CharField(max_length=MAX_REVIEWERS, required=False)
-  send_mail = forms.BooleanField(required=False)
-  base_hashes = forms.CharField(required=False)
-  repo_guid = forms.CharField(required=False, max_length=MAX_URL)
-
-
-class UploadContentForm(forms.Form):
-  filename = forms.CharField(max_length=MAX_FILENAME)
-  status = forms.CharField(required=False, max_length=20)
-  checksum = forms.CharField(max_length=32)
-  file_too_large = forms.BooleanField(required=False)
-  is_binary = forms.BooleanField(required=False)
-  is_current = forms.BooleanField(required=False)
-
-  def clean(self):
-    # Check presence of 'data'. We cannot use FileField because
-    # it disallows empty files.
-    super(UploadContentForm, self).clean()
-    if not self.files and 'data' not in self.files:
-      raise forms.ValidationError, 'No content uploaded.'
-    return self.cleaned_data
-
-  def get_uploaded_content(self):
-    return self.files['data'].read()
-
-
-class UploadPatchForm(forms.Form):
-  filename = forms.CharField(max_length=MAX_FILENAME)
-  content_upload = forms.BooleanField(required=False)
-
-  def get_uploaded_patch(self):
-    return self.files['data'].read()
-
-def validate_comp_score(val):
-    s = "Only numbers between -1 and 3 are allowed"
-    err = forms.ValidationError(s)
-    val = int(val)
-    if val < -1 or val > 3:
-        raise err
-
-class PublishForm(forms.Form):
-  reviewers = forms.CharField(required=False,
-                              max_length=MAX_REVIEWERS,
-                              widget=AccountInput(attrs={'size': 60}))
-  comp_score = forms.IntegerField(required=False, label = 'Composition Score',
-           validators=[validate_comp_score])
-  bug_submit = forms.BooleanField(required=False)
-  send_mail = forms.BooleanField(required=False)
-  message = forms.CharField(required=False,
-                            max_length=MAX_MESSAGE,
-                            widget=forms.Textarea(attrs={'cols': 60}))
-  message_only = forms.BooleanField(required=False,
-                                    widget=forms.HiddenInput())
-  no_redirect = forms.BooleanField(required=False,
-                                   widget=forms.HiddenInput())
-  in_reply_to = forms.CharField(required=False,
-                                max_length=MAX_DB_KEY_LENGTH,
-                                widget=forms.HiddenInput())
-
-FORM_CONTEXT_VALUES = [(x, '%d lines' % x) for x in models.CONTEXT_CHOICES]
-FORM_CONTEXT_VALUES.append(('', 'Whole file'))
-
-
-class SettingsForm(forms.Form):
-
-  context = forms.IntegerField(
-      widget=forms.Select(choices=FORM_CONTEXT_VALUES),
-      required=False,
-      label='Context')
-  column_width = forms.IntegerField(
-      initial=django_settings.DEFAULT_COLUMN_WIDTH,
-      min_value=django_settings.MIN_COLUMN_WIDTH,
-      max_value=django_settings.MAX_COLUMN_WIDTH)
-  sections = forms.CharField(required=False)
-  is_staff = forms.BooleanField(required=False)
-
-  def clean_nickname(self):
-    nickname = self.cleaned_data.get('nickname')
-    # Check for allowed characters
-    match = re.match(r'[\w\.\-_\(\) ]+$', nickname, re.UNICODE|re.IGNORECASE)
-    if not match:
-      raise forms.ValidationError('Allowed characters are letters, digits, '
-                                  '".-_()" and spaces.')
-    # Check for sane whitespaces
-    if re.search(r'\s{2,}', nickname):
-      raise forms.ValidationError('Use single spaces between words.')
-    if len(nickname) != len(nickname.strip()):
-      raise forms.ValidationError('Leading and trailing whitespaces are '
-                                  'not allowed.')
-
-    if nickname.lower() == 'me':
-      raise forms.ValidationError('Choose a different nickname.')
-
-    # Look for existing nicknames
-    accounts = list(models.Account.gql('WHERE lower_nickname = :1',
-                                       nickname.lower()))
-    for account in accounts:
-      if account.key() == models.Account.current_user_account.key():
-        continue
-      raise forms.ValidationError('This nickname is already in use.')
-
-    return nickname
-
-class SearchForm(forms.Form):
-
-  format = forms.ChoiceField(
-      required=False,
-      choices=(
-        ('html', 'html'),
-        ('json', 'json')),
-      widget=forms.HiddenInput(attrs={'value': 'html'}))
-  keys_only = forms.BooleanField(
-      required=False,
-      widget=forms.HiddenInput(attrs={'value': 'False'}))
-  with_messages = forms.BooleanField(
-      required=False,
-      widget=forms.HiddenInput(attrs={'value': 'False'}))
-  cursor = forms.CharField(
-      required=False,
-      widget=forms.HiddenInput(attrs={'value': ''}))
-  limit = forms.IntegerField(
-      required=False,
-      min_value=1,
-      max_value=1000,
-      initial=10,
-      widget=forms.HiddenInput(attrs={'value': '10'}))
-  closed = forms.NullBooleanField(required=False)
-  reviewer = forms.CharField(required=False,
-                             max_length=MAX_REVIEWERS,
-                             widget=AccountInput(attrs={'size': 60,
-                                                        'multiple': False}))
-  created_before = forms.DateTimeField(required=False, label='Created before')
-  created_after = forms.DateTimeField(
-      required=False, label='Created on or after')
-  modified_before = forms.DateTimeField(required=False, label='Modified before')
-  modified_after = forms.DateTimeField(
-      required=False, label='Modified on or after')
-
-  def _clean_accounts(self, key):
-    """Cleans up autocomplete field.
-
-    The input is validated to be zero or one name/email and it's
-    validated that the users exists.
-
-    Args:
-      key: the field name.
-
-    Returns an User instance or raises ValidationError.
-    """
-    accounts = filter(None,
-                      (x.strip()
-                       for x in self.cleaned_data.get(key, '').split(',')))
-    if len(accounts) > 1:
-      raise forms.ValidationError('Only one user name is allowed.')
-    elif not accounts:
-      return None
-    account = accounts[0]
-    if '@' in account:
-      acct = models.Account.get_account_for_email(account)
-    else:
-      acct = models.Account.get_account_for_nickname(account)
-    if not acct:
-      raise forms.ValidationError('Unknown user')
-    return acct.user
-
-  def clean_reviewer(self):
-    user = self._clean_accounts('reviewer')
-    if user:
-      return user.email()
-
-
 ### Exceptions ###
-
-
 class InvalidIncomingEmailError(Exception):
   """Exception raised by incoming mail handler when a problem occurs."""
 
 
 ### Helper functions ###
-
-# Counter displayed (by respond()) below) on every page showing how
-# many requests the current incarnation has handled, not counting
-# redirects.  Rendered by templates/base.html.
-counter = 0
-
 
 def respond(request, template, params=None):
   """Helper to render a response, passing standard stuff to the response.
@@ -375,14 +99,11 @@ def respond(request, template, params=None):
   Raises:
     Whatever render_to_response(template, params) raises.
   """
-  global counter
-  counter += 1
   if params is None:
     params = {}
   if request.user is not None:
     account = models.Account.current_user_account
   params['request'] = request
-  params['counter'] = counter
   params['user'] = request.user
   params['semester'] = getattr(request, 'semester', '')
   if request.user:
@@ -718,9 +439,9 @@ def json_response(func):
     if isinstance(data, HttpResponse):
       return data
     if request.REQUEST.get('pretty','0').lower() in ('1', 'true', 'on'):
-      data = simplejson.dumps(data, indent='  ', sort_keys=True)
+      data = json.dumps(data, indent='  ', sort_keys=True)
     else:
-      data = simplejson.dumps(data, separators=(',',':'))
+      data = json.dumps(data, separators=(',',':'))
     return HttpResponse(data, content_type='application/json; charset=utf-8')
 
   return json_wrapper
@@ -1081,11 +802,11 @@ def new(request):
   GET shows a blank form, POST processes it.
   """
   if request.method != 'POST':
-    form = NewForm()
+    form = forms.NewForm()
     form.set_branch_choices()
     return respond(request, 'new.html', {'form': form})
 
-  form = NewForm(request.POST, request.FILES)
+  form = forms.NewForm(request.POST, request.FILES)
   form.set_branch_choices()
   issue, _ = _make_new(request, form)
   if issue is None:
@@ -1124,7 +845,7 @@ def upload(request):
   # Check against old upload.py usage.
   if request.POST.get('num_parts') > 1:
     return HttpTextResponse('Upload.py is too old, get the latest version.')
-  form = UploadForm(request.POST, request.FILES)
+  form = forms.UploadForm(request.POST, request.FILES)
   issue = None
   patchset = None
   if form.is_valid():
@@ -1219,7 +940,7 @@ def upload_content(request):
 
   Used by upload.py to upload base files.
   """
-  form = UploadContentForm(request.POST, request.FILES)
+  form = forms.UploadContentForm(request.POST, request.FILES)
   if not form.is_valid():
     return HttpTextResponse(
         'ERROR: Upload content errors:\n%s' % repr(form.errors))
@@ -1277,7 +998,7 @@ def upload_patch(request):
       request.user = users.User(request.POST.get('user', 'test@example.com'))
     else:
       return HttpTextResponse('Error: Login required', status=401)
-  form = UploadPatchForm(request.POST, request.FILES)
+  form = forms.UploadPatchForm(request.POST, request.FILES)
   if not form.is_valid():
     return HttpTextResponse(
         'ERROR: Upload patch errors:\n%s' % repr(form.errors))
@@ -1450,7 +1171,7 @@ def _get_data_url(form):
 def add(request):
   """/<issue>/add - Add a new PatchSet to an existing Issue."""
   issue = request.issue
-  form = AddForm(request.POST, request.FILES)
+  form = forms.AddForm(request.POST, request.FILES)
   if not _add_patchset_from_form(request, issue, form):
     return show(request, issue.key().id(), form)
   return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
@@ -1712,7 +1433,7 @@ def show(request, form=None):
   if response:
     return response
   if not form:
-    form = AddForm(initial={'reviewers': ', '.join(issue.reviewers)})
+    form = forms.AddForm(initial={'reviewers': ', '.join(issue.reviewers)})
   last_patchset = first_patch = None
   if patchsets:
     last_patchset = patchsets[-1]
@@ -1794,7 +1515,7 @@ def edit(request):
   """/<issue>/edit - Edit an issue."""
   issue = request.issue
 
-  form_cls = IssueBaseForm
+  form_cls = forms.IssueBaseForm
 
   if request.method != 'POST':
     reviewers = [models.Account.get_nickname_for_email(reviewer,
@@ -1994,7 +1715,7 @@ def fields(request):
   if not request.issue.user_can_edit(request.user):
     if not IS_DEV:
       return HttpTextResponse('Login required', status=401)
-  fields = simplejson.loads(request.POST.get('fields'))
+  fields = json.loads(request.POST.get('fields'))
   issue = request.issue
   if 'description' in fields:
     issue.description = fields['description']
@@ -2726,7 +2447,7 @@ def _get_mail_template(request, issue, full_diff=False):
 def publish(request):
   """ /<issue>/publish - Publish draft comments and send mail."""
   issue = request.issue
-  form_class = PublishForm
+  form_class = forms.PublishForm
   draft_message = None
   if not request.POST.get('message_only', None):
     query = models.Message.gql(('WHERE issue = :1 AND sender = :2 '
@@ -3128,11 +2849,11 @@ def search(request):
   Returns HTTP 500 if the corresponding index is missing.
   """
   if request.method == 'GET':
-    form = SearchForm(request.GET, request.semester)
+    form = forms.SearchForm(request.GET, request.semester)
     if not form.is_valid() or not request.GET:
       return respond(request, 'search.html', {'form': form})
   else:
-    form = SearchForm(request.POST, request.semester)
+    form = forms.SearchForm(request.POST, request.semester)
     if not form.is_valid():
       return HttpTextResponse('Invalid arguments', status=400)
   logging.info('%s' % form.cleaned_data)
@@ -3229,7 +2950,7 @@ def settings(request):
         s += tmp + ','
     sections = s[:-1]
     is_staff = account.is_staff
-    form = SettingsForm(initial={'nickname': nickname,
+    form = forms.SettingsForm(initial={'nickname': nickname,
                                  'context': default_context,
                                  'column_width': default_column_width,
                                  'sections': sections,
@@ -3237,7 +2958,7 @@ def settings(request):
                                  })
     return respond(request, "settings.html", {'form':form,
                                               'user_to_show': request.user_to_show,})
-  form = SettingsForm(request.POST)
+  form = forms.SettingsForm(request.POST)
   if not form.is_valid():
     return HttpResponseRedirect(reverse(request, mine))
   account.default_context = form.cleaned_data.get('context')
