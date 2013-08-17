@@ -20,7 +20,7 @@ import re
 import sys
 import unittest
 
-TESTS_DIR = os.path.dirname(__file__)
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def collect_test_modules():
