@@ -33,6 +33,7 @@ class MockRequest(HttpRequest):
         self.META['HTTP_HOST'] = 'testserver'
         self.user = user
         self.issue = issue
+        self.semester = 'fa12' # Chosen arbitrarily
 
 
 class TestPublish(TestCase):

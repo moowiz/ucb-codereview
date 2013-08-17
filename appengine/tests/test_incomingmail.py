@@ -1,17 +1,3 @@
-# Copyright 2011 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -36,21 +22,20 @@ class TestIncomingMail(TestCase):
 
   def test_incoming_mail(self):
     msg = Message()
-    msg['To'] = 'reply@example.com'
-    msg['From'] = 'sender@example.com'
-    msg['Subject'] = 'subject (issue%s)' % self.issue.key().id()
+    msg['To'] = test_to = 'reply@example.com'
+    msg['From'] = test_from = 'sender@example.com'
+    msg['Subject'] = test_subj = 'subject (issue%s)' % self.issue.key().id()
     msg.set_payload('body')
     response = self.client.post('/_ah/mail/reply@example.com',
                                 msg.as_string(), content_type='text/plain')
-    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.status_code, 302)
     self.assertEqual(models.Message.all().ancestor(self.issue).count(), 1)
     self.assertEqual(models.Message.all().ancestor(self.issue2).count(), 0)
     msg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(msg.text, 'body')
-    self.assertEqual(msg.subject,
-                     'subject (issue%s)' % self.issue.key().id())
-    self.assertEqual(msg.sender, 'sender@example.com')
-    self.assertEqual(msg.recipients, ['reply@example.com'])
+    self.assertEqual(msg.subject, test_subj)
+    self.assertEqual(msg.sender, test_from)
+    self.assertEqual(msg.recipients, [test_to])
     self.assert_(msg.date is not None)
     self.assertEqual(msg.draft, False)
 
@@ -62,7 +47,7 @@ class TestIncomingMail(TestCase):
     msg.set_payload('body')
     response = self.client.post('/_ah/mail/reply@example.com',
                                 msg, content_type='text/plain')
-    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.status_code, 302)
     self.assertEqual(models.Message.all().ancestor(self.issue).count(), 0)
 
   def test_unknown_issue(self):

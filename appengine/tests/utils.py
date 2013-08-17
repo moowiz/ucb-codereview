@@ -29,7 +29,7 @@ class TestCase(_TestCase):
 
   This class disables the setup of Django features that are not
   available on App Engine (e.g. fixture loading). And it initializes
-  the Testbad class provided by the App Engine SDK.
+  the Testbed class provided by the App Engine SDK.
   """
 
   def _fixture_setup(self):  # defined in django.test.TestCase
@@ -44,6 +44,7 @@ class TestCase(_TestCase):
     self.testbed.activate()
     self.testbed.init_datastore_v3_stub()
     self.testbed.init_user_stub()
+    self.testbed.init_memcache_stub()
 
   def tearDown(self):
     self.testbed.deactivate()
@@ -60,4 +61,5 @@ class TestCase(_TestCase):
 
 def load_file(fname):
   """Read file and return it's content."""
-  return open(os.path.join(FILES_DIR, fname)).read()
+  with open(os.path.join(FILES_DIR, fname)) as f:
+    return f.read()
