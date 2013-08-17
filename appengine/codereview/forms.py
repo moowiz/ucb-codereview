@@ -4,6 +4,7 @@ from google.appengine.api import users
 from django import forms
 # Import settings as django_settings to avoid name conflict with settings().
 from django.conf import settings as django_settings
+from django.utils.safestring import mark_safe
 
 from codereview import models
 
