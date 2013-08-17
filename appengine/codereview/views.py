@@ -744,7 +744,7 @@ def _show_user(request):
     if user_to_show != request.user:
       return HttpTextResponse("You do not have permission to view this user", status=403)
     if request.semester not in acc_to_show.semesters:
-      return HttpTextResponse("You do not have permission to view a user", status=403)
+      return HttpTextResponse("You do not have permission to view a user in this semester", status=403)
 
   if user_to_show == request.user:
     query = models.Comment.all().filter('draft =', True)
@@ -2942,18 +2942,14 @@ def settings(request):
     nickname = account.nickname
     default_context = account.default_context
     default_column_width = account.default_column_width
-    s = ""
-    for i in account.sections:
-        tmp = str(i)
-        if tmp[-1] == 'L':
-            tmp = tmp[:-1]
-        s += tmp + ','
-    sections = s[:-1]
+    sections = ','.join(str(sec) for sec in account.sections)
+    semesters = ','.join(str(sem) for sem in account.semesters)
     is_staff = account.is_staff
     form = forms.SettingsForm(initial={'nickname': nickname,
                                  'context': default_context,
                                  'column_width': default_column_width,
                                  'sections': sections,
+                                 'semesters': semesters,
                                  'is_staff': is_staff,
                                  })
     return respond(request, "settings.html", {'form':form,
@@ -2961,22 +2957,11 @@ def settings(request):
   form = forms.SettingsForm(request.POST)
   if not form.is_valid():
     return HttpResponseRedirect(reverse(request, mine))
-  account.default_context = form.cleaned_data.get('context')
-  account.default_column_width = form.cleaned_data.get('column_width')
   data = form.cleaned_data
-  sections_s = data.get('sections', '')
-  if sections_s:
-      account.sections = []
-      sections_s = sections_s.strip('[]')
-      for val in sections_s.split(','):
-          val = val.strip()
-          if not val:
-              continue
-          if val[-1] == 'L':
-              val = val[:-1]
-          val = int(val)
-          if val not in account.sections:
-              account.sections.append(val)
+  account.default_context = data.get('context')
+  account.default_column_width = data.get('column_width')
+  account.semesters = data.get('semesters')
+  account.sections = data.get('sections')
   if 'is_staff' in data:
       account.is_staff = data['is_staff']
   account.put()

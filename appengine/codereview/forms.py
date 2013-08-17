@@ -167,7 +167,6 @@ class PublishForm(forms.Form):
 FORM_CONTEXT_VALUES = [(x, '%d lines' % x) for x in models.CONTEXT_CHOICES]
 FORM_CONTEXT_VALUES.append(('', 'Whole file'))
 
-
 class SettingsForm(forms.Form):
 
   context = forms.IntegerField(
@@ -179,6 +178,7 @@ class SettingsForm(forms.Form):
       min_value=django_settings.MIN_COLUMN_WIDTH,
       max_value=django_settings.MAX_COLUMN_WIDTH)
   sections = forms.CharField(required=False)
+  semesters = forms.CharField(required=False)
   is_staff = forms.BooleanField(required=False)
 
   def clean_nickname(self):
@@ -207,6 +207,25 @@ class SettingsForm(forms.Form):
       raise forms.ValidationError('This nickname is already in use.')
 
     return nickname
+
+  def clean_sections(self):
+    return list(set(self.cleaner('sections', try_int=True)))
+
+  def clean_semesters(self):
+    return list(set(self.cleaner('semesters')))
+
+  def cleaner(self, s, try_int=False):
+    got = self.cleaned_data[s].strip('[]')
+    for val in got.split(','):
+        val = val.strip()
+        if not val:
+            continue
+        if val[-1] == 'L':
+            val = val[:-1]
+        if try_int:
+          val = int(val)
+        yield val
+
 
 class SearchForm(forms.Form):
 
