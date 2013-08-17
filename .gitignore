@@ -5,3 +5,5 @@ MY.*
 upload/out
 
 *.swp
+
+appengine/env/*
