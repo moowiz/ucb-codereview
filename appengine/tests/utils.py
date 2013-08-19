@@ -44,6 +44,7 @@ class TestCase(_TestCase):
     self.testbed.activate()
     self.testbed.init_datastore_v3_stub()
     self.testbed.init_user_stub()
+    self.testbed.init_logservice_stub()
     self.testbed.init_memcache_stub()
 
   def tearDown(self):
@@ -53,6 +54,7 @@ class TestCase(_TestCase):
   def login(self, email):
     """Logs in a user identified by email."""
     os.environ['USER_EMAIL'] = email
+    #self.testbed.setup_env(USER_EMAIL=email)
 
   def logout(self):
     """Logs the user out."""
