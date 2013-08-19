@@ -630,33 +630,50 @@ def bugs(request):
 def last_modified_issue(request):
   last = memcache.get('l_iss')
   if not last:
-    last = models.Issue.all().order('-modified').fetch(1)[0].modified
+    last = models.Issue.all().order('-modified')
+
+    if request.closed:
+      last = last.filter('closed =', request.closed)
+    last = last.fetch(1)
+
+    if last:
+      last = last.modified
+    else:
+      last = datetime.datetime(2013, 1, 1)
     memcache.set('l_iss', last)
   return last
 
+def clean_args_all(func):
+  def wrapper(request, index_call=False):
+    closed = request.GET.get('closed', '')
+    if closed in ('0', 'false'):
+      closed = False
+    elif closed in ('1', 'true'):
+      closed = True
+    elif index_call:
+      # for index we display only open issues by default
+      closed = False
+    else:
+      closed = None
+
+    request.closed = closed
+
+    return func(request)
+  return wrapper
+
 @staff_required
+@clean_args_all
 @last_modified(last_modified_issue)
-def all(request, index_call=False):
+def all(request):
   """/all - Show a list of up to DEFAULT_LIMIT recent issues."""
-  closed = request.GET.get('closed', '')
-  if closed in ('0', 'false'):
-    closed = False
-  elif closed in ('1', 'true'):
-    closed = True
-  elif index_call:
-    # for index we display only open issues by default
-    closed = False
-  else:
-    closed = None
+  closed = request.closed
 
   key = 'all'
   if closed is not None:
     key += '.c' if closed else '.o'
-  if 'offset' in request.GET:
-    key += '.off:%s' % request.GET['offset']
-  if 'limit' in request.GET:
-    key += '.key:%s' % request.GET['limit']
-  val = memcache.get(key)
+  if 'offset' in request.GET or 'limit' in request.GET:
+    key = None
+  val = memcache.get(key) if key else None
   if not val:
     nav_parameters = {}
     if closed is not None:
@@ -674,7 +691,8 @@ def all(request, index_call=False):
                             'all.html',
                             extra_nav_parameters=nav_parameters,
                             extra_template_params=dict(closed=closed))
-    memcache.set(key, val)
+    if key:
+      memcache.set(key, val)
   return val
 
 
@@ -803,11 +821,9 @@ def new(request):
   """
   if request.method != 'POST':
     form = forms.NewForm()
-    form.set_branch_choices()
     return respond(request, 'new.html', {'form': form})
 
   form = forms.NewForm(request.POST, request.FILES)
-  form.set_branch_choices()
   issue, _ = _make_new(request, form)
   if issue is None:
     return respond(request, 'new.html', {'form': form})
@@ -1426,10 +1442,10 @@ def _get_patchset_info(request, patchset_id):
 @issue_required
 def show(request, form=None):
   """/<issue> - Show an issue."""
-  issue, patchsets, response = _get_patchset_info(request, None)
-  if not _can_view_issue(request, issue):
+  if not _can_view_issue(request, request.issue):
       return HttpTextResponse(
           'You cannot view this issue.', status=403)
+  issue, patchsets, response = _get_patchset_info(request, None)
   if response:
     return response
   if not form:
@@ -1541,35 +1557,6 @@ def edit(request):
   issue.bug = cleaned_data.get('bug_submit', False)
   issue.put()
   return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
-
-
-def _delete_cached_contents(patch_set):
-  """Transactional helper for edit() to delete cached contents."""
-  # TODO(guido): No need to do this in a transaction.
-  patches = []
-  contents = []
-  for patch in patch_set:
-    try:
-      content = patch.content
-    except db.Error:
-      content = None
-    try:
-      patched_content = patch.patched_content
-    except db.Error:
-      patched_content = None
-    if content is not None:
-      contents.append(content)
-    if patched_content is not None:
-      contents.append(patched_content)
-    patch.content = None
-    patch.patched_content = None
-    patches.append(patch)
-  if contents:
-    logging.info("Deleting %d contents", len(contents))
-    db.delete(contents)
-  if patches:
-    logging.info("Updating %d patches", len(patches))
-    db.put(patches)
 
 @issue_required
 @staff_required
@@ -1789,7 +1776,6 @@ def _issue_as_dict(issue, messages, request=None):
     'created': str(issue.created),
     'reviewers': issue.reviewers,
     'patchsets': [p.key().id() for p in issue.patchset_set.order('created')],
-    'description': issue.description,
     'subject': issue.subject,
     'issue': issue.key().id(),
   }
@@ -1803,7 +1789,7 @@ def _issue_as_dict(issue, messages, request=None):
         'approval': m.approval,
         'disapproval': m.disapproval,
       }
-      for m in models.Message.gql('WHERE ANCESTOR IS :1', issue)
+      for m in models.Message.ancestor(issue)
     ]
   return values
 
@@ -2458,9 +2444,6 @@ def publish(request):
     reviewers = issue.reviewers[:]
     if (request.user.email() not in issue.reviewers):
       reviewers.append(request.user.email())
-    reviewers = [models.Account.get_nickname_for_email(reviewer,
-                                                       default=reviewer)
-                 for reviewer in reviewers]
     tbd, comments = _get_draft_comments(request, issue, True)
     preview = _get_draft_details(request, comments)
     if draft_message is None:
@@ -2640,11 +2623,12 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
   # Decide who should receive mail
   my_email = db.Email(request.user.email())
   to = issue.reviewers[:]
-  reply_to = to
+  reply_to = to[:]
+  reply_to.insert(0, 'reply@berkeley-61a.appspotmail.com')
   if my_email in to and len(to) > 1:  # send_mail() wants a non-empty to list
     to.remove(my_email)
-  issue_id = issue.key().id()
-  subject = '%s (issue %d)' % (issue.subject, issue_id)
+  reply_to = [db.Email(email) for email in reply_to]
+  subject = '%s (issue %d)' % (issue.subject, issue.key().id())
   patch = None
   if attach_patch:
     subject = 'PATCH: ' + subject
@@ -3011,25 +2995,6 @@ def _user_popup(request):
     # Use time expired cache because the number of issues will change over time
     memcache.add('user_popup:' + user.email(), popup_html, 60)
   return popup_html
-
-
-@post_required
-def incoming_chat(request):
-  """/_ah/xmpp/message/chat/
-
-  This handles incoming XMPP (chat) messages.
-
-  Just reply saying we ignored the chat.
-  """
-  try:
-    msg = xmpp.Message(request.POST)
-  except xmpp.InvalidMessageError, err:
-    logging.warn('Incoming invalid chat message: %s' % err)
-    return HttpTextResponse('')
-  sts = msg.reply('Sorry, Rietveld does not support chat input')
-  logging.debug('XMPP status %r', sts)
-  return HttpTextResponse('')
-
 
 @post_required
 def incoming_mail(request, recipients):
