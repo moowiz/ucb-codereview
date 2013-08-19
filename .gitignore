@@ -7,3 +7,6 @@ upload/out
 *.swp
 
 appengine/env/*
+
+# Ignore ropeproject directories
+.ropeproject
