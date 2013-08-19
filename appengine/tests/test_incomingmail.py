@@ -11,6 +11,9 @@ from codereview import models, views
 
 class TestIncomingMail(TestCase):
 
+  def url(self, url):
+    return '/%s%s' % (self.issue.semester, url)
+
   def setUp(self):
     super(TestIncomingMail, self).setUp()
     self.login('foo@example.com')
@@ -26,9 +29,10 @@ class TestIncomingMail(TestCase):
     msg['From'] = test_from = 'sender@example.com'
     msg['Subject'] = test_subj = 'subject (issue%s)' % self.issue.key().id()
     msg.set_payload('body')
-    response = self.client.post('/_ah/mail/reply@example.com',
+    response = self.client.post(self.url('/_ah/mail/reply@example.com'),
                                 msg.as_string(), content_type='text/plain')
-    self.assertEqual(response.status_code, 302)
+    self.assertEqual(response.content,  '')
+    self.assertEqual(response.status_code, 200)
     self.assertEqual(models.Message.all().ancestor(self.issue).count(), 1)
     self.assertEqual(models.Message.all().ancestor(self.issue2).count(), 0)
     msg = models.Message.all().ancestor(self.issue).get()
@@ -45,9 +49,9 @@ class TestIncomingMail(TestCase):
     msg['From'] = 'sender@example.com'
     msg['Subject'] = 'invalid'
     msg.set_payload('body')
-    response = self.client.post('/_ah/mail/reply@example.com',
+    response = self.client.post(self.url('/_ah/mail/reply@example.com'),
                                 msg, content_type='text/plain')
-    self.assertEqual(response.status_code, 302)
+    self.assertEqual(response.status_code, 200)
     self.assertEqual(models.Message.all().ancestor(self.issue).count(), 0)
 
   def test_unknown_issue(self):

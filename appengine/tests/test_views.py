@@ -14,10 +14,13 @@
 
 """Tests for view functions and helpers."""
 
+import os
+
 from django.http import HttpRequest
 
 from google.appengine.api.users import User
 from google.appengine.ext import db
+from google.appengine.ext import testbed
 
 from utils import TestCase, load_file
 
@@ -35,7 +38,6 @@ class MockRequest(HttpRequest):
         self.issue = issue
         self.semester = 'fa12' # Chosen arbitrarily
 
-
 class TestPublish(TestCase):
     """Test publish functions."""
 
@@ -43,14 +45,72 @@ class TestPublish(TestCase):
         super(TestPublish, self).setUp()
         self.user = User('foo@example.com')
         self.login('foo@example.com')
-        self.issue = models.Issue(subject='test')
-        self.issue.local_base = False
+        self.issue = models.Issue(subject='test', reviewers=[db.Email(self.user.email())])
         self.issue.put()
+        self.account = models.Account.get_account_for_user(self.user)
+        self.account.put()
         self.ps = models.PatchSet(parent=self.issue, issue=self.issue)
         self.ps.data = load_file('ps1.diff')
         self.ps.save()
         self.patches = engine.ParsePatchSet(self.ps)
         db.put(self.patches)
+
+        self.testbed.init_mail_stub()
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        self.user_stub = self.testbed.get_stub(testbed.USER_SERVICE_NAME)
+
+    def tearDown(self):
+        self.testbed.deactivate()
+
+    def count_num(self, cls):
+        return cls.all().ancestor(self.issue.key()).count()
+
+    def test_correct_simple_publish(self):
+        data = {
+            'reviewers': 'foo@example.com, billy@example.com',
+            'comp_score': '3',
+            'bug_submit': 'False',
+            'send_mail': 'True',
+            'message': 'Hi there, this is a test message. Please ignore',
+            'message_only': '',
+            'in_reply_to': '',
+            'xsrf_token': self.account.get_xsrf_token(),
+        }
+        url = '/%s/%s/' % (self.issue.semester, self.issue.key().id())
+        resp = self.client.post(url + 'publish', data=data, follow=True)
+
+        self.assertRedirects(resp, url)
+        self.assertContains(resp, data['message'])
+
+        self.assertEqual(self.count_num(models.Message), 1) # Only sent 1 message
+        self.assertEqual(self.count_num(models.Comment), 0)
+        messages = self.mail_stub.get_sent_messages()
+        self.assertEqual(1, len(messages))
+
+    def test_correct_complex_publish(self):
+        messages_before = self.count_num(models.Message)
+        comments_before = self.count_num(models.Comment)
+
+        data = {
+            'reviewers': 'foo@example.com, billy@example.com',
+            'comp_score': '3',
+            'bug_submit': 'False',
+            'send_mail': 'True',
+            'message': 'Hi there, this is a test message. Please ignore',
+            'message_only': '',
+            'in_reply_to': '',
+            'xsrf_token': self.account.get_xsrf_token(),
+        }
+        url = '/%s/%s/' % (self.issue.semester, self.issue.key().id())
+        resp = self.client.post(url + 'publish', data=data, follow=True)
+
+        self.assertRedirects(resp, url)
+        self.assertContains(resp, data['message'])
+
+        self.assertEqual(self.count_num(models.Message) - 1, messages_before) # Only sent 1 message
+        self.assertEqual(self.count_num(models.Comment), comments_before)
+        messages = self.mail_stub.get_sent_messages()
+        self.assertEqual(1, len(messages)) 
 
     def test_draft_details_no_base_file(self):
         request = MockRequest(User('foo@example.com'), issue=self.issue)
