@@ -861,8 +861,24 @@ class Account(db.Model):
     return h.hexdigest()
 
 class Section(db.Model):
-    """Represents a class.
-    Each class has accounts associated with it.
-    """
-    accounts = db.ListProperty(db.Key)
+  """Represents a class.
+  Each class has accounts associated with it.
+  """
+  accounts = db.ListProperty(db.Key)
 
+class Snippet(db.Model):
+  """ Stores a user-entered snippet"""
+  MAX_LENGTH = 60
+  text = db.TextProperty()
+
+  @property
+  def label(self):
+    """ If text is above MAX_LENGTH, return a shortened label"""
+    if len(self.text) > Snippet.MAX_LENGTH:
+        return self.text[:Snippet.MAX_LENGTH] + "..."
+    return self.text
+
+  @property
+  def urlsafe(self):
+    """Returns an encoded key that is safe to put into URLs"""
+    return str(self.key())
