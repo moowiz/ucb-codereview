@@ -1892,8 +1892,12 @@ def diff(request):
 
   patchsets = list(request.issue.patchset_set.order('created'))
 
-  qry = models.Snippet.all()
-  snippets = [snippet for snippet in qry.run()]
+  if models.Account.get_account_for_user(request.user).is_staff:
+    # Only staff has access to snippets
+    qry = models.Snippet.all()
+    snippets = [snippet for snippet in qry.run()]
+  else:
+    snippets = []
   snippet_length = len(snippets)
 
   context = _get_context_for_user(request)
@@ -3166,6 +3170,11 @@ def calculate_delta(request):
 @login_required
 @post_required
 def add_snippet(request):
+  """
+  Adds a snippet to the database. POST request's data should be
+  `application/x-www-form-urlencoded` and should have a parameter TEXT
+  containing the text of the snippet.
+  """
   snippet = models.Snippet(text=db.Text(request.POST.get('text')));
   snippet.put()
   return HttpResponse()
@@ -3173,7 +3182,9 @@ def add_snippet(request):
 @login_required
 @post_required
 def delete_snippet(request, snippet_key):
-  """/snippets/delete/<snippet_key>"""
+  """/snippets/delete/<snippet_key>
+  Deletes a snippet with SNIPPET_KEY from the database.
+  """
   key = db.Key(snippet_key)
   snippet = models.Snippet.get(key)
   snippet.delete()
