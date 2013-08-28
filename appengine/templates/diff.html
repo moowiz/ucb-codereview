@@ -24,7 +24,7 @@ login_warned = false;
     <input type="hidden" name="patchset" value="{{patchset.key.id}}">
     <input type="hidden" name="patch" value="{{patch.key.id}}">
     <textarea name="text" cols="60" rows="5"></textarea><br>
-    {% if snippets %}
+    {% if allow_snippets %}
     <select id="snippets" name="snippets" size="{{snippet_length}}"
             onchange="M_updateSnippet(this)">
       {% for s in snippets %}
@@ -37,10 +37,12 @@ login_warned = false;
            onclick="return M_submitInlineComment(this.form);">
     <input type="reset" name="cancel" value="Cancel"
            onclick="M_removeTempInlineComment(this.form)">
+    {% if allow_snippets %}
     <input type="button" name="savesnippet" value="Save Snippet"
            onclick="M_saveSnippet(this.form)">
     <input type="button" name="deletesnippet" value="Delete Snippet"
            onclick="M_deleteSnippet(this.form)">
+    {% endif %}
   </div>
   <div class="comment-border" style="padding: 0pt;"></div>
 </form>
