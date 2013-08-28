@@ -4,7 +4,7 @@
 APPID?= `cat app.yaml | sed -n 's/^application: *//p'`
 VERSION?= `cat app.yaml | sed -n 's/^version: *//p'`
 
-SDK_PATH ?=
+SDK_PATH ?= "/usr/local/google_appengine"
 
 DEV_APPSERVER?= $(if $(SDK_PATH), $(SDK_PATH)/,)dev_appserver.py
 DEV_APPSERVER_FLAGS?=

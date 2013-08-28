@@ -77,4 +77,6 @@ urlpatterns = patterns(
     (r'^static/upload.py$', 'customized_upload_py'),
     (r'^search$', 'search'),
     (r'^tasks/calculate_delta$', 'calculate_delta'),
+    (r'^snippets/add$', 'add_snippet'),
+    (r'^snippets/delete/(.+)$', 'delete_snippet'),
 )
