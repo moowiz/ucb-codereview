@@ -918,6 +918,46 @@ function M_removeTempInlineComment(form) {
   M_updateRowHook(tr);
 }
 
+function M_getSelected(select) {
+    return select.options[select.selectedIndex];
+}
+
+function M_updateSnippet(select){
+    var text = M_getParent(M_getParent(select)).text;
+    text.value = M_getSelected(select).value;
+}
+
+function M_saveSnippet(form) {
+    var httpreq = M_getXMLHttpRequest();
+    httpreq.onreadystatechange = function () {
+        console.log(httpreq);
+        if (httpreq.readyState == 4) {
+            if (httpreq.status == 200) {
+                alert("Saved!");
+            }
+        }
+    };
+    httpreq.open("POST", base_url + "snippets/add", true);
+    httpreq.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    httpreq.send("text="+encodeURIComponent(form.text.value));
+}
+
+function M_deleteSnippet(form) {
+    var select = form.snippets;
+    var httpreq = M_getXMLHttpRequest();
+    httpreq.onreadystatechange = function () {
+        console.log(httpreq);
+        if (httpreq.readyState == 4) {
+            if (httpreq.status == 200) {
+                alert("Deleted!");
+            }
+        }
+    };
+    httpreq.open("POST", base_url + "snippets/delete/" +
+                 M_getSelected(select).id, true);
+    httpreq.send(null);
+}
+
 /**
  * Helper to edit a draft inline comment.
  * @param {String} cid The number of the comment
