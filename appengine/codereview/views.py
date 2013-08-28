@@ -1892,13 +1892,13 @@ def diff(request):
 
   patchsets = list(request.issue.patchset_set.order('created'))
 
+  qry = models.Snippet.all()
+  snippets = [snippet for snippet in qry.run()]
+  snippet_length = len(snippets)
+  allow_snippets = False
   if models.Account.get_account_for_user(request.user).is_staff:
     # Only staff has access to snippets
-    qry = models.Snippet.all()
-    snippets = [snippet for snippet in qry.run()]
-  else:
-    snippets = []
-  snippet_length = len(snippets)
+    allow_snippets = True
 
   context = _get_context_for_user(request)
   column_width = _get_column_width_for_user(request)
@@ -1922,7 +1922,8 @@ def diff(request):
                   'column_width': column_width,
                   'patchsets': patchsets,
                   'snippets': snippets,
-                  'snippet_length': snippet_length
+                  'snippet_length': snippet_length,
+                  'allow_snippets': allow_snippets
                   })
 
 
