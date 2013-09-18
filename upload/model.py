@@ -95,12 +95,11 @@ class CodeReviewDatabase(object):
 
     def query_student(self, student):
         """
-        Gets the issue number for the particular student & assignment
+        Gets the issue number for the particular student
 
         Args:
             students: a tuple of student logins,
                 eg. ("cs61a-ab",) or ("cs61a-ab", "cs61a-bc")
-            assign: assignment name, eg. "proj1"
         """
         if type(student) != str:
             raise Exception("Invalid student passed into model.")
