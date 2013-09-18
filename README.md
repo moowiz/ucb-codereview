@@ -1,4 +1,4 @@
-61a-codereview
+ucb-codereview
 ==============
 
 This is the code review system we use for the CS 61A class at UC Berkeley. This is a modified version of the [Rietveld](http://code.google.com/p/rietveld/) code review system.
