@@ -43,7 +43,7 @@ class Config_Class:
         self.REPO_DIR = self.CODE_REVIEW_DIR + "repo/"
         self.ASSIGN_DIR = self.MASTER_DIR + "lib/"
         self.TEMP_DIR = self.MASTER_DIR + "tmp/robot-temp/tmp/"
-        self.TEMPLATE_DIR = self.MASTER_DIR + "public_html/sp13/"
+        self.TEMPLATE_DIR = self.MASTER_DIR + "public_html/fa13/"
         self.PARAMS_FILE = self.GRADING_DIR + "params"
         self.GMAILS_FILE = "MY.GMAILS"
         self.SECTIONS_FILE = "MY.SECTIONS"
@@ -86,8 +86,6 @@ config = Config_Class()
 
 class ConfigException(Exception):
     pass
-
-
 
 def load_params():
     f = open(config.PARAMS_FILE, 'r')
