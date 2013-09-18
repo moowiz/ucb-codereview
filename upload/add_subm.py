@@ -142,7 +142,7 @@ def upload(path_to_repo, logins, data):
             line = l
             break
     if line:
-        line.strip('/')
+        line = line.strip('/')
         line = line[line.rfind('/') + 1:].strip()
         issue_num = int(line)
         print("New issue", issue_num)
