@@ -1877,7 +1877,6 @@ def _get_column_width_for_user(request):
                             django_settings.MAX_COLUMN_WIDTH)
   return column_width
 
-
 @login_required
 @patch_filename_required
 def diff(request):
@@ -1892,13 +1891,7 @@ def diff(request):
 
   patchsets = list(request.issue.patchset_set.order('created'))
 
-  qry = models.Snippet.all()
-  snippets = [snippet for snippet in qry.run()]
-  snippet_length = len(snippets)
-  allow_snippets = False
-  if models.Account.get_account_for_user(request.user).is_staff:
-    # Only staff has access to snippets
-    allow_snippets = True
+  snippets, allow_snippets = _get_snippets(request)
 
   context = _get_context_for_user(request)
   column_width = _get_column_width_for_user(request)
@@ -1922,7 +1915,6 @@ def diff(request):
                   'column_width': column_width,
                   'patchsets': patchsets,
                   'snippets': snippets,
-                  'snippet_length': snippet_length,
                   'allow_snippets': allow_snippets
                   })
 
@@ -3168,6 +3160,19 @@ def calculate_delta(request):
     patch.put()
   return HttpResponse()
 
+def _get_snippets(request):
+  if not models.Account.get_account_for_user(request.user).is_staff:
+    # Only staff has access to snippets
+    return [], False
+  val = memcache.get("snippets")
+  print val
+  if val == None:
+    qry = models.Snippet.all()
+    val = [snippet for snippet in qry.run()]
+    memcache.set("snippets", val)
+  print "True"
+  return val, True
+
 @login_required
 @post_required
 def add_snippet(request):
@@ -3178,6 +3183,7 @@ def add_snippet(request):
   """
   snippet = models.Snippet(text=db.Text(request.POST.get('text')));
   snippet.put()
+  memcache.delete('snippets')
   return HttpResponse()
 
 @login_required
@@ -3189,4 +3195,5 @@ def delete_snippet(request, snippet_key):
   key = db.Key(snippet_key)
   snippet = models.Snippet.get(key)
   snippet.delete()
+  memcache.delete('snippets')
   return HttpResponse()
