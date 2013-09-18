@@ -46,6 +46,8 @@ def sweep(assign, first):
         for name in subms:
             splt = name.split(".")
             login = splt[0]
+            if not login:
+                continue
             if not splt[1].isdigit():
                 print("Warning: Ignoring " + login +"'s submission")
                 continue
