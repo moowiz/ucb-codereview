@@ -121,6 +121,7 @@ def upload(path_to_repo, logins, data):
     data.gmails = get_gmails(logins)
     issue_num = model.get_issue_number(logins, data.git_assign)
     hash_str = git.get_revision_hash(path_to_repo)
+
     #now we create arguments
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
@@ -141,9 +142,10 @@ def upload(path_to_repo, logins, data):
             line = l
             break
     if line:
+        line.strip('/')
         line = line[line.rfind('/') + 1:].strip()
         issue_num = int(line)
-        print("New issue {}".format(issue_num))
+        print("New issue", issue_num)
         model.set_issue_numbers(logins, data.git_assign, issue_num)
 
 def copy_important_files(data, start_dir, end_dir, template=False):
