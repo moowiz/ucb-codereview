@@ -20,7 +20,7 @@ class Config_Class:
             "REPO_DIR" : None, # CODE_REVIEW_DIR + "repo/"
             "ASSIGN_DIR" : None, # MASTER_DIR + "lib/"
             "TEMP_DIR" : None, # MASTER_DIR + "tmp/robot-temp/tmp/"
-            "TEMPLATE_DIR" : None, # MASTER_DIR + "public_html/fa12/"
+            "TEMPLATE_DIR" : None, # MASTER_DIR + "public_html/fa13/"
             "PARAMS_FILE" : None, # GRADING_DIR + "params"
             "GMAILS_FILE" : None, # "MY.GMAILS"
             "SECTIONS_FILE" : None, # "MY.SECTIONS"
@@ -30,6 +30,7 @@ class Config_Class:
                     "proj1" : "hog",
                     "proj2" : "trends",
                     "proj3" : "ants",
+                    "proj4" : "scheme",
                 },
             "DB_PATH" : None #CODE_REVIEW_DIR + "codereview_db.sqlite"
         }
