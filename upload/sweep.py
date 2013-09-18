@@ -62,17 +62,16 @@ def main(assign, add, first):
     original_dir = os.getcwd()
     logins, maxes = sweep(assign, first)
     if add:
-        try:
-            os.chdir(original_dir)
-            for k, v in logins.items():
-                for login in v:
-                    add_subm.add(login, k)
-        except Exception as e:
-            print("Exception {}".format(e))
-            raise e
-            return
-        for k, v in maxes.items():
-            model.set_last_uploaded(v, k)
+        os.chdir(original_dir)
+        for assign, logins in logins.items():
+            for login in logins:
+                try:
+                    add_subm.add(login, assign)
+                except Exception as e:
+                    print("Exception {}".format(e))
+                    del maxes[assign]
+        for assign, time in maxes.items():
+            model.set_last_uploaded(time, assign)
     else:
         for key, value in logins.items():
             print('assignment {}'.format(key))
