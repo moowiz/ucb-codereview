@@ -100,15 +100,14 @@ def get_gmails(logins):
     """
     gmails = []
     for login in logins:
-        f = open(config.GRADING_DIR + "register/" + login)
-        email = f.read().split("\n")[-2].strip()
+        with open(config.GRADING_DIR + "register/" + login) as f:
+            email = f.read().split("\n")[-2].strip()
         email = email[6:].strip()
-        f.close()
         gmails.append(email)
     return gmails
 
 PYTHON_BIN = "python2.7"
-UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "61a-codereview/appengine/upload.py"
+UPLOAD_SCRIPT = config.CODE_REVIEW_DIR + "ucb-codereview/appengine/upload.py"
 SERVER_NAME = "ucb-codereview.appspot.com"
 ROBOT_EMAIL = "cs61a.robot@gmail.com"
 
@@ -126,11 +125,11 @@ def upload(path_to_repo, logins, data):
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", data.git_assign, '-r', ",".join(data.gmails), '-e', ROBOT_EMAIL,
-            '--rev', hash_str))#, "--send_mail"))
+            '--rev', hash_str))
     else:
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
-            '--rev', hash_str))#, "--send_mail"))
+            '--rev', hash_str))
     print("Uploading...")
     out, err = utils.run(cmd)
     if "Traceback" in err or "Unhandled Exception" in err:
