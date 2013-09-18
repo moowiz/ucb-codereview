@@ -634,7 +634,7 @@ def last_modified_issue(request):
 
     if request.closed:
       last = last.filter('closed =', request.closed)
-    last = last.fetch(1)
+    last = last.fetch(1)[0]
 
     if last:
       last = last.modified
