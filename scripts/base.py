@@ -13,12 +13,12 @@ def init(parser):
 	os.environ['SERVER_SOFTWARE'] = ''
 
 	def auth_func():
-	    return (u'cs61a.robot@gmail.com', getpass.getpass("Google One time password:"))
+	    return (input("Email: "), getpass.getpass("Password: "))
 
 	parser.add_argument('host', type=str,
 	                    help='the URL of the server we want to upload info to')
-	parser.add_argument('semester', type=str,
-						help='the semester to look at.')
+	# parser.add_argument('semester', type=str,
+	# 					help='the semester to look at.')
 	args = parser.parse_args()
 	remote_api_stub.ConfigureRemoteApi(None, '/_ah/remote_api', auth_func, args.host)
 	return args
