@@ -197,7 +197,7 @@ def put_in_repo(data):
         if "hw" in data.assign:
             path_to_template += "hw/"
         else:
-            path_to_template += "projects/"
+            path_to_template += "proj/"
         if data.git_assign not in config.ASSIGN_TO_NAME_MAP:
             path_to_template += data.git_assign + "/"
         else:
