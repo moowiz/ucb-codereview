@@ -1,23 +1,30 @@
 import base
+import argparse 
+import os
+
 parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
 parser.add_argument('mapping', type=str,
                     help='the path to the csv file containing email to section mappings')
 args = base.init(parser)
 
 from codereview.models import Account
+from google.appengine.api import users
+CURRENT_SEMESTER = "fa13"
 
 def make_acc(email, section):
-    acc = Account.get_or_insert('<%s>' % email, user=User(email), email=email)
+    acc = Account.get_or_insert('<%s>' % email, user=users.User(email), email=email)
     section = int(section)
     if section not in acc.sections:
         acc.sections.append(section)
+    if CURRENT_SEMESTER not in acc.semesters:
+        acc.semesters.append(CURRENT_SEMESTER)
     acc.put()
 
 def main(filename):
-    f = open(os.path.expanduser(filename))
-    split = f.read().split('\r')
-    split = list(map(lambda x: x.strip().split(','), split))
-    f.close()
+    with open(filename) as f:
+        split = f.read().split('\r')
+        split = list(map(lambda x: x.strip().split(','), split))
+
     count = 0
     for it in split:
         if count % 10 == 0:
@@ -26,4 +33,4 @@ def main(filename):
         count += 1
 
 if __name__ == "__main__":
-    main(args.mapping)
+    main(os.path.expanduser(args.mapping))
