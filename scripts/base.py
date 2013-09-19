@@ -13,7 +13,7 @@ def init(parser):
 	os.environ['SERVER_SOFTWARE'] = ''
 
 	def auth_func():
-	    return (input("Email: "), getpass.getpass("Password: "))
+	    return (raw_input("Email: "), getpass.getpass("Password: "))
 
 	parser.add_argument('host', type=str,
 	                    help='the URL of the server we want to upload info to')
