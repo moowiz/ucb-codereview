@@ -1,3 +1,5 @@
+#!/usr/local/env python
+
 """ This script gets run whenever we get a new submission to upload.
     The login of the student is passed in as the second argument, and the assignment is passed as the first arguments.
     The steps to follow (should be fleshed out more) to add a submission are as follows:
@@ -14,7 +16,9 @@ import git
 from config import config
 import utils
 from model import CodeReviewDatabase
-model = CodeReviewDatabase()
+if __name__ == '__main__':
+    model = CodeReviewDatabase()
+
 class SubmissionException(Exception):
     pass
 
@@ -22,13 +26,13 @@ class UploadException(Exception):
     pass
 
 def save_dir(func):
-    def fun(*args, **kwds):
+    def wrapper(*args, **kwds):
         original_dir = os.getcwd()
         try:
             func(*args, **kwds)
         finally:
             os.chdir(original_dir)
-    return fun
+    return wrapper
 
 def get_subm(data):
     """
@@ -179,11 +183,9 @@ def copy_important_files(data, start_dir, end_dir, template=False):
 def git_init(path):
     git.init(path=path)
     os.chdir(path)
-    gitignore = open('.gitignore', 'w')
-    gitignore.write("MY.*\n")
-    gitignore.write("commits")
-    gitignore.flush()
-    gitignore.close()
+    with open('.gitignore', 'w') as ignore_file:
+        ignore_file.write("MY.*\n")
+        ignore_file.write("commits")
 
 def put_in_repo(data):
     """
@@ -222,17 +224,17 @@ def put_in_repo(data):
                 raise SubmissionException("Found a git repository that hasn't been committed to yet. Ignoring...")
             with open('commits', 'r') as f:
                 out = f.read().strip()
-                last_line = out[out.rfind("\n"):]
-                if last_line.find(":") != -1:
-                    com_time = last_line[last_line.find(":") + 1:].strip()
-                    if timestamp in com_time:
-                        raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
+            last_line = out[out.rfind("\n"):]
+            if last_line.find(":") != -1:
+                com_time = last_line[last_line.find(":") + 1:].strip()
+                if timestamp in com_time:
+                    raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
         os.chdir(original_path)
     copy_important_files(data, path_to_subm, path_to_repo)
     with open(path_to_repo + 'commits', 'a') as f:
         f.write('{} : {}\n'.format(utils.get_timestamp_str(), timestamp))
     git.add(None, path=path_to_repo)
-    #shutil.rmtree(path_to_subm)
+
     files = glob.glob(path_to_repo + "*")
     for f in files:
         utils.chmod_own_grp(f)
