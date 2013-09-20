@@ -777,31 +777,37 @@ def _show_user(request):
     assign = request.GET.get('assign', None)
     if assign:
       query.filter('subject =', assign)
-    query.order('modified')
+    query.order('-modified')
     return query
 
   if acc_to_show.is_staff and acc.is_staff:
-      all_issues = []
-      all_keys = []
-      for section in models.Section.get_by_key_name("<%s>" % num for num in acc.sections) :
+      all_issues = ()
+      all_keys = ()
+      for num, section in ((num, models.Section.get_by_key_name("<%s>" % num)) for num in acc.sections):
           if not section:
             continue
-          for stu in section.accounts:
-              email = models.Account.get(stu).email
-              for issue in make_query().filter('reviewers =', email):
-                  if issue.key() not in draft_keys and issue.key() not in all_keys:
-                      all_issues.append(issue)
-                      all_keys.append(issue.key())
+          val = memcache.get('%s_iss' % num)
+          if not val:
+            for stu in section.accounts:
+                email = models.Account.get(stu).email
+                for issue in make_query().filter('reviewers =', email):
+                    if issue.key() not in draft_keys and issue.key() not in all_keys:
+                        all_issues += (issue,)
+                        all_keys += (issue.key(),)
+            val = (all_issues, all_keys)
+            memcache.set('%s_iss' % num, val)
+          else:
+            all_issues, all_keys = val
   else:
       query = make_query().filter('reviewers =', user_to_show.email())
-      all_issues = [issue for issue in query if _can_view_issue(request, issue)]
-  review_issues = []
-  closed_issues = []
+      all_issues = tuple(issue for issue in query if _can_view_issue(request, issue))
+  review_issues = ()
+  closed_issues = ()
   for iss in all_issues:
       if iss.closed:
-          closed_issues.append(iss)
+          closed_issues += (iss,)
       else:
-          review_issues.append(iss)
+          review_issues += (iss,)
   _load_users_for_issues(all_issues)
   _optimize_draft_counts(all_issues)
   return respond(request, 'user.html',
@@ -1108,6 +1114,7 @@ def _make_new(request, form):
                          repo_guid=form.cleaned_data.get('repo_guid', None),
                          reviewers=reviewers,
                          n_comments=0)
+    issue.sections
     issue.put()
 
     patchset = models.PatchSet(issue=issue, data=data, url=url, parent=issue)
@@ -1121,7 +1128,8 @@ def _make_new(request, form):
     return issue, patchset
 
   try:
-    issue, patchset = db.run_in_transaction(txn)
+    xg_on = db.create_transaction_options(xg=True)
+    issue, patchset = db.run_in_transaction_options(xg_on, txn)
   except EmptyPatchSet:
     errkey = url and 'url' or 'data'
     form.errors[errkey] = ['Patch set contains no recognizable patches']

@@ -84,6 +84,7 @@ class Issue(db.Model):
   def put(self):
     memcache.delete_multi(('all', 'all.c', 'all.o'))
     val = super(Issue, self).put()
+    memcache.delete_multi(('%s_iss' % section for section in self.sections))
     memcache.set('l_iss', self.modified)
     return val
 
@@ -94,17 +95,8 @@ class Issue(db.Model):
   @property
   def sections(self):
       """Returns the sections this issue covers"""
-      key = str(self.key()) + 'sec'
-      val = memcache.get(key)
-      if not val:
-        lst = [Account.get_account_for_email(stu) for stu in self.reviewers]
-        val = list(set(item for sublist in (stu.sections for stu in list if stu) for item in sublist))
-        memcache.set(key, val)
-      else:
-        if len(val) != len(self.reviewers):
-          memcache.delete(key)
-          return self.sections
-      return val
+      lst = [Account.get_account_for_email(stu) for stu in self.reviewers]
+      return list(set(item for sublist in (stu.sections for stu in lst if stu) for item in sublist))
 
   @property
   def is_starred(self):
