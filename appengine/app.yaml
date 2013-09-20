@@ -42,6 +42,14 @@ inbound_services:
 - mail
 - xmpp_message
 
+skip_files:
+- ^(.*/)?#.*#
+- ^(.*/)?.*~
+- ^(.*/)?.*\.py[co]
+- ^(.*/)?.*/RCS/.*
+- ^(.*/)?\..*
+- ^env/(.*)
+
 builtins:
 - appstats: on
 - remote_api: on
