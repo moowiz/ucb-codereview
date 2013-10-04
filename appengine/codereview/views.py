@@ -782,25 +782,30 @@ def _show_user(request):
 
   if acc_to_show.is_staff and acc.is_staff:
       all_issues = ()
-      all_keys = ()
+      all_keys = set()
       for num, section in ((num, models.Section.get_by_key_name("<%s>" % num)) for num in acc.sections):
           if not section:
             continue
           val = memcache.get('%s_iss' % num)
+          val = None # hack for now, fix this later
           if not val:
-            for stu in section.accounts:
-                email = models.Account.get(stu).email
-                for issue in make_query().filter('reviewers =', email):
-                    if issue.key() not in draft_keys and issue.key() not in all_keys:
-                        all_issues += (issue,)
-                        all_keys += (issue.key(),)
-            val = (all_issues, all_keys)
+            for stu in section.accounts[:]:
+                acc = models.Account.get(stu)
+                if not acc:
+                  section.accounts.remove(stu)
+                else:
+                  for issue in make_query().filter('reviewers =', acc.email):
+                      if issue.key() not in draft_keys and issue.key() not in all_keys:
+                          all_issues += (issue,)
+                          all_keys.add(issue.key())
+            val = all_issues
             memcache.set('%s_iss' % num, val)
           else:
-            all_issues, all_keys = val
+            all_issues = val
   else:
       query = make_query().filter('reviewers =', user_to_show.email())
       all_issues = tuple(issue for issue in query if _can_view_issue(request, issue))
+
   review_issues = ()
   closed_issues = ()
   for iss in all_issues:
@@ -2930,8 +2935,8 @@ def search(request):
 @xsrf_required
 def settings(request):
   account = models.Account.get_account_for_user(request.user_to_show)
-  tmp_acc = models.Account.current_user_account.is_staff
-  if not (tmp_acc or tmp_acc == account):
+  tmp_acc = models.Account.current_user_account
+  if not (tmp_acc.is_staff or tmp_acc == account):
       return HttpTextResponse("Error: Unable to edit settings for this user", status=404)
   if request.method != 'POST':
     nickname = account.nickname
@@ -3173,12 +3178,10 @@ def _get_snippets(request):
     # Only staff has access to snippets
     return [], False
   val = memcache.get("snippets")
-  print val
   if val == None:
     qry = models.Snippet.all()
     val = [snippet for snippet in qry.run()]
     memcache.set("snippets", val)
-  print "True"
   return val, True
 
 @login_required

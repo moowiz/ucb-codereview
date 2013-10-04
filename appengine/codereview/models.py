@@ -84,7 +84,8 @@ class Issue(db.Model):
   def put(self):
     memcache.delete_multi(('all', 'all.c', 'all.o'))
     val = super(Issue, self).put()
-    memcache.delete_multi(('%s_iss' % section for section in self.sections))
+    
+    memcache.delete_multi(tuple('%s_iss' % section for section in self.sections))
     memcache.set('l_iss', self.modified)
     return val
 
@@ -146,6 +147,14 @@ class Issue(db.Model):
     """Helper to compute the number of messages through a query."""
     return gql(Message,
                'WHERE ANCESTOR IS :1 AND draft = FALSE',
+               self).count()
+
+  @property
+  def num_subms(self):
+    """The number of submissions for this issue.
+    """
+    return gql(PatchSet,
+               'WHERE ANCESTOR IS :1',
                self).count()
 
   @property
@@ -641,7 +650,7 @@ class Account(db.Model):
 
   # Note that this doesn't get called when doing multi-entity puts.
   def put(self):
-    self.lower_email = str(self.email).lower()
+    self.lower_email = self.email = str(self.email).lower()
     self.lower_nickname = self.nickname.lower()
     if not self.is_staff and self.sections:
         for num in self.sections:
@@ -651,10 +660,15 @@ class Account(db.Model):
             section.put()
     super(Account, self).put()
 
+  @property
+
+  def get_section(self, semester):
+    return [x for x in Section.all().ancestor(semester)]
+
   @classmethod
   def get_account_for_user(cls, user):
     """Get the Account for a user, creating a default one if needed."""
-    email = user.email()
+    email = user.email().lower()
     assert email
     key = '<%s>' % email
     # Since usually the account already exists, first try getting it
@@ -689,13 +703,13 @@ class Account(db.Model):
   def get_account_for_email(cls, email):
     """Get the Account for an email address, or return None."""
     assert email
-    key = '<%s>' % email
+    key = '<%s>' % email.lower()
     return cls.get_by_key_name(key)
 
   @classmethod
   def get_accounts_for_emails(cls, emails):
     """Get the Accounts for each of a list of email addresses."""
-    return cls.get_by_key_name(['<%s>' % email for email in emails])
+    return cls.get_by_key_name(['<%s>' % email.lower() for email in emails])
 
   @classmethod
   def get_by_key_name(cls, key, **kwds):
@@ -710,6 +724,7 @@ class Account(db.Model):
     """Get multiple accounts.  Returns a dict by email."""
     results = {}
     keys = []
+    emails = [x.lower() for x in emails]
     for email in emails:
       if cls.current_user_account and email == cls.current_user_account.email:
         results[email] = cls.current_user_account
@@ -855,8 +870,19 @@ class Account(db.Model):
 class Section(db.Model):
   """Represents a class.
   Each class has accounts associated with it.
+  Ancestor of a Semester
   """
-  accounts = db.ListProperty(db.Key)
+  number = db.IntegerProperty(required=True)
+
+class Semester(db.Model):
+  """Represents a semester.
+  Each semester knows the sections the person were involved with.
+  Ancestor of an Account"""
+  name = db.StringProperty(required=True)
+
+  @property
+  def sections(self):
+    return [x for x in Section.all().ancestor(self)]
 
 class Snippet(db.Model):
   """ Stores a user-entered snippet"""

@@ -7,7 +7,7 @@ document.onkeydown = M_dashboardKeyDown;
 </script>
 <h2>Issues for {%nickname email%}</h2>
 {% if is_admin %}
-<h4><a href = "{%url codereview.views.settings user%}">Settings</a></h4>
+<h4><a href = "{%url codereview.views.settings email%}">Settings</a></h4>
 {% endif %}
 <div class="issue-list">
   <table id="queues">
@@ -25,13 +25,13 @@ document.onkeydown = M_dashboardKeyDown;
   {%endif%}
 
   <tr>
-    <td colspan="10" class="header">
+    <td colspan="11" class="header">
       <h3>Assignments Needing Grading ({{review_issues|length}})</h3>
     </td>
   </tr>
   {%if not review_issues%}
     <tr>
-      <td colspan="10" class="first last">
+      <td colspan="11" class="first last">
         <span class="disabled">(None)</span>
       </td>
     </tr>
@@ -43,13 +43,13 @@ document.onkeydown = M_dashboardKeyDown;
   {%endif%}
 
   <tr>
-    <td colspan="10" class="header">
+    <td colspan="11" class="header">
       <h3>Graded Assignments ({{closed_issues|length}})</h3>
     </td>
   </tr>
   {%if not closed_issues%}
     <tr>
-      <td colspan="10" class="first last">
+      <td colspan="11" class="first last">
         <span class="disabled">(None)</span>
       </td>
     </tr>
