@@ -2379,7 +2379,8 @@ def _inline_draft(request):
   if not comments:
     return HttpTextResponse(' ')
   for c in comments:
-    c.complete()
+    if c:
+      c.complete()
   return render_to_response('inline_comment.html',
                             {'user': request.user,
                              'patch': patch,
@@ -2678,6 +2679,7 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
     try:
       msg.in_reply_to = models.Message.get(in_reply_to)
       replied_issue_id = msg.in_reply_to.issue.key().id()
+      issue_id = issue.key().id()
       if replied_issue_id != issue_id:
         logging.warn('In-reply-to Message is for a different issue: '
                      '%s instead of %s', replied_issue_id, issue_id)

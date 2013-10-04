@@ -661,7 +661,6 @@ class Account(db.Model):
     super(Account, self).put()
 
   @property
-
   def get_section(self, semester):
     return [x for x in Section.all().ancestor(semester)]
 
@@ -870,9 +869,8 @@ class Account(db.Model):
 class Section(db.Model):
   """Represents a class.
   Each class has accounts associated with it.
-  Ancestor of a Semester
   """
-  number = db.IntegerProperty(required=True)
+  accounts = db.ListProperty(db.Key)
 
 class Semester(db.Model):
   """Represents a semester.
@@ -880,9 +878,10 @@ class Semester(db.Model):
   Ancestor of an Account"""
   name = db.StringProperty(required=True)
 
-  @property
-  def sections(self):
-    return [x for x in Section.all().ancestor(self)]
+  # Somehow this isn't right....
+  # @property
+  # def sections(self):
+  #   return [x for x in Section.all().ancestor(self)]
 
 class Snippet(db.Model):
   """ Stores a user-entered snippet"""
