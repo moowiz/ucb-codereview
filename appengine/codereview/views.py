@@ -749,6 +749,7 @@ def _load_users_for_issues(issues):
 
   library.get_links_for_users(user_dict.keys())
 
+@login_required
 @user_key_required
 def show_user(request):
   """/user - Show the user's dashboard"""
