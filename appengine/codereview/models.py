@@ -73,6 +73,7 @@ class Issue(db.Model):
   reviewers = db.ListProperty(db.Email)
   n_comments = db.IntegerProperty()
   n_messages = db.IntegerProperty()
+  n_subms = db.IntegerProperty()
   comp_score = db.IntegerProperty(default=-1)
   bug = db.BooleanProperty(default=False)
   bug_owner = db.EmailProperty(required=False)
@@ -153,9 +154,15 @@ class Issue(db.Model):
   def num_subms(self):
     """The number of submissions for this issue.
     """
+    if self.n_subms is None:
+      self.n_subms = self._get_num_subms()
+    return self.n_subms
+
+  def _get_num_subms(self):
     return gql(PatchSet,
                'WHERE ANCESTOR IS :1',
                self).count()
+
 
   @property
   def num_comments(self):
@@ -208,6 +215,20 @@ class PatchSet(db.Model):
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   n_comments = db.IntegerProperty(default=0)
+
+  def put(self, *args, **kwds):
+    super(PatchSet, self).put(*args, **kwds)
+    par = self.parent()
+    if par.n_subms is None:
+      par.num_subms # this is a property, makes it fetch the value from the datastore
+    self.parent().n_subms += 1
+
+  def delete(self, *args, **kwds):
+    par = self.parent()
+    par.n_subms -= 1
+    if par.n_subms < 0:
+      par.n_subms = 0
+    super(PatchSet, self).delete(*args, **kwds)
 
   def update_comment_count(self, n):
     """Increment the n_comments property by n."""
