@@ -790,8 +790,8 @@ def _show_user(request):
           val = memcache.get('%s_iss' % num)
           val = None # hack for now, fix this later
           if not val:
-            for stu in section.accounts[:]:
-                acc = models.Account.get(stu)
+            accs = db.get(section.accounts)
+            for acc, stu in zip(accs, section.accounts[:]):
                 if not acc:
                   section.accounts.remove(stu)
                 else:
