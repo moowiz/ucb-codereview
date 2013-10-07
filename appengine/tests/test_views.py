@@ -15,6 +15,7 @@
 """Tests for view functions and helpers."""
 
 import os
+from string import Template
 
 from django.http import HttpRequest
 
@@ -36,18 +37,16 @@ class MockRequest(HttpRequest):
         self.META['HTTP_HOST'] = 'testserver'
         self.user = user
         self.issue = issue
-        self.semester = 'fa12' # Chosen arbitrarily
+        self.semester = 'fa13' # Chosen arbitrarily
 
-class TestPublish(TestCase):
-    """Test publish functions."""
-
+class TestViewBase(TestCase):
     def setUp(self):
-        super(TestPublish, self).setUp()
-        self.user = User('foo@example.com')
+        super(TestViewBase, self).setUp()
+        self.student = User('foo@example.com')
         self.login('foo@example.com')
-        self.issue = models.Issue(subject='test', reviewers=[db.Email(self.user.email())])
+        self.issue = models.Issue(subject='test', reviewers=[db.Email(self.student.email())])
         self.issue.put()
-        self.account = models.Account.get_account_for_user(self.user)
+        self.account = models.Account.get_account_for_user(self.student)
         self.account.put()
         self.ps = models.PatchSet(parent=self.issue, issue=self.issue)
         self.ps.data = load_file('ps1.diff')
@@ -62,12 +61,60 @@ class TestPublish(TestCase):
     def tearDown(self):
         self.testbed.deactivate()
 
+class TestStudentUserViewing(TestViewBase):
+    def test_basic(self):
+        resp = self.client.get('/%s/mine' % self.issue.semester)
+        temp = Template("""
+<tr name="issue">
+  <td class="first" width="14"><img src="/static/closedtriangle.gif" 
+    style="visibility: hidden;" width="12" height="9" /></td>
+  <td width="34" align="left" style="white-space: nowrap"><span id="issue-star-$issueNum">
+      <a href="javascript:M_addIssueStar($issueNum)">
+    <img src="/static/star-dark.gif" width="15" height="15" border="0"></a>
+</span>
+    </td>
+  <td align="right"><div class="subject"><a class="noul"
+         href="/$semester/$issueNum/">$issueNum</a>
+     </div>
+  </td>
+  <td>
+    <div class="subject">
+      <a class="noul" href="/$semester/$issueNum/"
+      id="issue-title-$issueNum">$issueSubject</a>
+    </div>
+  </td>
+  <td><div class="users">
+          $email
+  </div></td>
+  <td>
+          Not graded yet
+  </td>
+  <td align="center"></td>
+  <td align="center"></td>
+  <td align="center"><b></b></td>
+  <td align="center">$numSubmissions</td>
+  <td class="last">
+  <div class="date">
+  0 minutes
+  </div>
+  </td>
+  </tr>""")
+        # raise Exception(resp.content)
+        self.assertContains(resp, temp.substitute(semester = self.issue.semester, issueNum = self.issue.key().id(),
+                                                    numSubmissions = models.PatchSet.all().ancestor(self.issue).count(),
+                                                    issueSubject=self.issue.subject, email=self.student.email()), html=True)
+
+
+
+class TestPublish(TestViewBase):
+    """Test publish functions."""
+
     def count_num(self, cls):
         return cls.all().ancestor(self.issue.key()).count()
 
     def test_correct_simple_publish(self):
         data = {
-            'reviewers': 'foo@example.com, billy@example.com',
+            'reviewers': self.student.email() + ', billy@example.com',
             'comp_score': '3',
             'bug_submit': 'False',
             'send_mail': 'True',
@@ -120,7 +167,7 @@ class TestPublish(TestCase):
         cmt1.lineno = 1
         cmt1.left = False
         cmt1.draft = True
-        cmt1.author = self.user
+        cmt1.author = self.student
         cmt1.save()
         # Add a second comment
         cmt2 = models.Comment(patch=self.patches[1], parent=self.patches[1])
@@ -128,7 +175,7 @@ class TestPublish(TestCase):
         cmt2.lineno = 2
         cmt2.left = False
         cmt2.draft = True
-        cmt2.author = self.user
+        cmt2.author = self.student
         cmt2.save()
         # Add fake content
         content1 = models.Content(text="foo\nbar\nbaz\nline\n")
