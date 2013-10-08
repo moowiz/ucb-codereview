@@ -771,7 +771,7 @@ def _show_user(request):
   if not acc.isStaff:
     if user_to_show != request.user:
       return HttpTextResponse("You do not have permission to view this user", status=403)
-    if request.semester != acc_to_show.parent():
+    if request.semester.name != acc_to_show.parent().name:
       return HttpTextResponse("You do not have permission to view a user in this semester", status=403)
 
   if user_to_show == request.user:
@@ -2885,7 +2885,7 @@ def search(request):
     form = forms.SearchForm(request.POST, request.semester)
     if not form.is_valid():
       return HttpTextResponse('Invalid arguments', status=400)
-  logging.info('%s' % form.cleaned_data)
+  # logging.info('%s' % form.cleaned_data)
   keys_only = form.cleaned_data['keys_only'] or False
   format = form.cleaned_data['format'] or 'html'
   limit = form.cleaned_data['limit']
@@ -3271,7 +3271,6 @@ def start_assign_readers(request):
   return HttpTextResponse("OK")
 
 TO_COPY = [
-  'xsrf_secret',
   'lower_nickname',
   'stars',
   'default_column_width',
@@ -3279,6 +3278,7 @@ TO_COPY = [
   'email',
   'user',
 ]
+
 MIGRATE_BATCH=1
 
 def migrate_accounts(semester, cursor=None, num_updated=0):
@@ -3286,7 +3286,7 @@ def migrate_accounts(semester, cursor=None, num_updated=0):
     logging.debug("Quitting")
     return
 
-  query = models.Account.all().filter('email =', 'moowiz2020@gmail.com')
+  query = models.Account.all().filter('semesters =', semester.name)
 
   if cursor:
     query.with_cursor(cursor)
@@ -3294,16 +3294,19 @@ def migrate_accounts(semester, cursor=None, num_updated=0):
   to_put = []
   to_iter = list(query.fetch(limit=MIGRATE_BATCH))
 
-  for acc in to_iter:
-    data = {k: getattr(acc, k) for k in TO_COPY}
-    data['parent'] = semester
-    if hasattr(acc, 'is_staff'):
+  i = 0
+  while i < len(to_iter):
+    acc = to_iter[i]
+    if hasattr(acc, 'semesters') and not acc.role > 0:
+      data = {k: getattr(acc, k) for k in TO_COPY}
+      data['parent'] = semester
       data['role'] = models.ROLE_MAPPING['ta'] if acc.is_staff else models.ROLE_MAPPING['student']
-    if hasattr(acc, 'role'):
-      data['role'] = acc.role
 
-    acc = models.Account(key_name='<%s>' % data['email'], **data)
-    to_put.append(acc)
+      acc = models.Account(key_name='<%s>' % data['email'], **data)
+      to_put.append(acc)
+      i += 1
+    else:
+      del to_iter[i]
 
   if to_put:
     db.put(to_put)
