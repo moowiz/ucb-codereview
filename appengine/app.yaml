@@ -1,5 +1,5 @@
 application: ucb-codereview 
-version: prod
+version: test
 runtime: python27
 api_version: 1
 threadsafe: false
@@ -53,6 +53,7 @@ skip_files:
 builtins:
 - appstats: on
 - remote_api: on
+- deferred: on
 
 libraries:
 - name: django
