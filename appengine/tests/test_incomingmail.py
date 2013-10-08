@@ -12,14 +12,18 @@ from codereview import models, views
 class TestIncomingMail(TestCase):
 
   def url(self, url):
-    return '/%s%s' % (self.issue.parent(), url)
+    return '/%s%s' % (self.issue.parent().name, url)
 
   def setUp(self):
     super(TestIncomingMail, self).setUp()
     self.login('foo@example.com')
-    self.issue = models.Issue(subject='test')
+    self.user = User('foo@example.com')
+    self.semester = models.Semester(key_name='<fa13>', name='fa13')
+    self.semester.put()
+
+    self.issue = models.Issue(subject='test', parent=self.semester)
     self.issue.put()
-    self.issue2 = models.Issue(subject='test2')
+    self.issue2 = models.Issue(subject='test2', parent=self.semester)
     self.issue2.put()
     self.logout()
 
@@ -61,7 +65,7 @@ class TestIncomingMail(TestCase):
     msg.set_payload('body')
     self.assertRaises(views.InvalidIncomingEmailError,
                       views._process_incoming_mail, msg.as_string(),
-                      'reply@example.com')
+                      'reply@example.com', self.semester)
 
   def test_empty_message(self):
     msg = Message()
@@ -69,23 +73,23 @@ class TestIncomingMail(TestCase):
     msg['Subject'] = 'subject (issue%s)\r\n\r\n' % self.issue.key().id()
     self.assertRaises(views.InvalidIncomingEmailError,
                       views._process_incoming_mail, msg.as_string(),
-                      'reply@example.com')
+                      'reply@example.com', self.semester)
 
   def test_senders_becomes_reviewer(self):
     msg = Message()
     msg['From'] ='sender@example.com'
     msg['Subject'] = 'subject (issue%s)' % self.issue.key().id()
     msg.set_payload('body')
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
-    issue = models.Issue.get_by_id(self.issue.key().id())  # re-fetch issue
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
+    issue = models.Issue.get_by_id(self.issue.key().id(), parent=self.semester)  # re-fetch issue
     self.assertEqual(issue.reviewers, ['sender@example.com'])
     issue.reviewers = []
     issue.put()
     # try again with sender that has an account
     # we do this to handle CamelCase emails correctly
     models.Account.get_account_for_user(User('sender@example.com'))
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
-    issue = models.Issue.get_by_id(self.issue.key().id())
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
+    issue = models.Issue.get_by_id(self.issue.key().id(), parent=self.semester)
     self.assertEqual(issue.reviewers, ['sender@example.com'])
 
   def test_long_subjects(self):
@@ -94,7 +98,7 @@ class TestIncomingMail(TestCase):
     msg['Subject'] = ('foo '*30)+' (issue%s)' % self.issue.key().id()
     msg['From'] = 'sender@example.com'
     msg.set_payload('body')
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
     imsg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(len(imsg.subject.splitlines()), 1)
 
@@ -105,7 +109,7 @@ class TestIncomingMail(TestCase):
     msg['From'] = 'sender@example.com'
     msg.attach(MIMEText('body', 'plain'))
     msg.attach(MIMEText('ignore', 'html'))
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
     imsg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(imsg.text, 'body')
     imsg.delete()
@@ -115,7 +119,7 @@ class TestIncomingMail(TestCase):
     msg['From'] = 'sender@example.com'
     msg.attach(MIMEText('ignore', 'html'))
     msg.attach(MIMEText('body', 'plain'))
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
     imsg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(imsg.text, 'body')
     imsg.delete()
@@ -126,7 +130,7 @@ class TestIncomingMail(TestCase):
     msg.attach(MIMEText('ignore', 'html'))
     self.assertRaises(views.InvalidIncomingEmailError,
                       views._process_incoming_mail, msg.as_string(),
-                      'reply@example.com')
+                      'reply@example.com', self.semester)
 
   def test_mails_from_appengine(self):  # bounces
     msg = Message()
@@ -135,14 +139,14 @@ class TestIncomingMail(TestCase):
     msg['X-Google-Appengine-App-Id'] = 'foo'
     self.assertRaises(views.InvalidIncomingEmailError,
                       views._process_incoming_mail, msg.as_string(),
-                      'reply@exampe.com')
+                      'reply@exampe.com', self.semester)
 
   def test_huge_body_is_truncated(self):  # see issue325
     msg = Message()
     msg['subject'] = 'subject (issue%s)' % self.issue.key().id()
     msg['From'] = 'sender@example.com'
     msg.set_payload('1' * 600 * 1024)
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
     imsg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(len(imsg.text), 500 * 1024)
     self.assert_(imsg.text.endswith('... (message truncated)'))
@@ -156,7 +160,7 @@ class TestIncomingMail(TestCase):
     msg.set_payload(jtxt, jcode)
     msg['Subject'] = 'subject (issue%s)' % self.issue.key().id()
     msg['From'] = 'sender@example.com'
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
     imsg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(imsg.text.encode(jcode), jtxt)
 
@@ -171,6 +175,6 @@ class TestIncomingMail(TestCase):
     msg['From'] = 'sender@example.com'
     del msg['Content-Transfer-Encoding']  # replace 7bit encoding
     msg['Content-Transfer-Encoding'] = '8bit'
-    views._process_incoming_mail(msg.as_string(), 'reply@example.com')
+    views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
     imsg = models.Message.all().ancestor(self.issue).get()
     self.assertEqual(imsg.text.encode(jcode), jtxt)

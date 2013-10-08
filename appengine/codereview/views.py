@@ -26,6 +26,7 @@ import random
 import re
 import urllib
 import json
+import settings as app_settings
 from cStringIO import StringIO
 from xml.etree import ElementTree
 
@@ -36,6 +37,7 @@ from google.appengine.api import users
 from google.appengine.api import urlfetch
 from google.appengine.api import xmpp
 from google.appengine.ext import db
+from google.appengine.ext import deferred
 from google.appengine.runtime import DeadlineExceededError
 from google.appengine.runtime import apiproxy_errors
 
@@ -110,7 +112,7 @@ def respond(request, template, params=None):
     params['user_id'] = request.user.user_id
   params['bug_owner'] = request.issue.bug_owner if hasattr(request, 'issue') else None
   params['is_admin'] = request.user_is_admin
-  params['is_staff'] = request.user and account.is_staff
+  params['isStaff'] = request.user and account.isStaff
   params['is_dev'] = IS_DEV
   params['media_url'] = django_settings.MEDIA_URL
   params['special_banner'] = getattr(django_settings, 'SPECIAL_BANNER', None)
@@ -161,7 +163,7 @@ def _clean_int(value, default, min_value=None, max_value=None):
 
 def _can_view_issue(request, issue):
   user = request.user
-  if models.Account.get_account_for_user(user).is_staff:
+  if models.Account.get_account_for_user(user).isStaff:
     return True
   if issue.parent() != request.semester:
     return False
@@ -327,7 +329,7 @@ def staff_required(func):
 
     @login_required
     def staff_required_wrapper(request, *args, **kwds):
-        if not request.is_staff:
+        if not request.isStaff:
             return HttpTextResponse('You do not have permission to view this page', status=403)
         return func(request, *args, **kwds)
     return staff_required_wrapper
@@ -766,7 +768,7 @@ def _show_user(request):
   user_to_show = request.user_to_show
   acc = models.Account.get_account_for_user(request.user)
   acc_to_show = models.Account.get_account_for_user(user_to_show)
-  if not acc.is_staff:
+  if not acc.isStaff:
     if user_to_show != request.user:
       return HttpTextResponse("You do not have permission to view this user", status=403)
     if request.semester != acc_to_show.parent():
@@ -788,7 +790,7 @@ def _show_user(request):
     query.order('-modified')
     return query
 
-  # if acc_to_show.is_staff and acc.is_staff:
+  # if acc_to_show.isStaff and acc.isStaff:
   #     all_issues = ()
   #     all_keys = set()
   #     for num, section in ((num, models.Section.get_by_key_name("<%s>" % num)) for num in acc.sections):
@@ -811,7 +813,7 @@ def _show_user(request):
   #         else:
   #           all_issues = val
 
-  if acc_to_show.is_staff:
+  if acc_to_show.isStaff:
     if acc.role == models.ROLE_MAPPING['reader']:
       accs = models.get_accounts_for_reader(acc, request.semester)
       all_issues = ()
@@ -2483,9 +2485,9 @@ def publish(request):
                                request.user.email())
     draft_message = query.get()
   if request.method != 'POST':
-    reviewers = issue.reviewers[:]
-    if (request.user.email() not in issue.reviewers):
-      reviewers.append(request.user.email())
+    owners = issue.owners[:]
+    if (request.user.email() not in issue.owners):
+      owners.append(request.user.email())
     tbd, comments = _get_draft_comments(request, issue, True)
     preview = _get_draft_details(request, comments)
     if draft_message is None:
@@ -2493,12 +2495,12 @@ def publish(request):
     else:
       msg = draft_message.text
     form = form_class(initial={'subject': issue.subject,
-                               'reviewers': ', '.join(reviewers),
+                               'owners': ', '.join(owners),
                                'send_mail': True,
                                'message': msg,
                                'comp_score': issue.comp_score,
                                })
-    if not models.Account.get_account_for_user(request.user).is_staff:
+    if not models.Account.get_account_for_user(request.user).isStaff:
         del form.fields['comp_score']
     return respond(request, 'publish.html', {'form': form,
                                              'issue': issue,
@@ -2510,9 +2512,9 @@ def publish(request):
   if not form.is_valid():
     return respond(request, 'publish.html', {'form': form, 'issue': issue})
   if form.is_valid() and not form.cleaned_data.get('message_only', False):
-    reviewers = _get_emails(form, 'reviewers')
+    owners = _get_emails(form, 'owners')
   else:
-    reviewers = issue.reviewers
+    owners = issue.owners
   if not form.is_valid():
     return respond(request, 'publish.html', {'form': form, 'issue': issue})
   if not form.cleaned_data.get('message_only', False):
@@ -2664,9 +2666,9 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
   template, context = _get_mail_template(request, issue, full_diff=attach_patch)
   # Decide who should receive mail
   my_email = db.Email(request.user.email())
-  to = issue.reviewers[:]
+  to = issue.owners[:] + issue.reviewers[:]
   reply_to = to[:]
-  reply_to.insert(0, 'reply@berkeley-61a.appspotmail.com')
+  reply_to.insert(0, app_settings.RIETVELD_INCOMING_MAIL_ADDRESS)
   if my_email in to and len(to) > 1:  # send_mail() wants a non-empty to list
     to.remove(my_email)
   reply_to = [db.Email(email) for email in reply_to]
@@ -2740,7 +2742,7 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
           context[key] = value.decode('ascii', 'replace')
     body = django.template.loader.render_to_string(
       template, context, context_instance=RequestContext(request))
-    logging.warn('Mail: to=%s', ', '.join(to))
+    logging.info('Mail: to=%s', ', '.join(to))
     send_args = {'sender': my_email,
                  'to': [_encode_safely(address) for address in to],
                  'subject': _encode_safely(subject),
@@ -2963,14 +2965,17 @@ def search(request):
 def settings(request):
   account = models.Account.get_account_for_user(request.user_to_show)
   tmp_acc = models.Account.current_user_account
-  if not (tmp_acc.is_staff or tmp_acc == account):
+  if not (tmp_acc.isStaff or tmp_acc == account):
       return HttpTextResponse("Error: Unable to edit settings for this user", status=404)
   if request.method != 'POST':
     nickname = account.nickname
     default_context = account.default_context
     default_column_width = account.default_column_width
     role = models.REV_ROLE_MAPPING[account.role]
-    reader = account.reader.email
+    if account.reader:
+      reader = account.reader.email
+    else:
+      reader = ''
     form = forms.SettingsForm(initial={'nickname': nickname,
                                  'context': default_context,
                                  'column_width': default_column_width,
@@ -2996,7 +3001,7 @@ def settings(request):
 @xsrf_required
 def account_delete(request):
   request_acc = models.Account.get_account_for_user(request.user)
-  if not (request_acc.is_staff or request.user == request.user_to_show):
+  if not (request_acc.isStaff or request.user == request.user_to_show):
       return HttpTextResponse("Invalid permissions to delete this user", status=403)
   account = models.Account.get_account_for_user(request.user_to_show)
   account.delete()
@@ -3044,13 +3049,13 @@ def incoming_mail(request, recipients):
   The issue is not modified. No reviewers or CC's will be added or removed.
   """
   try:
-    _process_incoming_mail(request.raw_post_data, recipients)
+    _process_incoming_mail(request.raw_post_data, recipients, request.semester)
   except InvalidIncomingEmailError, err:
     logging.debug(str(err))
   return HttpTextResponse('')
 
 
-def _process_incoming_mail(raw_message, recipients):
+def _process_incoming_mail(raw_message, recipients, semester):
   """Process an incoming email message."""
   recipients = [x[1] for x in _email_utils.getaddresses([recipients])]
 
@@ -3064,7 +3069,7 @@ def _process_incoming_mail(raw_message, recipients):
   if match is None:
     raise InvalidIncomingEmailError('No issue id found: %s', subject)
   issue_id = int(match.groupdict()['id'])
-  issue = models.Issue.get_by_id(issue_id)
+  issue = models.Issue.get_by_id(issue_id, parent=semester)
   if issue is None:
     raise InvalidIncomingEmailError('Unknown issue ID: %d' % issue_id)
   sender = _email_utils.parseaddr(incoming_msg.sender)[1]
@@ -3104,7 +3109,7 @@ def _process_incoming_mail(raw_message, recipients):
   all_emails = [str(x).lower()
                 for x in issue.reviewers]
   if sender.lower() not in all_emails:
-    query = models.Account.all().filter('lower_email =', sender.lower())
+    query = models.Account.all().ancestor(issue.parent().key()).filter('lower_email =', sender.lower())
     account = query.get()
     if account is not None:
       issue.reviewers.append(account.email)  # e.g. account.email is CamelCase
@@ -3197,7 +3202,7 @@ def calculate_delta(request):
   return HttpResponse()
 
 def _get_snippets(request):
-  if not models.Account.get_account_for_user(request.user).is_staff:
+  if not models.Account.get_account_for_user(request.user).isStaff:
     # Only staff has access to snippets
     return [], False
   val = memcache.get("snippets")
@@ -3232,22 +3237,88 @@ def delete_snippet(request, snippet_key):
   memcache.delete('snippets')
   return HttpResponse()
 
-def assign_readers(request, semester):
-  sem = models.Semester.all().filter('name =', semester).get()
-  accounts = list(models.Account.all().ancestor(sem).filter('role =', models.ROLE_MAPPING['student']))
-  readers = list(models.Account.all().ancestor(sem).filter('role =', models.ROLE_MAPPING['reader']))
-  i = 0
-  for acc in accounts:
-    acc.reader = readers[i]
-    i = (i + 1) % len(readers)
-  db.put(accounts)
+ASSIGN_READER_BATCH_SIZE = 100
+def assign_readers(semester, cursor=None, readers=None, reader_index=0, num_updated=0):
+  query = models.Account.all().ancestor(semester).filter('role =', models.ROLE_MAPPING['student'])
 
-  return HttpTextResponse("OK")
+  if cursor:
+    query.with_cursor(cursor)
+
+  if not readers:
+    readers = list(models.Account.all().ancestor(semester).filter('role =', models.ROLE_MAPPING['reader']))
+
+  to_put = []
+  for acc in query.fetch(limit=ASSIGN_READER_BATCH_SIZE):
+      acc.reader = readers[reader_index]
+      reader_index = (reader_index + 1) % len(readers)
+      to_put.append(acc)
+
+  if to_put:
+      db.put(to_put)
+      num_updated += len(to_put)
+      logging.debug(
+          'Put %d entities to Datastore for a total of %d',
+          len(to_put), num_updated)
+      deferred.defer(
+          assign_readers, semester, cursor=query.cursor(), readers=readers, reader_index=reader_index, num_updated=num_updated)
+  else:
+      logging.debug(
+          'assign_reader complete with %d updates!', num_updated)
 
 @staff_required
 def start_assign_readers(request):
-  taskqueue.add(url=reverse(request, assign_readers),
-                params={'semester': request.semester.name},
-                queue_name='assignreaders')
+  deferred.defer(assign_readers, request.semester)
+  return HttpTextResponse("OK")
 
+TO_COPY = [
+  'xsrf_secret',
+  'lower_nickname',
+  'stars',
+  'default_column_width',
+  'default_context',
+  'email',
+  'user',
+]
+MIGRATE_BATCH=1
+
+def migrate_accounts(semester, cursor=None, num_updated=0):
+  if num_updated > 1000:
+    logging.debug("Quitting")
+    return
+
+  query = models.Account.all().filter('email =', 'moowiz2020@gmail.com')
+
+  if cursor:
+    query.with_cursor(cursor)
+
+  to_put = []
+  to_iter = list(query.fetch(limit=MIGRATE_BATCH))
+
+  for acc in to_iter:
+    data = {k: getattr(acc, k) for k in TO_COPY}
+    data['parent'] = semester
+    if hasattr(acc, 'is_staff'):
+      data['role'] = models.ROLE_MAPPING['ta'] if acc.is_staff else models.ROLE_MAPPING['student']
+    if hasattr(acc, 'role'):
+      data['role'] = acc.role
+
+    acc = models.Account(key_name='<%s>' % data['email'], **data)
+    to_put.append(acc)
+
+  if to_put:
+    db.put(to_put)
+    db.delete(to_iter)
+    num_updated += len(to_put)
+    logging.debug(
+        'Put %d entities to Datastore for a total of %d',
+        len(to_put), num_updated)
+    # deferred.defer(
+    #     migrate_accounts, semester, cursor=query.cursor(), num_updated=num_updated)
+  else:
+    logging.debug(
+        'migrate_accounts complete with %d updates!', num_updated) 
+
+@staff_required
+def start_migrate_accounts(request):
+  deferred.defer(migrate_accounts, request.semester)
   return HttpTextResponse("OK")

