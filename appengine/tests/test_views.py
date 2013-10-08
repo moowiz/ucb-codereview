@@ -37,17 +37,25 @@ class MockRequest(HttpRequest):
         self.META['HTTP_HOST'] = 'testserver'
         self.user = user
         self.issue = issue
-        self.semester = 'fa13' # Chosen arbitrarily
+        self.semester = models.Semester.get_by_key_name('<fa13>') # Chosen arbitrarily
 
 class TestViewBase(TestCase):
     def setUp(self):
         super(TestViewBase, self).setUp()
+        self.semester = models.Semester.get_or_insert('<fa13>', name='fa13')
+
         self.student = User('foo@example.com')
-        self.login('foo@example.com')
-        self.issue = models.Issue(subject='test', reviewers=[db.Email(self.student.email())])
+        self.ta = User('bar@example.com')
+
+        self.student_acc = models.Account.get_account_for_user(self.student)
+        self.student_acc.put()
+        self.ta_acc = models.Account.get_account_for_user(self.ta)
+        self.ta_acc.role = models.ROLE_MAPPING['ta']
+        self.ta_acc.put()
+
+        self.issue = models.Issue(subject='test', reviewers=[db.Email(self.student.email())], parent=self.semester)
         self.issue.put()
-        self.account = models.Account.get_account_for_user(self.student)
-        self.account.put()
+
         self.ps = models.PatchSet(parent=self.issue, issue=self.issue)
         self.ps.data = load_file('ps1.diff')
         self.ps.save()
@@ -63,7 +71,8 @@ class TestViewBase(TestCase):
 
 class TestStudentUserViewing(TestViewBase):
     def test_basic(self):
-        resp = self.client.get('/%s/mine' % self.issue.semester)
+        self.login('foo@example.com')
+        resp = self.client.get('/%s/mine' % self.semester.name)
         temp = Template("""
 <tr name="issue">
   <td class="first" width="14"><img src="/static/closedtriangle.gif" 
@@ -99,15 +108,21 @@ class TestStudentUserViewing(TestViewBase):
   </div>
   </td>
   </tr>""")
-        # raise Exception(resp.content)
-        self.assertContains(resp, temp.substitute(semester = self.issue.semester, issueNum = self.issue.key().id(),
+        self.assertContains(resp, temp.substitute(semester = self.semester.name, issueNum = self.issue.key().id(),
                                                     numSubmissions = models.PatchSet.all().ancestor(self.issue).count(),
                                                     issueSubject=self.issue.subject, email=self.student.email()), html=True)
+    def test_settings(self):
+        self.login(self.ta_acc.email)
+        resp = self.client.get('/%s/user/%s/settings' % (self.semester.name, self.ta_acc.email))
+        self.assertContains(resp, "Settings")
 
 
 
 class TestPublish(TestViewBase):
     """Test publish functions."""
+    def setUp(self):
+        super(TestPublish, self).setUp()
+        self.login(self.student.email())
 
     def count_num(self, cls):
         return cls.all().ancestor(self.issue.key()).count()
@@ -121,9 +136,9 @@ class TestPublish(TestViewBase):
             'message': 'Hi there, this is a test message. Please ignore',
             'message_only': '',
             'in_reply_to': '',
-            'xsrf_token': self.account.get_xsrf_token(),
+            'xsrf_token': self.student_acc.get_xsrf_token(),
         }
-        url = '/%s/%s/' % (self.issue.semester, self.issue.key().id())
+        url = '/%s/%s/' % (self.semester.name, self.issue.key().id())
         resp = self.client.post(url + 'publish', data=data, follow=True)
 
         self.assertRedirects(resp, url)
@@ -146,13 +161,13 @@ class TestPublish(TestViewBase):
             'message': 'Hi there, this is a test message. Please ignore',
             'message_only': '',
             'in_reply_to': '',
-            'xsrf_token': self.account.get_xsrf_token(),
+            'xsrf_token': self.student_acc.get_xsrf_token(),
         }
-        url = '/%s/%s/' % (self.issue.semester, self.issue.key().id())
+        url = '/%s/%s/' % (self.semester.name, self.issue.key().id())
         resp = self.client.post(url + 'publish', data=data, follow=True)
 
-        self.assertRedirects(resp, url)
         self.assertContains(resp, data['message'])
+        self.assertRedirects(resp, url)
 
         self.assertEqual(self.count_num(models.Message) - 1, messages_before) # Only sent 1 message
         self.assertEqual(self.count_num(models.Comment), comments_before)

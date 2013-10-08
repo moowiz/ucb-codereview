@@ -14,6 +14,3 @@ class AccountTest(TestCase):
 		acc = models.Account(email=TEST_EMAIL, semesters=test_semester, sections=test_sections, user=User(TEST_EMAIL))
 		acc.save()
 		acc.put()
-
-		sec = models.Section.all().get()
-		self.assertEquals(sec.key().name(), '<%s>' % test_sections[0])

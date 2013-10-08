@@ -89,11 +89,10 @@ class UrlTemplateNode(django.template.Node):
     self.args = [django.template.Variable(x) for x in args]
 
   def render(self, context):
-    return reverse(self.url, args=[context['semester']] + [x.resolve(context) for x in self.args])
+    return reverse(self.url, args=[context['semester'].name] + [x.resolve(context) for x in self.args])
 
 @register.tag
 def url(parser, token):
-  #print token
   to_use = token.split_contents()
   return UrlTemplateNode(to_use[1], to_use[2:])
 

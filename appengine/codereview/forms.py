@@ -41,11 +41,7 @@ class AccountInput(forms.TextInput):
     output = super(AccountInput, self).render(name, value, attrs)
     if models.Account.current_user_account is not None:
       # TODO(anatoli): move this into .js media for this form
-      data = {'name': name, 
-              'multiple': 'true'}
-      if self.attrs.get('multiple', True) == False:
-        data['multiple'] = 'false'
-      data['semester'] = models.Account.current_user_account.semesters[0]
+      data = {'name': name, 'semester': models.Account.current_user_account.parent().name }
       output += mark_safe(u'''
       <script type="text/javascript">
           $("#id_%(name)s").autocomplete({
@@ -177,9 +173,11 @@ class SettingsForm(forms.Form):
       initial=django_settings.DEFAULT_COLUMN_WIDTH,
       min_value=django_settings.MIN_COLUMN_WIDTH,
       max_value=django_settings.MAX_COLUMN_WIDTH)
-  sections = forms.CharField(required=False)
-  semesters = forms.CharField(required=False)
-  is_staff = forms.BooleanField(required=False)
+  role = forms.CharField(required=False)
+  reader = forms.CharField(required=False)
+
+  def clean_role(self):
+    return models.ROLE_MAPPING.get(self.data.get('role'), 'student')
 
   def clean_nickname(self):
     nickname = self.cleaned_data.get('nickname')
@@ -199,33 +197,20 @@ class SettingsForm(forms.Form):
       raise forms.ValidationError('Choose a different nickname.')
 
     # Look for existing nicknames
-    accounts = list(models.Account.gql('WHERE lower_nickname = :1',
-                                       nickname.lower()))
-    for account in accounts:
-      if account.key() == models.Account.current_user_account.key():
-        continue
-      raise forms.ValidationError('This nickname is already in use.')
+    accounts = models.Account.all(keys_only=True).filter('lower_nickname =', nickname.lower())
+    curr_key = models.Account.current_user_account.key()
+    
+    for key in accounts:
+      if key != curr_key:
+        raise forms.ValidationError('This nickname is already in use.')
 
     return nickname
 
-  def clean_sections(self):
-    return list(set(self.cleaner('sections', try_int=True)))
+  def clean_reader(self):
+    reader_email = self.cleaned_data.get('reader')
 
-  def clean_semesters(self):
-    return list(set(self.cleaner('semesters')))
-
-  def cleaner(self, s, try_int=False):
-    got = self.cleaned_data[s].strip('[]')
-    for val in got.split(','):
-        val = val.strip()
-        if not val:
-            continue
-        if val[-1] == 'L':
-            val = val[:-1]
-        if try_int:
-          val = int(val)
-        yield val
-
+    reader = models.Account.get_account_for_email(reader_email)
+    return reader
 
 class SearchForm(forms.Form):
 

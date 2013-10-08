@@ -65,6 +65,8 @@ class Issue(db.Model):
   """The major top-level entity.
 
   It has one or more PatchSets as its descendants.
+
+  Child of Semester
   """
 
   subject = db.StringProperty(required=True)
@@ -78,27 +80,15 @@ class Issue(db.Model):
   bug = db.BooleanProperty(default=False)
   bug_owner = db.EmailProperty(required=False)
   closed = db.BooleanProperty(default=False)
-  semester = db.StringProperty(required=True, default=settings.CURRENT_SEMESTER)
+
+  # REMOVED. Changed to use ancestry instead
+  # semester = db.StringProperty(required=True, default=settings.CURRENT_SEMESTER)
 
   _is_starred = None
-
-  def put(self):
-    memcache.delete_multi(('all', 'all.c', 'all.o'))
-    val = super(Issue, self).put()
-    
-    memcache.delete_multi(tuple('%s_iss' % section for section in self.sections))
-    memcache.set('l_iss', self.modified)
-    return val
 
   def set_comp_score(self, val):
       self.comp_score = val
       self.closed = self.comp_score > -1
-
-  @property
-  def sections(self):
-      """Returns the sections this issue covers"""
-      lst = [Account.get_account_for_email(stu) for stu in self.reviewers]
-      return list(set(item for sublist in (stu.sections for stu in lst if stu) for item in sublist))
 
   @property
   def is_starred(self):
@@ -622,10 +612,14 @@ class Bucket(db.Model):
   quoted = db.BooleanProperty()
 
 
-### Repositories and Branches ###
-
-
 ### Accounts ###
+
+ROLE_MAPPING = {
+  'student': 0,
+  'reader': 1,
+  'ta': 2,
+}
+REV_ROLE_MAPPING = {v: k for k, v in ROLE_MAPPING.iteritems()}
 
 class Account(db.Model):
   """Maps a user or email address to a user-selected nickname, and more.
@@ -643,6 +637,8 @@ class Account(db.Model):
   integers of that size is very modest, so this is an efficient
   solution.  (If someone found a use case for having thousands of
   starred issues we'd have to think of a different approach.)
+
+  Child of Semester
   """
 
   user = db.UserProperty(auto_current_user_add=True, required=True)
@@ -654,16 +650,27 @@ class Account(db.Model):
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   stars = db.ListProperty(int)  # Issue ids of all starred issues
-  is_staff = db.BooleanProperty(default=False)
-  sections = db.ListProperty(int, default = [])
-  semesters = db.ListProperty(str, default=[settings.CURRENT_SEMESTER], required=True)
+
+  # change to roles
+  # is_staff = db.BooleanProperty(default=False)
+
+  # sections = db.ListProperty(int, default = [])
+
+  role = db.IntegerProperty(default=ROLE_MAPPING['student'])
+  # semesters = db.ListProperty(str, default=[settings.CURRENT_SEMESTER], required=True)
+
+  reader = db.SelfReferenceProperty(default=None)
 
   # Current user's Account.  Updated by middleware.AddUserToRequestMiddleware.
   current_user_account = None
 
-  lower_email = db.StringProperty()
+  # lower_email = db.StringProperty()
   lower_nickname = db.StringProperty()
   xsrf_secret = db.BlobProperty()
+
+  @property
+  def is_staff(self):
+    return self.role > 0 
 
   @property
   def nickname(self):
@@ -671,22 +678,12 @@ class Account(db.Model):
 
   # Note that this doesn't get called when doing multi-entity puts.
   def put(self):
-    self.lower_email = self.email = str(self.email).lower()
+    self.email = str(self.email).lower()
     self.lower_nickname = self.nickname.lower()
-    if not self.is_staff and self.sections:
-        for num in self.sections:
-            section = Section.get_or_insert('<{}>'.format(num))
-            if self.key() not in section.accounts:
-                section.accounts.append(self.key())
-            section.put()
     super(Account, self).put()
 
-  @property
-  def get_section(self, semester):
-    return [x for x in Section.all().ancestor(semester)]
-
   @classmethod
-  def get_account_for_user(cls, user):
+  def get_account_for_user(cls, user, semester=None):
     """Get the Account for a user, creating a default one if needed."""
     email = user.email().lower()
     assert email
@@ -697,7 +694,9 @@ class Account(db.Model):
     if account is not None:
       return account
     nickname = cls.create_nickname_for_user(user)
-    return cls.get_or_insert(key, user=user, email=email, nickname=nickname)
+    if semester == None:
+      semester = Semester.get_current_semester()
+    return cls.get_or_insert(key, user=user, email=email, nickname=nickname, parent=semester)
 
   @classmethod
   def create_nickname_for_user(cls, user):
@@ -879,13 +878,30 @@ class Account(db.Model):
       self.put()
     h = hashlib.md5()
     h.update(self.xsrf_secret)
-    email_str = self.lower_email
+    email_str = self.email
     if isinstance(email_str, unicode):
       email_str = email_str.encode('utf-8')
-    h.update(self.lower_email)
+    h.update(self.email)
     when = int(time.time()) // 3600 + offset
     h.update(str(when))
     return h.hexdigest()
+
+reader_cache = {}
+
+def get_accounts_for_reader(reader, semester):
+  key = (reader.key(), semester.key())
+  s_key = str(key[0]), str(key[1])
+  if key in reader_cache:
+    pass
+    # return reader_cache[key]
+  val = memcache.get(s_key)
+  if val:
+    return val
+  val = reader_cache[key] = tuple(Account.all().ancestor(semester).filter('reader =', reader.key()))
+  memcache.set(s_key, val)
+  return val
+
+
 
 class Section(db.Model):
   """Represents a class.
@@ -896,13 +912,27 @@ class Section(db.Model):
 class Semester(db.Model):
   """Represents a semester.
   Each semester knows the sections the person were involved with.
-  Ancestor of an Account"""
+  Ancestor of an Account, Issue, and AssigningQueueData"""
   name = db.StringProperty(required=True)
 
   # Somehow this isn't right....
   # @property
   # def sections(self):
   #   return [x for x in Section.all().ancestor(self)]
+
+  @staticmethod
+  def get_current_semester():
+    return Semester.get_or_insert('<%s>' % settings.CURRENT_SEMESTER, name=settings.CURRENT_SEMESTER)
+
+  def __eq__(self, other):
+    return isinstance(other, Semester) and other.name == self.name
+
+  def __ne__(self, other):
+    return not self == other
+
+class AssigningQueueData(db.Model):
+  assignment = db.ReferenceProperty(Issue)
+  readers = db.ListProperty(db.Key) # keys of Account objects
 
 class Snippet(db.Model):
   """ Stores a user-entered snippet"""
@@ -920,3 +950,6 @@ class Snippet(db.Model):
   def urlsafe(self):
     """Returns an encoded key that is safe to put into URLs"""
     return str(self.key())
+
+def upgrade_old_account(acc):
+  pass

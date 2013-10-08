@@ -79,4 +79,7 @@ urlpatterns = patterns(
     (r'^tasks/calculate_delta$', 'calculate_delta'),
     (r'^snippets/add$', 'add_snippet'),
     (r'^snippets/delete/(.+)$', 'delete_snippet'),
+    (r'^start_assign_readers$', 'start_assign_readers'),
+    (r'^tasks/assign_readers$', 'assign_readers'),
+
 )

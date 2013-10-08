@@ -71,9 +71,9 @@ IS_DEV = os.environ['SERVER_SOFTWARE'].startswith('Dev')  # Development server
 def reverse(request, url, *args, **kwds):
   _args = kwds.pop('args', [])
   if type(_args) is tuple:
-    _args = (request.semester,) + _args
+    _args = (request.semester.name,) + _args
   else:
-    _args.insert(0, request.semester)
+    _args.insert(0, request.semester.name)
   kwds['args'] = _args
   return _reverse(url, *args, **kwds)
 
@@ -163,7 +163,7 @@ def _can_view_issue(request, issue):
   user = request.user
   if models.Account.get_account_for_user(user).is_staff:
     return True
-  if not issue.semester in request.semester:
+  if issue.parent() != request.semester:
     return False
   user_email = user.email().lower()
   return (user_email in issue.reviewers)
@@ -276,7 +276,12 @@ def handle_year(func):
 
   def year_wrapper(request, *args, **kwds):
     if 'semester' in kwds:
-      request.semester = kwds.pop('semester')
+      popped = kwds.pop('semester')
+      sem = models.Semester.all().filter('name =', popped).get()
+      if not sem:
+        sem = models.Semester(name=popped)
+        sem.put()
+      request.semester = sem
     return func(request, *args, **kwds)
 
   return year_wrapper
@@ -287,7 +292,7 @@ def issue_required(func):
 
   @handle_year
   def issue_wrapper(request, issue_id, *args, **kwds):
-    issue = models.Issue.get_by_id(int(issue_id))
+    issue = models.Issue.get_by_id(int(issue_id), parent=request.semester)
     if issue is None:
       return HttpTextResponse(
           'No issue exists with that id (%s)' % issue_id, status=404)
@@ -552,7 +557,7 @@ def _paginate_issues(page_url,
     'nexttext': 'Older',
   }
   # Fetch one more to see if there should be a 'next' link
-  query.filter('semester =', request.semester)
+
   issues = query.fetch(limit+1, offset)
   if len(issues) > limit:
     del issues[limit:]
@@ -634,13 +639,14 @@ def last_modified_issue(request):
 
     if request.closed:
       last = last.filter('closed =', request.closed)
-    last = last.fetch(1)[0]
+    last = last.fetch(1)
 
     if last:
-      last = last.modified
+      last = last[0].modified
     else:
       last = datetime.datetime(2013, 1, 1)
     memcache.set('l_iss', last)
+  last = datetime.datetime(2013, 1, 1)
   return last
 
 def clean_args_all(func):
@@ -674,12 +680,13 @@ def all(request):
   if 'offset' in request.GET or 'limit' in request.GET:
     key = None
   val = memcache.get(key) if key else None
+  val = None
   if not val:
     nav_parameters = {}
     if closed is not None:
       nav_parameters['closed'] = int(closed)
 
-    query = models.Issue.all()
+    query = models.Issue.all().ancestor(request.semester.key())
     if closed is not None:
       # return only opened or closed issues
       query.filter('closed =', closed)
@@ -690,7 +697,7 @@ def all(request):
                             query,
                             'all.html',
                             extra_nav_parameters=nav_parameters,
-                            extra_template_params=dict(closed=closed))
+                            extra_template_params={'closed':closed})
     if key:
       memcache.set(key, val)
   return val
@@ -762,7 +769,7 @@ def _show_user(request):
   if not acc.is_staff:
     if user_to_show != request.user:
       return HttpTextResponse("You do not have permission to view this user", status=403)
-    if request.semester not in acc_to_show.semesters:
+    if request.semester != acc_to_show.parent():
       return HttpTextResponse("You do not have permission to view a user in this semester", status=403)
 
   if user_to_show == request.user:
@@ -773,39 +780,53 @@ def _show_user(request):
   else:
     draft_issues = draft_keys = []
 
-  def make_query():
-    query = models.Issue.all().filter('semester =', request.semester)
+  def make_iss_query():
+    query = models.Issue.all().ancestor(request.semester)
     assign = request.GET.get('assign', None)
     if assign:
       query.filter('subject =', assign)
     query.order('-modified')
     return query
 
-  if acc_to_show.is_staff and acc.is_staff:
+  # if acc_to_show.is_staff and acc.is_staff:
+  #     all_issues = ()
+  #     all_keys = set()
+  #     for num, section in ((num, models.Section.get_by_key_name("<%s>" % num)) for num in acc.sections):
+  #         if not section:
+  #           continue
+  #         val = memcache.get('%s_iss' % num)
+  #         val = None # hack for now, fix this later
+  #         if not val:
+  #           accs = db.get(section.accounts)
+  #           for acc, stu in zip(accs, section.accounts[:]):
+  #               if not acc:
+  #                 section.accounts.remove(stu)
+  #               else:
+  #                 for issue in make_query().filter('reviewers =', acc.email):
+  #                     if issue.key() not in draft_keys and issue.key() not in all_keys:
+  #                         all_issues += (issue,)
+  #                         all_keys.add(issue.key())
+  #           val = all_issues
+  #           memcache.set('%s_iss' % num, val)
+  #         else:
+  #           all_issues = val
+
+  if acc_to_show.is_staff:
+    if acc.role == models.ROLE_MAPPING['reader']:
+      accs = models.get_accounts_for_reader(acc, request.semester)
       all_issues = ()
-      all_keys = set()
-      for num, section in ((num, models.Section.get_by_key_name("<%s>" % num)) for num in acc.sections):
-          if not section:
-            continue
-          val = memcache.get('%s_iss' % num)
-          val = None # hack for now, fix this later
-          if not val:
-            accs = db.get(section.accounts)
-            for acc, stu in zip(accs, section.accounts[:]):
-                if not acc:
-                  section.accounts.remove(stu)
-                else:
-                  for issue in make_query().filter('reviewers =', acc.email):
-                      if issue.key() not in draft_keys and issue.key() not in all_keys:
-                          all_issues += (issue,)
-                          all_keys.add(issue.key())
-            val = all_issues
-            memcache.set('%s_iss' % num, val)
-          else:
-            all_issues = val
+      for acc in accs:
+        all_issues += tuple(make_iss_query().filter('reviewers =', acc.email))
+
+      all_issues = (issue for issue in all_issues if _can_view_issue(request, issue))
+
+    elif acc.role == models.ROLE_MAPPING['ta']:
+      all_issues = ()
+    else:
+      return HttpTextResponse("Weird settings....", status=403)
   else:
-      query = make_query().filter('reviewers =', user_to_show.email())
-      all_issues = tuple(issue for issue in query if _can_view_issue(request, issue))
+    query = make_iss_query().filter('reviewers =', user_to_show.email())
+    all_issues = tuple(issue for issue in query if _can_view_issue(request, issue))
 
   review_issues = ()
   closed_issues = ()
@@ -960,6 +981,7 @@ def upload(request):
   return HttpTextResponse(msg)
 
 
+@handle_year
 @post_required
 @patch_required
 @upload_required
@@ -1012,6 +1034,7 @@ def upload_content(request):
   return HttpTextResponse('OK')
 
 
+@handle_year
 @post_required
 @patchset_required
 @upload_required
@@ -1049,6 +1072,7 @@ def upload_patch(request):
   return HttpTextResponse(msg)
 
 
+@handle_year
 @post_required
 @issue_required
 @upload_required
@@ -1119,8 +1143,8 @@ def _make_new(request, form):
                          description=form.cleaned_data['description'],
                          repo_guid=form.cleaned_data.get('repo_guid', None),
                          reviewers=reviewers,
-                         n_comments=0)
-    issue.sections
+                         n_comments=0,
+                         parent=request.semester)
     issue.put()
 
     patchset = models.PatchSet(issue=issue, data=data, url=url, parent=issue)
@@ -2945,15 +2969,13 @@ def settings(request):
     nickname = account.nickname
     default_context = account.default_context
     default_column_width = account.default_column_width
-    sections = ','.join(str(sec) for sec in account.sections)
-    semesters = ','.join(str(sem) for sem in account.semesters)
-    is_staff = account.is_staff
+    role = models.REV_ROLE_MAPPING[account.role]
+    reader = account.reader.email
     form = forms.SettingsForm(initial={'nickname': nickname,
                                  'context': default_context,
                                  'column_width': default_column_width,
-                                 'sections': sections,
-                                 'semesters': semesters,
-                                 'is_staff': is_staff,
+                                 'role': role,
+                                 'reader': reader,
                                  })
     return respond(request, "settings.html", {'form':form,
                                               'user_to_show': request.user_to_show,})
@@ -2963,10 +2985,8 @@ def settings(request):
   data = form.cleaned_data
   account.default_context = data.get('context')
   account.default_column_width = data.get('column_width')
-  account.semesters = data.get('semesters')
-  account.sections = data.get('sections')
-  if 'is_staff' in data:
-      account.is_staff = data['is_staff']
+  if 'role' in data:
+      account.role = data['role']
   account.put()
   return HttpResponseRedirect(reverse(request, show_user, args=(request.user_to_show,)))
 
@@ -3211,3 +3231,23 @@ def delete_snippet(request, snippet_key):
   snippet.delete()
   memcache.delete('snippets')
   return HttpResponse()
+
+def assign_readers(request, semester):
+  sem = models.Semester.all().filter('name =', semester).get()
+  accounts = list(models.Account.all().ancestor(sem).filter('role =', models.ROLE_MAPPING['student']))
+  readers = list(models.Account.all().ancestor(sem).filter('role =', models.ROLE_MAPPING['reader']))
+  i = 0
+  for acc in accounts:
+    acc.reader = readers[i]
+    i = (i + 1) % len(readers)
+  db.put(accounts)
+
+  return HttpTextResponse("OK")
+
+@staff_required
+def start_assign_readers(request):
+  taskqueue.add(url=reverse(request, assign_readers),
+                params={'semester': request.semester.name},
+                queue_name='assignreaders')
+
+  return HttpTextResponse("OK")
