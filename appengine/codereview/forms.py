@@ -70,6 +70,9 @@ class IssueBaseForm(forms.Form):
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
+  owners = forms.CharField(required=False,
+                              max_length=MAX_REVIEWERS,
+                              widget=AccountInput(attrs={'size': 60}))
   bug_submit = forms.BooleanField(required=False)
 
 
@@ -90,7 +93,7 @@ class AddForm(forms.Form):
   url = forms.URLField(required=False,
                        max_length=MAX_URL,
                        widget=forms.TextInput(attrs={'size': 60}))
-  reviewers = forms.CharField(max_length=MAX_REVIEWERS, required=False,
+  owners = forms.CharField(max_length=MAX_REVIEWERS, required=False,
                               widget=AccountInput(attrs={'size': 60}))
   send_mail = forms.BooleanField(required=False, initial=True)
 
@@ -103,7 +106,7 @@ class UploadForm(forms.Form):
   separate_patches = forms.BooleanField(required=False)
   data = forms.FileField(required=False)
   issue = forms.IntegerField(required=False)
-  reviewers = forms.CharField(max_length=MAX_REVIEWERS, required=False)
+  owners = forms.CharField(max_length=MAX_REVIEWERS, required=False)
   send_mail = forms.BooleanField(required=False)
   base_hashes = forms.CharField(required=False)
   repo_guid = forms.CharField(required=False, max_length=MAX_URL)
@@ -142,6 +145,9 @@ def validate_comp_score(val):
         raise forms.ValidationError, "Only numbers between -1 and 3 are allowed"
 
 class PublishForm(forms.Form):
+  owners = forms.CharField(required=False,
+                              max_length=MAX_REVIEWERS,
+                              widget=AccountInput(attrs={'size': 60}))
   reviewers = forms.CharField(required=False,
                               max_length=MAX_REVIEWERS,
                               widget=AccountInput(attrs={'size': 60}))
