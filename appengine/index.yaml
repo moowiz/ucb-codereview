@@ -81,6 +81,26 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: Issue
+  ancestor: yes
+  properties:
+  - name: modified
+    direction: desc
+
+- kind: Issue
+  ancestor: yes
+  properties:
+  - name: reviewers
+  - name: modified
+    direction: desc
+
+- kind: Issue
+  ancestor: yes
+  properties:
+  - name: semester
+  - name: modified
+    direction: desc
+
 - kind: Message
   properties:
   - name: issue

@@ -12,7 +12,7 @@ from codereview import models, views
 class TestIncomingMail(TestCase):
 
   def url(self, url):
-    return '/%s%s' % (self.issue.semester, url)
+    return '/%s%s' % (self.issue.parent(), url)
 
   def setUp(self):
     super(TestIncomingMail, self).setUp()
