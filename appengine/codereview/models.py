@@ -622,7 +622,7 @@ ROLE_MAPPING = {
 }
 REV_ROLE_MAPPING = {v: k for k, v in ROLE_MAPPING.iteritems()}
 
-class Account(db.Model):
+class Account(db.Expando):
   """Maps a user or email address to a user-selected nickname, and more.
 
   Nicknames do not have to be unique.
@@ -671,8 +671,7 @@ class Account(db.Model):
 
   @property
   def isStaff(self):
-    logging.debug("is staff %s role %s" % (self.email, self.role))
-    return self.email == "moowiz2020@gmail.com" or self.role > 0 
+    return self.email == "irisw2822@gmail.com" or self.role > 0 
 
   @property
   def nickname(self):
