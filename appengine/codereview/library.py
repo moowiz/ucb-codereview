@@ -66,7 +66,7 @@ def get_links_for_users(user_emails):
   for account in accounts:
     if account:
       ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
-             (reverse('codereview.views.show_user', args=[account.semesters[0], account.nickname]),
+             (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
               cgi.escape(account.nickname)))
       link_dict[account.email] = ret
 
