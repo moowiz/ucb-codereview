@@ -40,7 +40,7 @@ class AddUserToRequestMiddleware(object):
       account = models.Account.get_account_for_user(request.user)
     models.Account.current_user_account = account
 
-    request.isStaff = models.Account.current_user_account.isStaff if request.user else False
+    request.is_staff = models.Account.current_user_account.is_staff if request.user else False
 
 
 

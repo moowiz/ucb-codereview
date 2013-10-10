@@ -83,7 +83,8 @@ class Issue(db.Model):
   closed = db.BooleanProperty(default=False)
 
   # REMOVED. Changed to use ancestry instead
-  # semester = db.StringProperty(required=True, default=settings.CURRENT_SEMESTER)
+  # LOL JK. Can't do that mid semester
+  semester = db.StringProperty(required=True, default=settings.CURRENT_SEMESTER)
 
   _is_starred = None
 
@@ -102,7 +103,7 @@ class Issue(db.Model):
 
   def user_can_edit(self, user):
     """Return true if the given user has permission to edit this issue."""
-    return Account.get_account_for_user(user).isStaff
+    return Account.get_account_for_user(user).is_staff
 
   @property
   def edit_allowed(self):
@@ -670,8 +671,8 @@ class Account(db.Expando):
   xsrf_secret = db.BlobProperty()
 
   @property
-  def isStaff(self):
-    return self.email == "irisw2822@gmail.com" or self.role > 0 
+  def is_staff(self):
+    return self.role > 0 
 
   @property
   def nickname(self):
@@ -697,7 +698,7 @@ class Account(db.Expando):
     nickname = cls.create_nickname_for_user(user)
     if semester == None:
       semester = Semester.get_current_semester()
-    return cls.get_or_insert(key, user=user, email=email, nickname=nickname, parent=semester)
+    return cls.get_or_insert(key, user=user, email=email, nickname=nickname, parent=semester.key())
 
   @classmethod
   def create_nickname_for_user(cls, user):
@@ -737,6 +738,8 @@ class Account(db.Expando):
     if not kwds and cls.current_user_account is not None:
       if key == cls.current_user_account.key().name():
         return cls.current_user_account
+    if 'parent' not in kwds:
+      kwds['parent'] = Semester.get_current_semester().key()
     return super(Account, cls).get_by_key_name(key, **kwds)
 
   @classmethod
@@ -887,18 +890,13 @@ class Account(db.Expando):
     h.update(str(when))
     return h.hexdigest()
 
-reader_cache = {}
-
 def get_accounts_for_reader(reader, semester):
   key = (reader.key(), semester.key())
   s_key = str(key[0]), str(key[1])
-  if key in reader_cache:
-    pass
-    # return reader_cache[key]
   val = memcache.get(s_key)
   if val:
     return val
-  val = reader_cache[key] = tuple(Account.all().ancestor(semester).filter('reader =', reader.key()))
+  val = tuple(Account.all().ancestor(semester).filter('reader =', reader))
   memcache.set(s_key, val)
   return val
 
@@ -910,8 +908,7 @@ class Section(db.Model):
 
 class Semester(db.Model):
   """Represents a semester.
-  Each semester knows the sections the person were involved with.
-  Ancestor of an Account, Issue, and AssigningQueueData"""
+  Ancestor of an Account, and Issue"""
   name = db.StringProperty(required=True)
 
   # Somehow this isn't right....
@@ -928,10 +925,6 @@ class Semester(db.Model):
 
   def __ne__(self, other):
     return not self == other
-
-class AssigningQueueData(db.Model):
-  assignment = db.ReferenceProperty(Issue)
-  readers = db.ListProperty(db.Key) # keys of Account objects
 
 class Snippet(db.Model):
   """ Stores a user-entered snippet"""
