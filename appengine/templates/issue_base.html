@@ -24,14 +24,10 @@
         <span class="disabled">Can't Edit</span>
         {%endif%}
         <br/>
-        {%if user%}
         <a class="novisit"
           href="{%url codereview.views.publish issue.key.id%}">
           Publish+Mail Comments
         </a> ('m')
-        {%else%}
-        <span class="disabled">Can't Publish+Mail</span>
-        {%endif%}
         {%if is_staff%}
         <div>
             {%if not issue.bug_owner%}
