@@ -9,12 +9,13 @@ document.onkeydown = M_dashboardKeyDown;
 {% if is_admin %}
 <h4><a href = "{%url codereview.views.settings email%}">Settings</a></h4>
 {% endif %}
+{% with colspan="12" %}
 <div class="issue-list">
   <table id="queues">
 
   {%if draft_issues%}
   <tr>
-    <td colspan="10" class="header">
+    <td colspan="{{colspan}}" class="header">
       <h3>Issues with drafts by me</h3>
     </td>
   </tr>
@@ -25,13 +26,13 @@ document.onkeydown = M_dashboardKeyDown;
   {%endif%}
 
   <tr>
-    <td colspan="11" class="header">
-      <h3>Assignments Needing Grading ({{review_issues|length}})</h3>
+    <td colspan="{{colspan}}" class="header">
+      <h3>My Assignments that need grading ({{review_issues|length}})</h3>
     </td>
   </tr>
   {%if not review_issues%}
     <tr>
-      <td colspan="11" class="first last">
+      <td colspan="{{colspan}}" class="first last">
         <span class="disabled">(None)</span>
       </td>
     </tr>
@@ -43,13 +44,13 @@ document.onkeydown = M_dashboardKeyDown;
   {%endif%}
 
   <tr>
-    <td colspan="11" class="header">
-      <h3>Graded Assignments ({{closed_issues|length}})</h3>
+    <td colspan="{{colspan}}" class="header">
+      <h3>My graded Assignments ({{closed_issues|length}})</h3>
     </td>
   </tr>
   {%if not closed_issues%}
     <tr>
-      <td colspan="11" class="first last">
+      <td colspan="1{{colspan}}" class="first last">
         <span class="disabled">(None)</span>
       </td>
     </tr>
@@ -59,8 +60,45 @@ document.onkeydown = M_dashboardKeyDown;
       {%include "issue_row.html"%}
     {%endfor%}
   {%endif%}
+
+  <tr>
+    <td colspan="{{colspan}}" class="header">
+      <h3>Other people's ungraded Assignments ({{others_open|length}})</h3>
+    </td>
+  </tr>
+  {%if not others_open%}
+    <tr>
+      <td colspan="{{colspan}}" class="first last">
+        <span class="disabled">(None)</span>
+      </td>
+    </tr>
+  {%else%}
+    {%include "issue_heading.html"%}
+    {%for issue in others_open%}
+      {%include "issue_row.html"%}
+    {%endfor%}
+  {%endif%}
+
+  <tr>
+    <td colspan="{{colspan}}" class="header">
+      <h3>Other people's graded Assignments ({{others_closed|length}})</h3>
+    </td>
+  </tr>
+  {%if not others_closed%}
+    <tr>
+      <td colspan="{{colspan}}" class="first last">
+        <span class="disabled">(None)</span>
+      </td>
+    </tr>
+  {%else%}
+    {%include "issue_heading.html"%}
+    {%for issue in others_closed%}
+      {%include "issue_row.html"%}
+    {%endfor%}
+  {%endif%}
   </table>
 </div>
+{% endwith %}
 
 <script language="JavaScript" type="text/javascript"><!--
 var dashboardState = new M_DashboardState(window,'issue', 'M_myDashboardIssueMarker');

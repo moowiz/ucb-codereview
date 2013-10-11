@@ -46,14 +46,20 @@ class TestViewBase(TestCase):
 
         self.student = User('foo@example.com')
         self.ta = User('bar@example.com')
+        self.other = User('baz@example.com')
 
         self.student_acc = models.Account.get_account_for_user(self.student)
         self.student_acc.put()
+
+        self.other_acc = models.Account.get_account_for_user(self.other)
+        self.other_acc.put()
+
         self.ta_acc = models.Account.get_account_for_user(self.ta)
         self.ta_acc.role = models.ROLE_MAPPING['ta']
         self.ta_acc.put()
 
-        self.issue = models.Issue(subject='test', reviewers=[db.Email(self.student.email())], parent=self.semester)
+        self.issue = models.Issue(subject='test', owners=[db.Email(self.student.email())], 
+                                  reviewers=[db.Email(self.other.email())], parent=self.semester)
         self.issue.put()
 
         self.ps = models.PatchSet(parent=self.issue, issue=self.issue)
@@ -71,7 +77,7 @@ class TestViewBase(TestCase):
 
 class TestStudentUserViewing(TestViewBase):
     def test_basic(self):
-        self.login('foo@example.com')
+        self.login(self.student_acc.email)
         resp = self.client.get('/%s/mine' % self.semester.name)
         temp = Template("""
 <tr name="issue">
@@ -93,7 +99,10 @@ class TestStudentUserViewing(TestViewBase):
     </div>
   </td>
   <td><div class="users">
-          $email
+          me
+  </div></td>
+  <td><div class="users">
+          Anonymous
   </div></td>
   <td>
           Not graded yet
@@ -111,12 +120,16 @@ class TestStudentUserViewing(TestViewBase):
         self.assertContains(resp, temp.substitute(semester = self.semester.name, issueNum = self.issue.key().id(),
                                                     numSubmissions = models.PatchSet.all().ancestor(self.issue).count(),
                                                     issueSubject=self.issue.subject, email=self.student.email()), html=True)
+
     def test_settings(self):
         self.login(self.ta_acc.email)
-        resp = self.client.get('/%s/user/%s/settings' % (self.semester.name, self.ta_acc.email))
-        self.assertContains(resp, "Settings")
+        resp = self.client.get('/%s/user/%s/settings' % (self.semester.name, self.student_acc.email))
+        self.assertContains(resp, "Role:")
+        self.logout()
 
-
+        self.login(self.student_acc.email)
+        resp = self.client.get('/%s/user/%s/settings' % (self.semester.name, self.student_acc.email))
+        self.assertNotContains(resp, "Role:")
 
 class TestPublish(TestViewBase):
     """Test publish functions."""

@@ -542,9 +542,11 @@ group.add_option("-m", "--message", action="store", dest="message",
                  help="New issue description or new patch set message")
 group.add_option("-F", "--file", action="store", dest="file",
                  default=None, help="Read the message above from file.")
-group.add_option("-r", "--reviewers", action="store", dest="reviewers",
+group.add_option("-o", "--owners", action="store", dest="owners",
                  metavar="REVIEWERS", default=None,
-                 help="Add reviewers (comma separated email addresses).")
+                 help="Add owners (comma separated email addresses).")
+group.add_option("--semester", action="store", dest="semester",
+                help="The semester to upload this issue to")
 
 # Upload options
 group = parser.add_option_group("Patch options")
@@ -2205,10 +2207,12 @@ def RealMain(argv, data=None):
     form_fields.append(("issue", str(options.issue)))
   if options.email:
     form_fields.append(("user", options.email))
-  if options.reviewers:
-    for reviewer in options.reviewers.split(','):
+  if options.owners:
+    for reviewer in options.owners.split(','):
       CheckReviewer(reviewer)
-    form_fields.append(("reviewers", options.reviewers))
+    form_fields.append(("owners", options.owners))
+  if options.semester:
+    form_fields.append(("semester", options.semester))
 
   # Process --message, --title and --file.
   message = options.message or ""

@@ -165,10 +165,10 @@ def _can_view_issue(request, issue):
   user = request.user
   if models.Account.get_account_for_user(user).is_staff:
     return True
-  if issue.parent() != request.semester:
+  if issue.semester != request.semester.name:
     return False
   user_email = user.email().lower()
-  return (user_email in issue.reviewers)
+  return (user_email in issue.reviewers or user_email in issue.owners)
 
 
 class HttpTextResponse(HttpResponse):
@@ -294,10 +294,10 @@ def issue_required(func):
 
   @handle_year
   def issue_wrapper(request, issue_id, *args, **kwds):
-    issue = models.Issue.get_by_id(int(issue_id))
+    issue = models.Issue.get_by_id(int(issue_id), request.semester)
     if issue is None:
       return HttpTextResponse(
-          'No issue exists with that id (%s)' % issue_id, status=404)
+          'No issue exists with that id (%s) in this semester (%s)' % (issue_id, request.semester.name), status=404)
     request.issue = issue
     return func(request, *args, **kwds)
 
@@ -716,6 +716,9 @@ def _optimize_draft_counts(issues):
 
   If there is no current user, all draft counts are forced to 0.
   """
+  if not issues:
+    return
+
   account = models.Account.current_user_account
   if account is None:
     issue_ids = None
@@ -740,7 +743,7 @@ def starred(request):
   if not stars:
     issues = []
   else:
-    issues = [issue for issue in models.Issue.get_by_id(stars)
+    issues = [issue for issue in models.Issue.get_by_id(stars, request.semester)
                     if issue is not None
                     and _can_view_issue(request, issue)]
     _load_users_for_issues(issues)
@@ -749,6 +752,9 @@ def starred(request):
 
 def _load_users_for_issues(issues):
   """Load all user links for a list of issues in one go."""
+  if not issues:
+    return
+
   user_dict = {}
   for i in issues:
     for e in i.reviewers:
@@ -789,35 +795,12 @@ def _show_user(request):
     query.order('-modified')
     return query
 
-  # if acc_to_show.is_staff and acc.is_staff:
-  #     all_issues = ()
-  #     all_keys = set()
-  #     for num, section in ((num, models.Section.get_by_key_name("<%s>" % num)) for num in acc.sections):
-  #         if not section:
-  #           continue
-  #         val = memcache.get('%s_iss' % num)
-  #         val = None # hack for now, fix this later
-  #         if not val:
-  #           accs = db.get(section.accounts)
-  #           for acc, stu in zip(accs, section.accounts[:]):
-  #               if not acc:
-  #                 section.accounts.remove(stu)
-  #               else:
-  #                 for issue in make_query().filter('reviewers =', acc.email):
-  #                     if issue.key() not in draft_keys and issue.key() not in all_keys:
-  #                         all_issues += (issue,)
-  #                         all_keys.add(issue.key())
-  #           val = all_issues
-  #           memcache.set('%s_iss' % num, val)
-  #         else:
-  #           all_issues = val
-
   if acc_to_show.is_staff:
     if acc_to_show.role == models.ROLE_MAPPING['reader']:
       accs = models.get_accounts_for_reader(acc_to_show, request.semester)
       all_issues = ()
       for acc in accs:
-        all_issues += tuple(make_query().filter('reviewers =', acc.email))
+        all_issues += tuple(make_query().filter('owners =', acc.email))
 
       all_issues = (issue for issue in all_issues if _can_view_issue(request, issue))
 
@@ -825,9 +808,21 @@ def _show_user(request):
       all_issues = ()
     else:
       return HttpTextResponse("Weird settings....", status=403)
+
+    others_issues = others_open = others_closed = ()
   else:
-    query = make_query().filter('reviewers =', user_to_show.email().lower())
+    query = make_query().filter('owners =', user_to_show.email().lower())
     all_issues = tuple(issue for issue in query if _can_view_issue(request, issue))
+
+    query = make_query().filter('reviewers =', user_to_show.email().lower())
+    others_issues = tuple(issue for issue in query if _can_view_issue(request, issue))
+    others_closed = ()
+    others_open = ()
+    for iss in others_issues:
+      if iss.closed:
+        others_closed += (iss,)
+      else:
+        others_open += (iss,)
 
   review_issues = ()
   closed_issues = ()
@@ -836,12 +831,17 @@ def _show_user(request):
           closed_issues += (iss,)
       else:
           review_issues += (iss,)
-  _load_users_for_issues(all_issues)
-  _optimize_draft_counts(all_issues)
+
+  for lst in (all_issues, others_issues):
+    _load_users_for_issues(lst)
+    _optimize_draft_counts(lst)
+
   return respond(request, 'user.html',
                  {'email': user_to_show.email(),
                   'review_issues': review_issues,
                   'closed_issues': closed_issues,
+                  'others_open': others_open,
+                  'others_closed': others_closed,
                   'draft_issues': draft_issues,
                   })
 
@@ -902,7 +902,7 @@ def upload(request):
     issue_id = form.cleaned_data['issue']
     if issue_id:
       action = 'updated'
-      issue = models.Issue.get_by_id(issue_id)
+      issue = models.Issue.get_by_id(issue_id, form.semester)
       if issue is None:
         form.errors['issue'] = ['No issue exists with that id (%s)' %
                                 issue_id]
@@ -910,8 +910,7 @@ def upload(request):
         form.errors['issue'] = ['Base files upload required for that issue.']
         issue = None
       else:
-        patchset = _add_patchset_from_form(request, issue, form, 'subject',
-                                            emails_add_only=True)
+        patchset = _add_patchset_from_form(request, issue, form, 'subject')
         if not patchset:
             issue = None
     else:
@@ -1135,15 +1134,14 @@ def _make_new(request, form):
     return (None, None)
   data, url, separate_patches = data_url
 
-  reviewers = _get_emails(form, 'reviewers')
-  if not form.is_valid() or reviewers is None:
+  owners = _get_emails(form, 'owners')
+  if not form.is_valid() or owners is None:
     return (None, None)
 
   def txn():
     issue = models.Issue(subject=form.cleaned_data['subject'],
                          description=form.cleaned_data['description'],
-                         repo_guid=form.cleaned_data.get('repo_guid', None),
-                         reviewers=reviewers,
+                         owners=owners,
                          n_comments=0)
                          
     issue.put()
@@ -1254,19 +1252,6 @@ def _add_patchset_from_form(request, issue, form, message_key='message',
       form.errors[errkey] = ['Patch set contains no recognizable patches']
       return None
     db.put(patches)
-
-  if emails_add_only:
-    emails = _get_emails(form, 'reviewers')
-    if not form.is_valid():
-      return None
-    issue.reviewers += [reviewer for reviewer in emails
-                        if reviewer not in issue.reviewers]
-    emails = _get_emails(form, 'cc')
-    if not form.is_valid():
-      return None
-  else:
-    issue.reviewers = _get_emails(form, 'reviewers')
-  issue.put()
 
   if form.cleaned_data.get('send_mail'):
     msg = _make_message(request, issue, message, '', True)
@@ -2354,7 +2339,7 @@ def _inline_draft(request):
   side = request.POST.get('side')
   assert side in ('a', 'b'), repr(side)  # Display left (a) or right (b)
   issue_id = int(request.POST['issue'])
-  issue = models.Issue.get_by_id(issue_id)
+  issue = models.Issue.get_by_id(issue_id, request.semester)
   assert issue  # XXX
   patchset_id = int(request.POST.get('patchset') or
                     request.POST[side == 'a' and 'ps_left' or 'ps_right'])
@@ -2485,9 +2470,8 @@ def publish(request):
                                request.user.email())
     draft_message = query.get()
   if request.method != 'POST':
-    owners = issue.reviewers[:]
-    if (request.user.email() not in issue.owners):
-      owners.append(request.user.email())
+    owners = issue.owners[:]
+    reviewers = issue.reviewers[:]
     tbd, comments = _get_draft_comments(request, issue, True)
     preview = _get_draft_details(request, comments)
     if draft_message is None:
@@ -2496,12 +2480,12 @@ def publish(request):
       msg = draft_message.text
     form = form_class(initial={'subject': issue.subject,
                                'owners': ', '.join(owners),
-                               'send_mail': True,
+                               'send_mail': request.is_staff,
                                'message': msg,
                                'comp_score': issue.comp_score,
                                'reviewers': ', '.join(reviewers),
                                })
-    if not models.Account.get_account_for_user(request.user).is_staff:
+    if not request.is_staff:
         for it in PUBLISH_STAFF_FIELDS:
           del form.fields[it]
     return respond(request, 'publish.html', {'form': form,
@@ -2984,6 +2968,10 @@ def settings(request):
                                  'role': role,
                                  'reader': reader,
                                  })
+    if not request.is_staff:
+      del form.fields['role']
+      del form.fields['reader']
+
     return respond(request, "settings.html", {'form':form,
                                               'user_to_show': request.user_to_show,})
   form = forms.SettingsForm(request.POST)
@@ -2994,6 +2982,7 @@ def settings(request):
   account.default_column_width = data.get('column_width')
   if 'role' in data:
       account.role = data['role']
+      #TODO make sure this is staff
   account.put()
   return HttpResponseRedirect(reverse(request, show_user, args=(request.user_to_show,)))
 
@@ -3071,7 +3060,7 @@ def _process_incoming_mail(raw_message, recipients, semester):
   if match is None:
     raise InvalidIncomingEmailError('No issue id found: %s', subject)
   issue_id = int(match.groupdict()['id'])
-  issue = models.Issue.get_by_id(issue_id, parent=semester)
+  issue = models.Issue.get_by_id(issue_id, semester)
   if issue is None:
     raise InvalidIncomingEmailError('Unknown issue ID: %d' % issue_id)
   sender = _email_utils.parseaddr(incoming_msg.sender)[1]

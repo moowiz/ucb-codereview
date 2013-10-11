@@ -42,8 +42,6 @@ class AddUserToRequestMiddleware(object):
 
     request.is_staff = models.Account.current_user_account.is_staff if request.user else False
 
-
-
 class PropagateExceptionMiddleware(object):
   """Catch exceptions, log them and return a friendly error message.
      Disables itself in DEBUG mode.

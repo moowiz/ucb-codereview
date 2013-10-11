@@ -81,7 +81,7 @@ class TestIncomingMail(TestCase):
     msg['Subject'] = 'subject (issue%s)' % self.issue.key().id()
     msg.set_payload('body')
     views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
-    issue = models.Issue.get_by_id(self.issue.key().id(), parent=self.semester)  # re-fetch issue
+    issue = models.Issue.get_by_id(self.issue.key().id(), self.semester)  # re-fetch issue
     self.assertEqual(issue.reviewers, ['sender@example.com'])
     issue.reviewers = []
     issue.put()
@@ -89,7 +89,7 @@ class TestIncomingMail(TestCase):
     # we do this to handle CamelCase emails correctly
     models.Account.get_account_for_user(User('sender@example.com'))
     views._process_incoming_mail(msg.as_string(), 'reply@example.com', self.semester)
-    issue = models.Issue.get_by_id(self.issue.key().id(), parent=self.semester)
+    issue = models.Issue.get_by_id(self.issue.key().id(), self.semester)
     self.assertEqual(issue.reviewers, ['sender@example.com'])
 
   def test_long_subjects(self):

@@ -32,51 +32,21 @@ user_cache = {}
 
 
 def get_links_for_users(user_emails):
-  """Return a dictionary of email->link to user page and fill caches."""
+  """Return a dictionary of email->link to user page"""
   link_dict = {}
-  remaining_emails = set(user_emails)
 
-  # initialize with email usernames
-  for email in remaining_emails:
-    nick = email.split('@', 1)[0]
-    link_dict[email] = cgi.escape(nick)
-
-  # look in the local cache
-  for email in remaining_emails:
-    if email in user_cache:
-      link_dict[email] = user_cache[email]
-  remaining_emails = remaining_emails - set(user_cache)
-
-  if not remaining_emails:
-    return link_dict
-
-  # then look in memcache
-  memcache_results = memcache.get_multi(remaining_emails,
-                                        key_prefix="show_user:")
-  for email in memcache_results:
-    link_dict[email] = memcache_results[email]
-    user_cache[email] = memcache_results[email]
-  remaining_emails = remaining_emails - set(memcache_results)
-
-  if not remaining_emails:
-    return link_dict
-
-  # and finally hit the datastore
-  accounts = models.Account.get_accounts_for_emails(remaining_emails)
+  curr_acc = models.Account.get_account_for_user(users.get_current_user())
+  accounts = models.Account.get_accounts_for_emails(user_emails)
   for account in accounts:
     if account:
       nick = cgi.escape(account.nickname)
-      if account.is_staff:
+      if curr_acc.is_staff:
         ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
-               (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
-                nick)))
+              (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
+              nick))
         link_dict[account.email] = ret
       else:
-        ret = nick
-
-  datastore_results = dict((e, link_dict[e]) for e in remaining_emails)
-  memcache.set_multi(datastore_results, 300, key_prefix='show_user:')
-  user_cache.update(datastore_results)
+        link_dict[account.email] = 'Anonymous'
 
   return link_dict
 

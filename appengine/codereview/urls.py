@@ -18,8 +18,6 @@
 from django.conf.urls import *  # NOQA
 import django.views.defaults
 
-from codereview import feeds
-
 urlpatterns = patterns(
     'codereview.views',
     (r'^$', 'index'),
