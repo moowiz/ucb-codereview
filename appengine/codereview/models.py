@@ -676,7 +676,7 @@ class Account(db.Expando):
 
   @property
   def nickname(self):
-      return self.email[:self.email.find('@')]
+    return self.email[:self.email.find('@')]
 
   # Note that this doesn't get called when doing multi-entity puts.
   def put(self):

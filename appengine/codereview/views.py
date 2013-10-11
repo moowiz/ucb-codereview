@@ -2469,6 +2469,7 @@ def _get_mail_template(request, issue, full_diff=False):
     context.update({'files': files, 'patch': patch, })
   return template, context
 
+PUBLISH_STAFF_FIELDS = ['comp_score', 'send_mail', 'reviewers', 'owners', 'bug_submit']
 
 @login_required
 @issue_required
@@ -2494,14 +2495,15 @@ def publish(request):
     else:
       msg = draft_message.text
     form = form_class(initial={'subject': issue.subject,
-                               # 'owners': ', '.join(owners),
+                               'owners': ', '.join(owners),
                                'send_mail': True,
                                'message': msg,
                                'comp_score': issue.comp_score,
-                               'reviewers': ', '.join(owners),
+                               'reviewers': ', '.join(reviewers),
                                })
     if not models.Account.get_account_for_user(request.user).is_staff:
-        del form.fields['comp_score']
+        for it in PUBLISH_STAFF_FIELDS:
+          del form.fields[it]
     return respond(request, 'publish.html', {'form': form,
                                              'issue': issue,
                                              'preview': preview,

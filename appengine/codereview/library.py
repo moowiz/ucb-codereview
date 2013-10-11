@@ -65,10 +65,14 @@ def get_links_for_users(user_emails):
   accounts = models.Account.get_accounts_for_emails(remaining_emails)
   for account in accounts:
     if account:
-      ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
-             (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
-              cgi.escape(account.nickname)))
-      link_dict[account.email] = ret
+      nick = cgi.escape(account.nickname)
+      if account.is_staff:
+        ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
+               (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
+                nick)))
+        link_dict[account.email] = ret
+      else:
+        ret = nick
 
   datastore_results = dict((e, link_dict[e]) for e in remaining_emails)
   memcache.set_multi(datastore_results, 300, key_prefix='show_user:')
