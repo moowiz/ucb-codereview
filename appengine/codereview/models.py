@@ -193,6 +193,16 @@ class Issue(db.Model):
         self._num_drafts = query.count()
     return self._num_drafts
 
+  @classmethod
+  def get_by_id(cls, id, semester):
+    # First try ancestry
+    val = super(Issue, cls).get_by_id(id, parent=semester)
+
+    if val:
+      return val
+
+    return super(Issue, cls).get_by_id(id)
+
 
 class PatchSet(db.Model):
   """A set of patchset uploaded together.

@@ -64,6 +64,13 @@ indexes:
 
 - kind: Issue
   properties:
+  - name: owners
+  - name: semester
+  - name: modified
+    direction: desc
+
+- kind: Issue
+  properties:
   - name: reviewers
   - name: semester
   - name: modified

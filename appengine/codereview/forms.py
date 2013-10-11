@@ -109,7 +109,7 @@ class UploadForm(forms.Form):
   owners = forms.CharField(max_length=MAX_REVIEWERS, required=False)
   send_mail = forms.BooleanField(required=False)
   base_hashes = forms.CharField(required=False)
-  repo_guid = forms.CharField(required=False, max_length=MAX_URL)
+  semester = forms.CharField(required=True)
 
 
 class UploadContentForm(forms.Form):
