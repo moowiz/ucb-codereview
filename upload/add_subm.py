@@ -129,14 +129,14 @@ def upload(path_to_repo, logins, data):
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", data.git_assign, '-o', ",".join(gmails), '-e', ROBOT_EMAIL,
-            '--rev', hash_str))
+            '--rev', hash_str, '--semester', data.semester))
     else:
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
             "-t", utils.get_timestamp_str(), '-e', ROBOT_EMAIL, '-i', str(issue_num),
-            '--rev', hash_str))
+            '--rev', hash_str, '--semester', data.semester))
     print("Uploading...")
     out, err = utils.run(cmd)
-    if "Traceback" in err or "Unhandled Exception" in err or "Err" in err:
+    if "Traceback" in err or "Unhandled Exception" in err or "Err" in err or "errors" in err:
         raise UploadException(str(err))
     print("Done uploading")
     line = ""
@@ -241,7 +241,7 @@ def put_in_repo(data):
     return path_to_repo, logins
 
 def add(login, assign, semester):
-    data = Data(login, assign)
+    data = Data(login, assign, semester)
     utils.check_allowed_user()
     print("Adding {} for {}".format(data.assign, data.login))
     original_path = os.getcwd()
@@ -264,9 +264,10 @@ def add(login, assign, semester):
         os.chdir(original_path)
 
 class Data:
-    def __init__(self,login,assign):
+    def __init__(self,login,assign, semester):
         self.login = login
         self.assign = assign
+        self.semester = semester
         if "revision" in self.assign:
             self.git_assign = self.assign[:self.assign.find("revision")]
         else:
