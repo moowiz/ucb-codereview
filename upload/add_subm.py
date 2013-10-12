@@ -121,14 +121,14 @@ def upload(path_to_repo, logins, data):
     gmail account of the student.
     """
     os.chdir(path_to_repo)
-    data.gmails = get_gmails(logins)
+    gmails = get_gmails(logins)
     issue_num = model.get_issue_number(logins, data.git_assign)
     hash_str = git.get_revision_hash(path_to_repo)
 
     #now we create arguments
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-            "-t", data.git_assign, '-o', ",".join(data.gmails), '-e', ROBOT_EMAIL,
+            "-t", data.git_assign, '-o', ",".join(gmails), '-e', ROBOT_EMAIL,
             '--rev', hash_str))
     else:
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
@@ -241,7 +241,7 @@ def put_in_repo(data):
     return path_to_repo, logins
 
 def add(login, assign, semester):
-    data = Data(login, assign, gmails)
+    data = Data(login, assign)
     utils.check_allowed_user()
     print("Adding {} for {}".format(data.assign, data.login))
     original_path = os.getcwd()
@@ -264,10 +264,9 @@ def add(login, assign, semester):
         os.chdir(original_path)
 
 class Data:
-    def __init__(self,login,assign,gmails):
+    def __init__(self,login,assign):
         self.login = login
         self.assign = assign
-        self.gmails = gmails
         if "revision" in self.assign:
             self.git_assign = self.assign[:self.assign.find("revision")]
         else:
