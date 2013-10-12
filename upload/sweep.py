@@ -88,7 +88,7 @@ if __name__ == "__main__":
                         help='the assignment to submit, or "all" for all assignments')
     parser.add_argument("-a", "--add", action="store_true",
                         help="runs add_subm.py on all inputs")
-    parser.add_argument('-s', '--semester', type=str,
+    parser.add_argument('semester', type=str,
                        help="the semester to upload all the issues to")
     parser.add_argument('--first', action='store_true', help='First run; this means that \
                         if someone is already in the system then we don\'t add them again')
