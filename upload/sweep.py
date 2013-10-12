@@ -59,7 +59,7 @@ def sweep(assign, first):
         maxes[directory] = max
     return logins, maxes
 
-def main(assign, add, first):
+def main(assign, add, first, semester):
     utils.check_allowed_user()
     original_dir = os.getcwd()
     logins, maxes = sweep(assign, first)
@@ -68,7 +68,7 @@ def main(assign, add, first):
         for assign, logins in logins.items():
             for login in logins:
                 try:
-                    add_subm.add(login, assign)
+                    add_subm.add(login, assign, semester)
                 except Exception as e:
                     print("Exception {}".format(e))
                     del maxes[assign]
@@ -88,7 +88,9 @@ if __name__ == "__main__":
                         help='the assignment to submit, or "all" for all assignments')
     parser.add_argument("-a", "--add", action="store_true",
                         help="runs add_subm.py on all inputs")
+    parser.add_argument('-s', '--semester', type=str,
+                       help="the semester to upload all the issues to")
     parser.add_argument('--first', action='store_true', help='First run; this means that \
                         if someone is already in the system then we don\'t add them again')
     args = parser.parse_args()
-    main(args.assign, args.add, args.first)
+    main(args.assign, args.add, args.first, args.semester)
