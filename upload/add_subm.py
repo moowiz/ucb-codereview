@@ -136,7 +136,7 @@ def upload(path_to_repo, logins, data):
             '--rev', hash_str))
     print("Uploading...")
     out, err = utils.run(cmd)
-    if "Traceback" in err or "Unhandled Exception" in err:
+    if "Traceback" in err or "Unhandled Exception" in err or "Err" in err:
         raise UploadException(str(err))
     print("Done uploading")
     line = ""
@@ -240,7 +240,7 @@ def put_in_repo(data):
         utils.chown_staff_master(f)
     return path_to_repo, logins
 
-def add(login, assign, gmails=None):
+def add(login, assign, semester):
     data = Data(login, assign, gmails)
     utils.check_allowed_user()
     print("Adding {} for {}".format(data.assign, data.login))
@@ -276,11 +276,11 @@ class Data:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
             submission for the given assignment to the code review system.")
-    parser.add_argument('assign', type=str,
+    parser.add_argument('-a', '--assign', type=str,
             help='the assignment to look at')
-    parser.add_argument('login', type=str,
+    parser.add_argument('-l', '--login', type=str,
             help='the login to add')
-    parser.add_argument('gmails', default=None,type=str,
-            nargs="*", help="Optional gmails to force the student to have.")
+    parser.add_argument('-s', '--semester', type=str,
+            help='the semester to add the issue to')
     args = parser.parse_args()
-    add(args.login, args.assign, args.gmails)
+    add(args.login, args.assign, args.semester)
