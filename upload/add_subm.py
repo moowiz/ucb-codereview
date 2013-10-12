@@ -16,8 +16,7 @@ import git
 from config import config
 import utils
 from model import CodeReviewDatabase
-if __name__ == '__main__':
-    model = CodeReviewDatabase()
+model = CodeReviewDatabase()
 
 class SubmissionException(Exception):
     pass
@@ -129,7 +128,7 @@ def upload(path_to_repo, logins, data):
     #now we create arguments
     if not issue_num: #if this is the first time uploading...
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
-            "-t", data.git_assign, '-r', ",".join(data.gmails), '-e', ROBOT_EMAIL,
+            "-t", data.git_assign, '-o', ",".join(data.gmails), '-e', ROBOT_EMAIL,
             '--rev', hash_str))
     else:
         cmd = " ".join((PYTHON_BIN, UPLOAD_SCRIPT, '-s', SERVER_NAME,
