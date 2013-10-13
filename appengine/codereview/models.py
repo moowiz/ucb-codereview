@@ -88,6 +88,8 @@ class Issue(db.Model):
 
   _is_starred = None
 
+  current_issue = None
+
   def set_comp_score(self, val):
       self.comp_score = val
       self.closed = self.comp_score > -1
@@ -903,11 +905,12 @@ class Account(db.Expando):
 def get_accounts_for_reader(reader, semester):
   key = (reader.key(), semester.key())
   s_key = str(key[0]), str(key[1])
-  val = memcache.get(s_key)
+  # val = memcache.get(s_key)
+  val = None
   if val:
     return val
   val = tuple(Account.all().ancestor(semester).filter('reader =', reader))
-  memcache.set(s_key, val)
+  # memcache.set(s_key, val)
   return val
 
 class Section(db.Model):
@@ -921,14 +924,13 @@ class Semester(db.Model):
   Ancestor of an Account, and Issue"""
   name = db.StringProperty(required=True)
 
-  # Somehow this isn't right....
-  # @property
-  # def sections(self):
-  #   return [x for x in Section.all().ancestor(self)]
+  _curr_semester = None
 
   @staticmethod
   def get_current_semester():
-    return Semester.get_or_insert('<%s>' % settings.CURRENT_SEMESTER, name=settings.CURRENT_SEMESTER)
+    if not Semester._curr_semester:
+      Semester._curr_semester = Semester.get_or_insert('<%s>' % settings.CURRENT_SEMESTER, name=settings.CURRENT_SEMESTER)
+    return Semester._curr_semester
 
   def __eq__(self, other):
     return isinstance(other, Semester) and other.name == self.name
