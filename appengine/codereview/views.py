@@ -298,7 +298,7 @@ def issue_required(func):
     if issue is None:
       return HttpTextResponse(
           'No issue exists with that id (%s) in this semester (%s)' % (issue_id, request.semester.name), status=404)
-    request.issue = issue
+    models.Issue.current_issue = request.issue = issue
     return func(request, *args, **kwds)
 
   return issue_wrapper
@@ -2700,6 +2700,7 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
     except (db.KindError, db.BadKeyError):
       logging.warn('Invalid in-reply-to Message or key given: %s', in_reply_to)
 
+  send_mail = request.is_staff
   if send_mail:
     # Limit the list of files in the email to approximately 200
     if 'files' in context and len(context['files']) > 210:
@@ -3269,7 +3270,6 @@ TO_COPY = [
   'email',
   'user',
 ]
-
 MIGRATE_BATCH=100
 
 # def migrate_accounts(semester, cursor=None, num_updated=0):
@@ -3308,6 +3308,45 @@ MIGRATE_BATCH=100
 #     logging.debug(
 #         'migrate_accounts complete with %d updates!', num_updated) 
 
+def balance_accounts(semester):
+  query = models.Account().all().ancestor(semester).filter('role =', 0)
+  mapping = {acc:[] for acc in models.Account.all().ancestor(semester).filter('role =', 1)}
+
+  for acc in query.run(batch_size=100):
+    mapping[acc.reader].append(acc)
+
+  counts = [len(val) for k, val in mapping.iteritems()]
+  mean = int(sum(counts) / len(counts))
+
+  above = []
+  below = []
+
+  for k, v in mapping.iteritems():
+    if len(v) > mean:
+      above.append(v)
+    else:
+      below.append([k, len(v) - mean])
+
+  to_put = []
+  abo = bel = None
+  while below and above:
+    bel = bel or below.pop()
+    while bel[1]:
+      abo = abo or above.pop()
+      while abo and bel[1]:
+        it = abo.pop()
+        it.reader = bel[0]
+        to_put.append(it)
+        bel[1] -= 1
+
+  db.put(to_put)
+
+
+@staff_required
+def start_balance(request):
+  deferred.defer(balance_accounts, request.semester)
+  return HttpTextResponse("OK")
+
 def migrate_accounts(semester):
   def migrate(acc, semester):
     data = {k: getattr(acc, k) for k in TO_COPY}
@@ -3338,43 +3377,4 @@ def start_migrate_accounts(request):
   deferred.defer(migrate_accounts, request.semester)
   return HttpTextResponse("OK")
 
-READERS = [
-'MelanieCebula.bass@gmail.com',
-'jeffreylu017@gmail.com',
-'ehariyoshi@berkeley.edu',
-'zhangmarvin@berkeley.edu',
-'dtyrrell3@berkeley.edu',
-'ronuchit@berkeley.edu',
-'fangcai@berkeley.edu',
-'googooberry@gmail.com',
-'kelsey_li@berkeley.edu',
-'rogerhub@berkeley.edu',
-'aykamko@berkeley.edu',
-'dickson.tsai@gmail.com',
-'jian.qiao@berkeley.edu',
-]
-
-def get_curr_assigns(semester):
-  to_put = []
-  for reader in READERS:
-    reader_acc = models.Account.get_account_for_email(reader)
-    if not reader_acc:
-      continue
-    issues = (message.parent() for message in models.Message.all().filter('sender =', reader))
-    for issue in issues:
-      for email in issue.reviewers:
-        acc = models.Account.all().filter('email =', email).get()
-        if not acc:
-          logging.debug("No account found for %s" % email)
-        else:
-          acc.reader = reader_acc
-          to_put.append(acc)
-    logging.debug('Update all issues messaged by %s' % reader)
-
-  db.put(to_put)
-  logging.debug('done! did %s items' % len(to_put))
-
-@staff_required
-def start_get_curr_assigns(request):
-  deferred.defer(get_curr_assigns, request.semester)
-  return HttpTextResponse("OK")
+def 

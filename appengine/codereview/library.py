@@ -16,6 +16,7 @@
 
 import cgi
 import settings
+import logging
 
 from google.appengine.api import memcache
 from google.appengine.api import users
@@ -35,20 +36,37 @@ def get_links_for_users(user_emails):
   """Return a dictionary of email->link to user page"""
   link_dict = {}
 
+  # initialize with email usernames
+  for email in user_emails:
+    nick = email.split('@', 1)[0]
+    link_dict[email] = cgi.escape(nick)
+
   curr_acc = models.Account.get_account_for_user(users.get_current_user())
   accounts = models.Account.get_accounts_for_emails(user_emails)
+
   for account in accounts:
     if account:
       nick = cgi.escape(account.nickname)
-      if curr_acc.is_staff:
+      if curr_acc.is_staff or account.is_staff:
         ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
               (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
               nick))
         link_dict[account.email] = ret
       else:
-        link_dict[account.email] = 'Anonymous'
+        if _can_see_other_user(curr_acc.email, account.email):
+          link_dict[account.email] = 'Anonymous'
+        else:
+          link_dict[account.email] = nick
 
   return link_dict
+
+def _can_see_other_user(curr_email, other_email):
+  issue = models.Issue.current_issue
+  if not issue:
+    return False
+  acc_is_owner = other_email in issue.owners
+  curr_acc_is_owner = curr_email in issue.owners
+  return acc_is_owner ^ curr_acc_is_owner
 
 
 def get_link_for_user(email):
@@ -160,33 +178,22 @@ def get_nickname(email, never_me=False, request=None):
   """Return a nickname for an email address.
 
   If 'never_me' is True, 'me' is not returned if 'email' belongs to the
-  current logged in user. If 'request' is a HttpRequest, it is used to
-  cache the nickname returned by models.Account.get_nickname_for_email().
+  current logged in user. 
   """
   if isinstance(email, users.User):
     email = email.email()
+  if request is not None:
+    user = request.user
+  else:
+    user = users.get_current_user()
   if not never_me:
-    if request is not None:
-      user = request.user
-    else:
-      user = users.get_current_user()
     if user is not None and email == user.email():
       return 'me'
 
-  if request is None:
-    return models.Account.get_nickname_for_email(email)
+  if _can_see_other_user(user.email(), email):
+    return "Anonymous"
 
-  # _nicknames is injected into request as a cache.
-  # TODO(maruel): Use memcache instead.
-  # Access to a protected member _nicknames of a client class
-  # pylint: disable=W0212
-  if getattr(request, '_nicknames', None) is None:
-    request._nicknames = {}
-  if email in request._nicknames:
-    return request._nicknames[email]
-  result = models.Account.get_nickname_for_email(email)
-  request._nicknames[email] = result
-  return result
+  return models.Account.get_nickname_for_email(email)
 
 
 class NicknameNode(django.template.Node):
@@ -206,7 +213,6 @@ class NicknameNode(django.template.Node):
 
   def __init__(self, email_address, never_me=''):
     """Constructor.
-
     'email_address' is the name of the template variable that holds an
     email address. If 'never_me' evaluates to True, 'me' won't be returned.
     """
@@ -239,7 +245,6 @@ def nickname(_parser, token):
       raise django.template.TemplateSyntaxError(
         "%r requires exactly one or two arguments" % token.contents.split()[0])
   return NicknameNode(email_address, never_me)
-
 
 @register.tag
 def nicknames(parser, token):

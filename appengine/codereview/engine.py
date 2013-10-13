@@ -279,6 +279,7 @@ def _GetComments(request):
   # XXX GQL doesn't support OR yet...  Otherwise we'd be using
   # .gql('WHERE patch = :1 AND (draft = FALSE OR author = :2) ORDER BY data',
   #      patch, request.user)
+  # for comment in models.Comment.all().filter("patch =", request.patch).order('date')
   for comment in models.Comment.gql('WHERE patch = :1 ORDER BY date',
                                     request.patch):
     if comment.draft and comment.author != request.user:
