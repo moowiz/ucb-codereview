@@ -2983,7 +2983,9 @@ def settings(request):
   account.default_column_width = data.get('column_width')
   if 'role' in data:
       account.role = data['role']
-      #TODO make sure this is staff
+      #TODO make sure this is staff doing this
+  if 'reader' in data:
+    account.reader = data['reader']
   account.put()
   return HttpResponseRedirect(reverse(request, show_user, args=(request.user_to_show,)))
 
@@ -3274,22 +3276,34 @@ TO_COPY = [
 MIGRATE_BATCH=150
 
 def fix_issues(semester, cursor=None, num_updated=0):
-  query = models.Issue.all().filter('semester =', semester.name)
+  query = models.Issue.all().filter('semester =', semester.name).filter('subject =', 'proj2')
 
   if cursor:
     query.with_cursor(cursor)
 
   to_put = []
   to_iter = list(query.fetch(limit=MIGRATE_BATCH))
+  quit = len(to_iter) < MIGRATE_BATCH
+  if quit:
+    logging.info("Qutting because got {}, less than {}".format(len(to_iter), MIGRATE_BATCH))
 
   for iss in to_iter:
     accs = [models.Account.get_account_for_email(email) for email in iss.owners]
+    accs = [x for x in accs if x]
+    to_assign = None
     for acc in accs:
-      if acc.reader.email != accs[0].reader.email:
-        acc.reader = accs[0].reader
-        to_put.append(acc)
+      if acc.reader:
+        to_assign = acc.reader
+        break
+    if not to_assign:
+      logging.warn("This issue {} has no readers!".format(iss.key().id()))
+    else:
+      for acc in accs:
+        if not acc.reader or acc.reader.email != to_assign.email:
+          acc.reader = to_assign
+          to_put.append(acc)
 
-  if to_put:
+  if not quit:
     db.put(to_put)
     num_updated += len(to_put)
     logging.debug(
@@ -3315,6 +3329,7 @@ def my_put(to_put):
   real_to_put = None
 
 def balance_accounts(semester):
+  max_acc = models.Account.get_account_for_email('max.alan.wolffe@gmail.com')
   def get_mapping():
     query = models.Account.all(projection=('reader', 'email')).ancestor(semester).filter('role =', 0)
     readers = list(models.Account.all().ancestor(semester).filter('role =', 1))
@@ -3327,10 +3342,11 @@ def balance_accounts(semester):
           mapping[acc.reader.email].append(acc.email)
         else:
           logging.warn("reader email {} not found".format(acc.reader.email))
-    return mapping
+    return mapping, reader_mapping
 
-  mapping = get_mapping()
+  mapping, reader_mapping = get_mapping()
   logging.info({k:len(v) for k, v in mapping.iteritems()})
+  return
 
   counts = [len(val) for k, val in mapping.iteritems()]
   mean = int(sum(counts) / len(counts))
@@ -3363,7 +3379,7 @@ def balance_accounts(semester):
 
   my_put(to_put)
 
-  logging.info({k:len(v) for k, v in get_mapping().iteritems()})
+  logging.info({k:len(v) for k, v in get_mapping()[0].iteritems()})
 
 
 @staff_required
@@ -3400,3 +3416,74 @@ def migrate_accounts(semester):
 def start_migrate_accounts(request):
   # deferred.defer(migrate_accounts, request.semester)
   return HttpTextResponse("OK")
+
+CODE_REVIEW_STUDENTS = list(set([u'herman121093@berkeley.edu', u'chen.brian@berkeley.edu', u'caobaiyue@berkeley.edu', 
+u'hansong@berkeley.edu', u'sebastian.merz@berkeley.edu', u'jenniferhwang@berkeley.edu', u'denise.bui@berkeley.edu', u'amandachow@berkeley.edu', 
+u'patilpranay@berkeley.edu', u'timifasubaa@gmail.com', u'eandres1@berkeley.edu', 
+u'jacoblin@berkeley.edu', u'mmindanao@berkeley.edu', u'vashishtha.mahesh@berkeley.edu', 
+u'sean.t.loughlin@berkeley.edu', u'shannon_wang@berkeley.edu', u'andymelendez@berkeley.edu', 
+u'morganrconnolly@berkeley.edu', u'asingh820@berkeley.edu', u'djhwang423@berkeley.edu', 
+u'sau@berkeley.edu', u'dorislee@berkeley.edu', u'alexerviti@berkeley.edu', 
+u'gillguo21@berkeley.edu', u'mjr225@berkeley.edu', u'charles2299@berkeley.edu', 
+u'vighnesh.iyer@berkeley.edu', u'tta@berkeley.edu', u'wj.lin@berkeley.edu', 
+u'hr_zhu@berkeley.edu', u'lcq9501@berkeley.edu', u'jay.iyer@berkeley.edu', 
+u'alansanders@berkeley.edu', u'wangie94@yahoo.com', u'patransd@berkeley.edu', 
+u'dpok@berkeley.edu', u'mtgibson@berkeley.edu', u'wendydai@berkeley.edu', u'hly@berkeley.edu', 
+u'anthonyhbh@gmail.com', u'jooeunlim@berkeley.edu', u'xicong.guan@gmail.com', 
+u'mgandhi93@berkeley.edu', u'weisong@berkeley.edu', u'juns123@berkeley.edu', 
+u'arjunmehta94@berkeley.edu', u'sapeiris@berkeley.edu', u'katelin.bull@gmail.com', 
+u'hamudabdull@berkeley.edu', u'hwhuang@berkeley.edu', u'dgoldberg@berkeley.edu', 
+u'abugni@berkeley.edu', u'duyhong@berkeley.edu', u'vikramsidhu@berkeley.edu', 
+u'raeinteymouri@berkeley.edu', u'ajrose@berkeley.edu', u'darksunsets27@gmail.com', u'spritewu@berkeley.edu', 
+u'chchow@berkeley.edu', u'hannallee@berkeley.edu', u'alcyee@berkeley.edu', 
+u'stevencheng@berkeley.edu', u'timothyhongtran@berkeley.edu', u'stevencheng@berkeley.edu', 
+u'timothyhongtran@berkeley.edu', u'daxili@berkeley.edu', u'clancyhwang@berkeley.edu', 
+u'lathiata@berkeley.edu', u'hekwan1@berkeley.edu', u'esonnad@berkeley.edu', 
+u'serenachan@berkeley.edu', u'jenliang@berkeley.edu', u'pauldubovsky@berkeley.edu', 
+u'stevenhu03@berkeley.edu', u'sid8795@berkeley.edu', u'abains@berkeley.edu', 
+u'jhaazpr@berkeley.edu', u'jmahabal@berkeley.edu', u'shuang@berkeley.edu', 
+u'sikun.peng@berkeley.edu', u'edward.jl.gao@berkeley.edu', u'elee92@berkeley.edu', 
+u'nirshtern@berkeley.edu', u'kunwoohong@berkeley.edu', u'bowenjiang@berkeley.edu', 
+u'kyleguo@berkeley.edu', u'justinhjiang@berkeley.edu', u'carmen.z@berkeley.edu', 
+u'mjrlee@berkeley.edu', u'jkarstens@berkeley.edu', u'caobaiyue@berkeley.edu', 
+u'junzhucong@gmail.com', u'pitcany@berkeley.edu', u'sharath3@berkeley.edu', 
+u'achao@berkeley.edu', u'tianshibai@berkeley.edu', u'sedward@berkeley.edu', 
+u'aneesh@berkeley.edu', u'jessmchang@berkeley.edu', u'xhl0623@berkeley.edu',
+u'delphine.ho@berkeley.edu', u'miagilepner@gmail.com']))
+
+def get_peer_reviewers(semester):
+  return models.Account.get_accounts_for_emails(CODE_REVIEW_STUDENTS)
+
+def get_issues_for_stus(semester, stus, assign):
+  iss = [[iss for iss in models.Issue.all().filter('semester = ', semester.name).filter('owners =', stu.email)] for stu in stus]
+  iss = [it for subl in iss for it in subl]
+  return list(set(iss))
+
+from random import shuffle
+
+def assign_peer_reviewers(semester, assign, num_reviewers=2):
+  stus = get_peer_reviewers(semester)
+  to_use = stus[:]
+  to_assign = get_issues_for_stus(semester, stus, assign)
+  for _ in range(num_reviewers):
+    shuffle(to_assign)
+    shuffle(to_use)
+
+    i = 0
+
+    # print 'to_use {} to_assign {}'.format(to_use, to_assign)
+    while i < len(to_assign):
+      using = to_use.pop(0)
+      assigning = to_assign.pop(0)
+
+      while using.email in assigning.reviewers or using.email in assigning.owners:
+        to_use.append(using)
+        using = to_use.pop(0)
+
+      assigning.reviewers.append(using.email)
+      to_assign.append(assigning)
+      to_use.append(using)
+
+      i += 1
+
+  db.put(to_assign)

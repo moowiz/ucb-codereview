@@ -635,7 +635,7 @@ ROLE_MAPPING = {
 }
 REV_ROLE_MAPPING = {v: k for k, v in ROLE_MAPPING.iteritems()}
 
-class Account(db.Expando):
+class Account(db.Model):
   """Maps a user or email address to a user-selected nickname, and more.
 
   Nicknames do not have to be unique.
@@ -744,7 +744,7 @@ class Account(db.Expando):
   @classmethod
   def get_accounts_for_emails(cls, emails):
     """Get the Accounts for each of a list of email addresses."""
-    return cls.get_by_key_name(['<%s>' % email.lower() for email in emails])
+    return cls.get_by_key_name('<%s>' % email.lower() for email in emails)
 
   @classmethod
   def get_by_key_name(cls, key, **kwds):
