@@ -1558,11 +1558,11 @@ def edit(request):
   form_cls = forms.IssueBaseForm
 
   if request.method != 'POST':
-    reviewers = [models.Account.get_nickname_for_email(reviewer,
-                                                       default=reviewer)
-                 for reviewer in issue.reviewers]
+    reviewers = [reviewer for reviewer in issue.reviewers]
+    owners = [owner for owner in issue.owners]
     form = form_cls(initial={'subject': issue.subject,
                              'reviewers': ', '.join(reviewers),
+                             'owners': ', '.join(owners),
                              'bug_submit': issue.bug,
                              })
     return respond(request, 'edit.html', {'issue': issue, 'form': form})
