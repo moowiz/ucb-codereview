@@ -14,10 +14,10 @@
     </div>
   </td>
   <td><div class="users">
-          {{issue.owners|show_users}}
+          {{issue.owners|show_users:issue}}
   </div></td>
   <td><div class="users">
-          {{issue.reviewers|show_users}}
+          {{issue.reviewers|show_users:issue}}
   </div></td>
   <td>
       {%if issue.comp_score > -1%}
