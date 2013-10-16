@@ -4,13 +4,13 @@
 APPID?= `cat app.yaml | sed -n 's/^application: *//p'`
 VERSION?= `cat app.yaml | sed -n 's/^version: *//p'`
 
-SDK_PATH ?= "/usr/local/google_appengine"
+SDK_PATH ?= /usr/local/bin
 
 DEV_APPSERVER?= $(if $(SDK_PATH), $(SDK_PATH)/,)dev_appserver.py
 DEV_APPSERVER_FLAGS?=
 
 APPCFG?= $(if $(SDK_PATH), $(SDK_PATH)/,)appcfg.py
-APPCFG_FLAGS?=
+APPCFG_FLAGS?=--oauth2
 
 PYTHON?= python2.7
 COVERAGE?= coverage
@@ -39,11 +39,15 @@ serve_remote_email: update_revision
 
 update_revision:
 	@echo "---[Updating REVISION]---"
-	@echo "`hg id -n`:`hg id -i`" >REVISION
+	@echo "`git log -1 HEAD | head -1 | cut -d ' ' -f 2`" >REVISION
 
 update: update_revision
 	@echo "---[Updating $(APPID)]---"
 	$(APPCFG) $(APPCFG_FLAGS) update . --application $(APPID) --version $(VERSION)
+
+rollback: 
+	@echo "ROLLING BACK"
+	$(APPCFG) $(APPCFG_FLAGS) rollback .
 
 upload: update
 
