@@ -53,20 +53,23 @@ def get_links_for_users(user_emails):
               nick))
         link_dict[account.email] = ret
       else:
-        if not _can_see_other_user(curr_acc.email, account.email):
-          link_dict[account.email] = nick
-        else:
-          link_dict[account.email] = 'Anonymous'
+        link_dict[account.email] = get_nickname(account, curr_acc=curr_acc)
 
   return link_dict
 
-def _can_see_other_user(curr_email, other_email):
+def _can_see_other_user(curr_acc, other_acc):
   issue = models.Issue.current_issue
+
+  if curr_acc.email == other_acc.email:
+    return True
   if not issue:
     return False
-  acc_is_owner = other_email in issue.owners
-  curr_acc_is_owner = curr_email in issue.owners
-  return acc_is_owner ^ curr_acc_is_owner
+  if curr_acc.is_staff or other_acc.is_staff:
+    return True
+  other_acc_is_owner = other_acc.email in issue.owners
+  curr_acc_is_owner = curr_acc.email in issue.owners
+  rval = other_acc_is_owner ^ curr_acc_is_owner
+  print 'returning {} for other {} and curr {}'.format(rval, other_acc.email, curr_acc.email)
 
 
 def get_link_for_user(email):
@@ -174,27 +177,36 @@ def urlappend_view_settings(_parser, _token):
   return UrlAppendViewSettingsNode()
 
 
-def get_nickname(email, never_me=False, request=None):
+def get_nickname(email_or_acc_to_show, never_me=False, curr_acc=None):
   """Return a nickname for an email address.
 
   If 'never_me' is True, 'me' is not returned if 'email' belongs to the
   current logged in user. 
   """
-  if isinstance(email, users.User):
-    email = email.email()
-  if request is not None:
-    user = request.user
+
+  if not curr_acc:
+    t = models.Account.current_user_account
+    curr_acc = t if t else models.Account.get_account_for_user(users.get_current_user())
+
+  if isinstance(email_or_acc_to_show, models.Account):
+    email = email_or_acc_to_show.email
+    acc_to_show = email_or_acc_to_show
   else:
-    user = users.get_current_user()
+    if isinstance(email_or_acc_to_show, users.User):
+      email_or_acc_to_show = email_or_acc_to_show.email()
+
+    email = str(email_or_acc_to_show)
+    acc_to_show = models.Account.get_account_for_email(email)
+    assert type(email) is str, "ERR: type of email is %s" % str(type(email))
+
   if not never_me:
-    if user is not None and email == user.email():
+    if curr_acc is not None and email == curr_acc.email:
       return 'me'
 
-  if _can_see_other_user(user.email(), email):
+  if _can_see_other_user(curr_acc, acc_to_show):
+    return acc_to_show.nickname
+  else:
     return "Anonymous"
-
-  return models.Account.get_nickname_for_email(email)
-
 
 class NicknameNode(django.template.Node):
   """Renders a nickname for a given email address.
@@ -226,10 +238,9 @@ class NicknameNode(django.template.Node):
       email = self.email_address.resolve(context)
     except django.template.VariableDoesNotExist:
       return ''
-    request = context.get('request')
     if self.is_multi:
-      return ', '.join(get_nickname(e, self.never_me, request) for e in email)
-    return get_nickname(email, self.never_me, request)
+      return ', '.join(get_nickname(e, self.never_me) for e in email)
+    return get_nickname(email, self.never_me)
 
 
 @register.tag
