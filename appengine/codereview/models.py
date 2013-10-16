@@ -733,11 +733,13 @@ class Account(db.Expando):
     return cls.get_account_for_user(user).nickname
 
   @classmethod
-  def get_account_for_email(cls, email):
+  def get_account_for_email(cls, email, semester=None):
     """Get the Account for an email address, or return None."""
     assert email
     key = '<%s>' % email.lower()
-    return cls.get_by_key_name(key)
+    if semester == None:
+      semester = Semester.get_current_semester()
+    return cls.get_by_key_name(key, parent=semester)
 
   @classmethod
   def get_accounts_for_emails(cls, emails):

@@ -77,8 +77,6 @@ urlpatterns = patterns(
     (r'^tasks/calculate_delta$', 'calculate_delta'),
     (r'^snippets/add$', 'add_snippet'),
     (r'^snippets/delete/(.+)$', 'delete_snippet'),
-    (r'^start_assign_readers$', 'start_assign_readers'),
-    (r'^start_migrate_accounts$', 'start_migrate_accounts'),
-    (r'^start_get_curr_assigns$', 'start_get_curr_assigns'),
-
+    (r'^start_balance$', 'start_balance'),
+    (r'^start_fix_issues$', 'start_fix_issues'),
 )

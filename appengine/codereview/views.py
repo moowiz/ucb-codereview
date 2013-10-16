@@ -3251,15 +3251,15 @@ def assign_readers(semester, cursor=None, readers=None, reader_index=0, num_upda
       logging.debug(
           'Put %d entities to Datastore for a total of %d',
           len(to_put), num_updated)
-      deferred.defer(
-          assign_readers, semester, cursor=query.cursor(), readers=readers, reader_index=reader_index, num_updated=num_updated)
+      # deferred.defer(
+      #     assign_readers, semester, cursor=query.cursor(), readers=readers, reader_index=reader_index, num_updated=num_updated)
   else:
       logging.debug(
           'assign_reader complete with %d updates!', num_updated)
 
 @staff_required
 def start_assign_readers(request):
-  deferred.defer(assign_readers, request.semester)
+  # deferred.defer(assign_readers, request.semester)
   return HttpTextResponse("OK")
 
 TO_COPY = [
@@ -3270,50 +3270,67 @@ TO_COPY = [
   'email',
   'user',
 ]
-MIGRATE_BATCH=100
 
-# def migrate_accounts(semester, cursor=None, num_updated=0):
-#   query = models.Account.all()
+MIGRATE_BATCH=150
 
-#   if cursor:
-#     query.with_cursor(cursor)
+def fix_issues(semester, cursor=None, num_updated=0):
+  query = models.Issue.all().filter('semester =', semester.name)
 
-#   to_put = []
-#   to_iter = list(query.fetch(limit=MIGRATE_BATCH))
+  if cursor:
+    query.with_cursor(cursor)
 
-#   i = 0
-#   while i < len(to_iter):
-#     acc = to_iter[i]
-#     if hasattr(acc, 'semesters') and not acc.role > 0 and not hasattr(acc, 'sections'):
-#       data = {k: getattr(acc, k) for k in TO_COPY}
-#       data['parent'] = semester
-#       data['role'] = models.ROLE_MAPPING['ta'] if acc.is_staff else models.ROLE_MAPPING['student']
+  to_put = []
+  to_iter = list(query.fetch(limit=MIGRATE_BATCH))
 
-#       acc = models.Account(key_name='<%s>' % data['email'], **data)
-#       to_put.append(acc)
-#       i += 1
-#     else:
-#       del to_iter[i]
+  for iss in to_iter:
+    accs = [models.Account.get_account_for_email(email) for email in iss.owners]
+    for acc in accs:
+      if acc.reader.email != accs[0].reader.email:
+        acc.reader = accs[0].reader
+        to_put.append(acc)
 
-#   if to_put:
-#     db.put(to_put)
-#     db.delete(to_iter)
-#     num_updated += len(to_put)
-#     logging.debug(
-#         'Put %d entities to Datastore for a total of %d',
-#         len(to_put), num_updated)
-#     deferred.defer(
-#         migrate_accounts, semester, cursor=query.cursor(), num_updated=num_updated)
-#   else:
-#     logging.debug(
-#         'migrate_accounts complete with %d updates!', num_updated) 
+  if to_put:
+    db.put(to_put)
+    num_updated += len(to_put)
+    logging.debug(
+        'Put %d entities to Datastore for a total of %d',
+        len(to_put), num_updated)
+    deferred.defer(
+        fix_issues, semester, cursor=query.cursor(), num_updated=num_updated)
+  else:
+    logging.debug(
+        'fix_issues complete with %d updates!', num_updated) 
+
+@staff_required
+def start_fix_issues(request):
+  deferred.defer(fix_issues, request.semester)
+  return HttpTextResponse("OK")
+
+def my_put(to_put):
+  # print 'putting ', to_put
+  real_to_put = [(reader, models.Account.get_account_for_email(email)) for reader, email in to_put]
+  for reader, acc in real_to_put:
+    acc.reader = reader
+  db.put(acc for reader, acc in real_to_put)
+  real_to_put = None
 
 def balance_accounts(semester):
-  query = models.Account().all().ancestor(semester).filter('role =', 0)
-  mapping = {acc:[] for acc in models.Account.all().ancestor(semester).filter('role =', 1)}
+  def get_mapping():
+    query = models.Account.all(projection=('reader', 'email')).ancestor(semester).filter('role =', 0)
+    readers = list(models.Account.all().ancestor(semester).filter('role =', 1))
+    reader_mapping = {acc.email.lower():acc for acc in readers}
+    mapping = {acc.email.lower():[] for acc in readers}
 
-  for acc in query.run(batch_size=100):
-    mapping[acc.reader].append(acc)
+    for acc in query.run(batch_size=100):
+      if acc.reader:
+        if acc.reader.email in mapping:
+          mapping[acc.reader.email].append(acc.email)
+        else:
+          logging.warn("reader email {} not found".format(acc.reader.email))
+    return mapping
+
+  mapping = get_mapping()
+  logging.info({k:len(v) for k, v in mapping.iteritems()})
 
   counts = [len(val) for k, val in mapping.iteritems()]
   mean = int(sum(counts) / len(counts))
@@ -3325,21 +3342,28 @@ def balance_accounts(semester):
     if len(v) > mean:
       above.append(v)
     else:
-      below.append([k, len(v) - mean])
+      below.append([k, mean - len(v)])
 
   to_put = []
   abo = bel = None
   while below and above:
-    bel = bel or below.pop()
-    while bel[1]:
+    # print 'below %s above %s' % (below, above)
+    bel = (bel if bel and bel[1] else below.pop())
+    while bel[1] and above:
       abo = abo or above.pop()
+      # print 'abo', abo, 'bel', bel, 'above', above
       while abo and bel[1]:
         it = abo.pop()
-        it.reader = bel[0]
-        to_put.append(it)
+        # print 'adding ', it
+        to_put.append((reader_mapping[bel[0]], it))
         bel[1] -= 1
+    my_put(to_put)
+    to_put = None
+    to_put = []
 
-  db.put(to_put)
+  my_put(to_put)
+
+  logging.info({k:len(v) for k, v in get_mapping().iteritems()})
 
 
 @staff_required
@@ -3374,7 +3398,5 @@ def migrate_accounts(semester):
 
 @staff_required
 def start_migrate_accounts(request):
-  deferred.defer(migrate_accounts, request.semester)
+  # deferred.defer(migrate_accounts, request.semester)
   return HttpTextResponse("OK")
-
-def 
