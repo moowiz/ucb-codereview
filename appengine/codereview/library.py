@@ -57,20 +57,56 @@ def get_links_for_users(user_emails):
 
   return link_dict
 
+def get_nickname(email_or_acc_to_show, never_me=False, curr_acc=None):
+  """Return a nickname for an email address.
+
+  If 'never_me' is True, 'me' is not returned if 'email' belongs to the
+  current logged in user. 
+  """
+
+  if not curr_acc:
+    t = models.Account.current_user_account
+    curr_acc = t if t else models.Account.get_account_for_user(users.get_current_user())
+
+  if isinstance(email_or_acc_to_show, models.Account):
+    email = email_or_acc_to_show.email
+    acc_to_show = email_or_acc_to_show
+  else:
+    if isinstance(email_or_acc_to_show, users.User):
+      email_or_acc_to_show = email_or_acc_to_show.email()
+
+    email = str(email_or_acc_to_show)
+    acc_to_show = models.Account.get_account_for_email(email)
+    assert type(email) is str, "ERR: type of email is %s" % str(type(email))
+
+  if not never_me:
+    if acc_to_show.email == curr_acc.email:
+      return 'me'
+
+  if _can_see_other_user(curr_acc, acc_to_show):
+    return acc_to_show.nickname
+  else:
+    return "Anonymous"
+
 def _can_see_other_user(curr_acc, other_acc):
   issue = models.Issue.current_issue
 
+  print 'checking {} can see {}'.format(curr_acc.email, other_acc.email)
+
   if curr_acc.email == other_acc.email:
+    print 'self, see self'
+    return True
+  if curr_acc.is_staff or other_acc.is_staff:
+    print 'staff, true'
     return True
   if not issue:
+    print "no issue, can't see"
     return False
-  if curr_acc.is_staff or other_acc.is_staff:
-    return True
   other_acc_is_owner = other_acc.email in issue.owners
   curr_acc_is_owner = curr_acc.email in issue.owners
-  rval = other_acc_is_owner ^ curr_acc_is_owner
-  print 'returning {} for other {} and curr {}'.format(rval, other_acc.email, curr_acc.email)
-
+  rval = not other_acc_is_owner ^ curr_acc_is_owner
+  print 'returning {} for other {} and curr {} owners {}'.format(rval, other_acc.email, curr_acc.email, issue.owners)
+  return rval
 
 def get_link_for_user(email):
   """Get a link to a user's profile page."""
@@ -92,14 +128,17 @@ def url(parser, token):
   return UrlTemplateNode(to_use[1], to_use[2:])
 
 @register.filter
-def show_user(email, arg=None, _autoescape=None, _memcache_results=None):
+def show_user(email, issue=None, _autoescape=None, _memcache_results=None):
   """Render a link to the user's dashboard, with text being the nickname."""
   if isinstance(email, users.User):
     email = email.email()
-  if not arg:
-    user = users.get_current_user()
-    if user is not None and email == user.email():
-      return 'me'
+
+  user = users.get_current_user()
+  if user is not None and email == user.email():
+    return 'me'
+
+  if issue:
+    models.Issue.current_issue = issue
 
   ret = get_link_for_user(email)
 
@@ -107,7 +146,7 @@ def show_user(email, arg=None, _autoescape=None, _memcache_results=None):
 
 
 @register.filter
-def show_users(email_list, arg=None):
+def show_users(email_list, issue=None):
   """Render list of links to each user's dashboard."""
   new_email_list = []
   for email in email_list:
@@ -115,12 +154,14 @@ def show_users(email_list, arg=None):
       email = email.email()
     new_email_list.append(email)
 
+  if issue:
+    models.Issue.current_issue = issue
+
   links = get_links_for_users(new_email_list)
 
-  if not arg:
-    user = users.get_current_user()
-    if user is not None:
-      links[user.email()] = 'me'
+  user = users.get_current_user()
+  if user is not None:
+    links[user.email()] = 'me'
 
   return django.utils.safestring.mark_safe(', '.join(
       links[email] for email in email_list))
@@ -177,36 +218,6 @@ def urlappend_view_settings(_parser, _token):
   return UrlAppendViewSettingsNode()
 
 
-def get_nickname(email_or_acc_to_show, never_me=False, curr_acc=None):
-  """Return a nickname for an email address.
-
-  If 'never_me' is True, 'me' is not returned if 'email' belongs to the
-  current logged in user. 
-  """
-
-  if not curr_acc:
-    t = models.Account.current_user_account
-    curr_acc = t if t else models.Account.get_account_for_user(users.get_current_user())
-
-  if isinstance(email_or_acc_to_show, models.Account):
-    email = email_or_acc_to_show.email
-    acc_to_show = email_or_acc_to_show
-  else:
-    if isinstance(email_or_acc_to_show, users.User):
-      email_or_acc_to_show = email_or_acc_to_show.email()
-
-    email = str(email_or_acc_to_show)
-    acc_to_show = models.Account.get_account_for_email(email)
-    assert type(email) is str, "ERR: type of email is %s" % str(type(email))
-
-  if not never_me:
-    if curr_acc is not None and email == curr_acc.email:
-      return 'me'
-
-  if _can_see_other_user(curr_acc, acc_to_show):
-    return acc_to_show.nickname
-  else:
-    return "Anonymous"
 
 class NicknameNode(django.template.Node):
   """Renders a nickname for a given email address.

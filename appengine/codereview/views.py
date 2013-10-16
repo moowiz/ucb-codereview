@@ -761,8 +761,6 @@ def _load_users_for_issues(issues):
       # keeping a count lets you track total vs. distinct if you want
       user_dict[e] = user_dict.setdefault(e, 0) + 1
 
-  library.get_links_for_users(user_dict.keys())
-
 @login_required
 @user_key_required
 def show_user(request):
@@ -1568,16 +1566,18 @@ def edit(request):
     return respond(request, 'edit.html', {'issue': issue, 'form': form})
 
   form = form_cls(request.POST)
-  if form.is_valid():
-    reviewers = _get_emails(form, 'reviewers')
-
 
   if not form.is_valid():
     return respond(request, 'edit.html', {'issue': issue, 'form': form})
+  else:
+    reviewers = _get_emails(form, 'reviewers')
+    owners = _get_emails(form, 'owners')
+
   cleaned_data = form.cleaned_data
 
   issue.subject = cleaned_data['subject']
   issue.reviewers = reviewers
+  issue.owners = owners
   issue.bug = cleaned_data.get('bug_submit', False)
   issue.put()
   return HttpResponseRedirect(reverse(request, show, args=[issue.key().id()]))
