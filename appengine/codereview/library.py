@@ -47,13 +47,13 @@ def get_links_for_users(user_emails):
   for account in accounts:
     if account:
       nick = cgi.escape(account.nickname)
-      if curr_acc.is_staff:
+      if curr_acc.is_staff or account.is_staff:
         ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
               (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
               nick))
         link_dict[account.email] = ret
       else:
-        if _can_see_other_user(curr_acc.email, account.email):
+        if not _can_see_other_user(curr_acc.email, account.email):
           link_dict[account.email] = nick
         else:
           link_dict[account.email] = 'Anonymous'
