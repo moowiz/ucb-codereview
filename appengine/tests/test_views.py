@@ -44,23 +44,11 @@ class TestViewBase(TestCase):
         super(TestViewBase, self).setUp()
         self.semester = models.Semester.get_or_insert('<fa13>', name='fa13')
 
-        self.student = User('foo@example.com')
-        self.ta = User('bar@example.com')
-        self.other = User('baz@example.com')
+        self.ta_acc = self.make_ta(self.semester)
+        self.student_acc = self.make_student(self.semester)
+        self.other_acc = self.make_student(self.semester)
 
-        self.student_acc = models.Account.get_account_for_user(self.student)
-        self.student_acc.put()
-
-        self.other_acc = models.Account.get_account_for_user(self.other)
-        self.other_acc.put()
-
-        self.ta_acc = models.Account.get_account_for_user(self.ta)
-        self.ta_acc.role = models.ROLE_MAPPING['ta']
-        self.ta_acc.put()
-
-        self.issue = models.Issue(subject='test', owners=[db.Email(self.student.email())], 
-                                  reviewers=[db.Email(self.other.email())], parent=self.semester)
-        self.issue.put()
+        self.issue = self.make_issue(owners=[self.student_acc.email], reviewers=[self.other_acc.email])
 
         self.ps = models.PatchSet(parent=self.issue, issue=self.issue)
         self.ps.data = load_file('ps1.diff')
@@ -78,6 +66,7 @@ class TestViewBase(TestCase):
 class TestStudentUserViewing(TestViewBase):
     def test_basic(self):
         self.login(self.student_acc.email)
+        
         resp = self.client.get('/%s/mine' % self.semester.name)
         temp = Template("""
 <tr name="issue">
@@ -119,7 +108,7 @@ class TestStudentUserViewing(TestViewBase):
   </tr>""")
         self.assertContains(resp, temp.substitute(semester = self.semester.name, issueNum = self.issue.key().id(),
                                                     numSubmissions = models.PatchSet.all().ancestor(self.issue).count(),
-                                                    issueSubject=self.issue.subject, email=self.student.email()), html=True)
+                                                    issueSubject=self.issue.subject, email=self.student_acc.email), html=True)
 
     def test_settings(self):
         self.login(self.ta_acc.email)
@@ -130,26 +119,28 @@ class TestStudentUserViewing(TestViewBase):
         self.login(self.student_acc.email)
         resp = self.client.get('/%s/user/%s/settings' % (self.semester.name, self.student_acc.email))
         self.assertNotContains(resp, "Role:")
+        self.logout()
 
 class TestPublish(TestViewBase):
     """Test publish functions."""
     def setUp(self):
         super(TestPublish, self).setUp()
-        self.login(self.student.email())
+        self.login(self.student_acc.email)
 
     def count_num(self, cls):
         return cls.all().ancestor(self.issue.key()).count()
 
     def test_correct_simple_publish(self):
+        self.login(self.ta_acc.email)
         data = {
-            'reviewers': self.student.email() + ', billy@example.com',
+            'reviewers': self.student_acc.email + ', billy@example.com',
             'comp_score': '3',
             'bug_submit': 'False',
             'send_mail': 'True',
             'message': 'Hi there, this is a test message. Please ignore',
             'message_only': '',
             'in_reply_to': '',
-            'xsrf_token': self.student_acc.get_xsrf_token(),
+            'xsrf_token': self.ta_acc.get_xsrf_token(),
         }
         url = '/%s/%s/' % (self.semester.name, self.issue.key().id())
         resp = self.client.post(url + 'publish', data=data, follow=True)
@@ -161,8 +152,11 @@ class TestPublish(TestViewBase):
         self.assertEqual(self.count_num(models.Comment), 0)
         messages = self.mail_stub.get_sent_messages()
         self.assertEqual(1, len(messages))
+        self.logout()
 
     def test_correct_complex_publish(self):
+        self.login(self.ta_acc.email)
+
         messages_before = self.count_num(models.Message)
         comments_before = self.count_num(models.Comment)
 
@@ -174,7 +168,7 @@ class TestPublish(TestViewBase):
             'message': 'Hi there, this is a test message. Please ignore',
             'message_only': '',
             'in_reply_to': '',
-            'xsrf_token': self.student_acc.get_xsrf_token(),
+            'xsrf_token': self.ta_acc.get_xsrf_token(),
         }
         url = '/%s/%s/' % (self.semester.name, self.issue.key().id())
         resp = self.client.post(url + 'publish', data=data, follow=True)
@@ -187,15 +181,19 @@ class TestPublish(TestViewBase):
         messages = self.mail_stub.get_sent_messages()
         self.assertEqual(1, len(messages)) 
 
+        self.logout()
+
     def test_draft_details_no_base_file(self):
-        request = MockRequest(User('foo@example.com'), issue=self.issue)
+        self.login(self.student_acc.email)
+
+        request = MockRequest(self.student_acc.user, issue=self.issue)
         # add a comment and render
         cmt1 = models.Comment(patch=self.patches[0], parent=self.patches[0])
         cmt1.text = 'test comment'
         cmt1.lineno = 1
         cmt1.left = False
         cmt1.draft = True
-        cmt1.author = self.student
+        cmt1.author = self.student_acc.user
         cmt1.save()
         # Add a second comment
         cmt2 = models.Comment(patch=self.patches[1], parent=self.patches[1])
@@ -203,7 +201,7 @@ class TestPublish(TestViewBase):
         cmt2.lineno = 2
         cmt2.left = False
         cmt2.draft = True
-        cmt2.author = self.student
+        cmt2.author = self.student_acc.user
         cmt2.save()
         # Add fake content
         content1 = models.Content(text="foo\nbar\nbaz\nline\n")
@@ -225,3 +223,5 @@ class TestPublish(TestViewBase):
         # Try to render draft details using the patched Comment
         # instances from here.
         views._get_draft_details(request, [cmt1, cmt2])
+
+        self.logout()

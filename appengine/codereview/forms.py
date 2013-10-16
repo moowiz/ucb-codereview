@@ -215,7 +215,7 @@ class SettingsForm(forms.Form):
   def clean_reader(self):
     reader_email = self.cleaned_data.get('reader')
 
-    reader = models.Account.get_account_for_email(reader_email)
+    reader = models.Account.get_account_for_email(reader_email) if reader_email else None
     return reader
 
 class SearchForm(forms.Form):
