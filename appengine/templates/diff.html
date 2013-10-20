@@ -26,20 +26,24 @@ login_warned = false;
     <textarea name="text" cols="60" rows="5"></textarea><br>
     {% if allow_snippets %}
     My Snippets:
-    <select id="mysnippets" name="mysnippets" size="1"
+
+    <select id="mysnippets" name="mysnippets" size="{{my_snippets | length}}"
             onchange="M_updateSnippet(this)">
       {% for s in my_snippets %}
       <option value="{{s.text}}" id="{{s.urlsafe}}">{{s.label}}</option>
       {% endfor %}
-    </select><br>
+    </select>
+
+
     All Snippets:
     <select id="snippets" name="snippets" size="1"
             onchange="M_updateSnippet(this)">
       {% for s in snippets %}
       <option value="{{s.text}}" id="{{s.urlsafe}}">{{s.label}}</option>
       {% endfor %}
-    </select><br>
+    </select>
     {% endif %}
+
     <div name="status"></div> <br>
     <input type="submit" name="save" value="Save"
            onclick="return M_submitInlineComment(this.form);">
