@@ -1141,7 +1141,7 @@ def _make_new(request, form):
                          description=form.cleaned_data['description'],
                          owners=owners,
                          n_comments=0)
-                         
+
     issue.put()
 
     patchset = models.PatchSet(issue=issue, data=data, url=url, parent=issue)
@@ -1916,6 +1916,8 @@ def diff(request):
   patchsets = list(request.issue.patchset_set.order('created'))
 
   snippets, allow_snippets = _get_snippets(request)
+  my_email = users.get_current_user().email()
+  my_snippets = [s for s in snippets if s.created_by.email() == my_email]
 
   context = _get_context_for_user(request)
   column_width = _get_column_width_for_user(request)
@@ -1939,7 +1941,8 @@ def diff(request):
                   'column_width': column_width,
                   'patchsets': patchsets,
                   'snippets': snippets,
-                  'allow_snippets': allow_snippets
+                  'allow_snippets': allow_snippets,
+                  'my_snippets': my_snippets
                   })
 
 
@@ -3313,7 +3316,7 @@ def fix_issues(semester, cursor=None, num_updated=0):
         fix_issues, semester, cursor=query.cursor(), num_updated=num_updated)
   else:
     logging.debug(
-        'fix_issues complete with %d updates!', num_updated) 
+        'fix_issues complete with %d updates!', num_updated)
 
 @staff_required
 def start_fix_issues(request):
