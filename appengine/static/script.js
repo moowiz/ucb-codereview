@@ -943,7 +943,7 @@ function M_saveSnippet(form) {
 }
 
 function M_deleteSnippet(form) {
-    var select = form.snippets;
+    var select = form.mysnippets;
     var httpreq = M_getXMLHttpRequest();
     httpreq.onreadystatechange = function () {
         console.log(httpreq);
