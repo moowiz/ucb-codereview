@@ -61,40 +61,42 @@ document.onkeydown = M_dashboardKeyDown;
     {%endfor%}
   {%endif%}
 
-  <tr>
-    <td colspan="{{colspan}}" class="header">
-      <h3>Other people's ungraded Assignments ({{others_open|length}})</h3>
-    </td>
-  </tr>
-  {%if not others_open%}
+  {% if others_open or others_closed %}
     <tr>
-      <td colspan="{{colspan}}" class="first last">
-        <span class="disabled">(None)</span>
+      <td colspan="{{colspan}}" class="header">
+        <h3>Other people's ungraded Assignments ({{others_open|length}})</h3>
       </td>
     </tr>
-  {%else%}
-    {%include "issue_heading.html"%}
-    {%for issue in others_open%}
-      {%include "issue_row.html"%}
-    {%endfor%}
-  {%endif%}
+    {%if not others_open%}
+      <tr>
+        <td colspan="{{colspan}}" class="first last">
+          <span class="disabled">(None)</span>
+        </td>
+      </tr>
+    {%else%}
+      {%include "issue_heading.html"%}
+      {%for issue in others_open%}
+        {%include "issue_row.html"%}
+      {%endfor%}
+    {%endif%}
 
-  <tr>
-    <td colspan="{{colspan}}" class="header">
-      <h3>Other people's graded Assignments ({{others_closed|length}})</h3>
-    </td>
-  </tr>
-  {%if not others_closed%}
     <tr>
-      <td colspan="{{colspan}}" class="first last">
-        <span class="disabled">(None)</span>
+      <td colspan="{{colspan}}" class="header">
+        <h3>Other people's graded Assignments ({{others_closed|length}})</h3>
       </td>
     </tr>
-  {%else%}
-    {%include "issue_heading.html"%}
-    {%for issue in others_closed%}
-      {%include "issue_row.html"%}
-    {%endfor%}
+    {%if not others_closed%}
+      <tr>
+        <td colspan="{{colspan}}" class="first last">
+          <span class="disabled">(None)</span>
+        </td>
+      </tr>
+    {%else%}
+      {%include "issue_heading.html"%}
+      {%for issue in others_closed%}
+        {%include "issue_row.html"%}
+      {%endfor%}
+    {%endif%}
   {%endif%}
   </table>
 </div>

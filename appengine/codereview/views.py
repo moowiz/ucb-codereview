@@ -18,6 +18,7 @@
 import binascii
 import datetime
 import email.utils as _email_utils
+import collections
 import logging
 import hashlib
 import mimetypes
@@ -785,9 +786,12 @@ def _show_user(request):
   else:
     draft_issues = draft_keys = []
 
-  def make_query():
+  get_assign = request.GET.get('assign', None)
+  def make_query(assign=None):
     query = models.Issue.all().filter('semester =', request.semester.name)
-    assign = request.GET.get('assign', None)
+    if not assign:
+      assign = get_assign
+
     if assign:
       query.filter('subject =', assign)
     query.order('-modified')
@@ -795,12 +799,22 @@ def _show_user(request):
 
   if acc_to_show.is_staff:
     if acc_to_show.role == models.ROLE_MAPPING['reader']:
-      accs = models.get_accounts_for_reader(acc_to_show, request.semester)
+      emails = set(acc.email for acc in models.get_accounts_for_reader(acc_to_show, request.semester))
       all_issues = ()
-      for acc in accs:
-        all_issues += tuple(make_query().filter('owners =', acc.email))
+      all_queries = tuple(tuple(((email, subj), make_query(subj).filter('owners =', email).run()) for subj in models.VALID_SUBJECTS) for email in emails)
+      all_queries = tuple(it for subl in all_queries for it in subl)
 
-      all_issues = (issue for issue in all_issues if _can_view_issue(request, issue))
+      mapping = collections.defaultdict(dict)
+      for (email, subj), query in all_queries:  
+        if email not in mapping[subj]:
+          to_add = tuple(query)
+          for iss in to_add:
+            for em in iss.owners:
+              mapping[subj][em] = True
+
+          all_issues += to_add
+
+      all_issues = tuple(issue for issue in all_issues if _can_view_issue(request, issue))
 
     elif acc.role == models.ROLE_MAPPING['ta']:
       all_issues = ()
@@ -1519,7 +1533,7 @@ def account(request):
     query = request.GET.get('q').lower()
     limit = _clean_int(request.GET.get('limit'), 10, 10, 100)
 
-    accounts = models.Account.all()
+    accounts = models.Account.all().ancestor(request.semester)
     accounts.filter("lower_%s >= " % property, query)
     accounts.filter("lower_%s < " % property, query + u"\ufffd")
     accounts.order("lower_%s" % property)
@@ -2708,10 +2722,9 @@ def _make_message(request, issue, message, comments=None, send_mail=False,
       del context['files'][200:]
       context['files'].append('[[ %d additional files ]]' % num_trimmed)
     url = request.build_absolute_uri(reverse(request, show, args=[issue.key().id()]))
-    reviewer_nicknames = ', '.join(library.get_nickname(rev_temp, True,
-                                                        request)
+    reviewer_nicknames = ', '.join(library.get_nickname(rev_temp, never_me=True, curr_acc=models.Account.current_user_account)
                                    for rev_temp in issue.reviewers)
-    my_nickname = library.get_nickname(request.user, True, request)
+    my_nickname = library.get_nickname(request.user, never_me=True, curr_acc=models.Account.current_user_account)
     reply_to = ', '.join(reply_to)
     home = request.build_absolute_uri(reverse(request, index))
     context.update({'reviewer_nicknames': reviewer_nicknames,
@@ -3422,9 +3435,14 @@ def get_peer_reviewers(semester):
   return models.Account.get_accounts_for_emails(CODE_REVIEW_STUDENTS)
 
 def get_issues_for_stus(semester, stus, assign):
-  iss = [[iss for iss in models.Issue.all().filter('semester = ', semester.name).filter('owners =', stu.email)] for stu in stus]
+  iss = [[iss for iss in models.Issue.all().filter('semester = ', semester.name).filter('owners =', stu.email).filter('subject =', assign)] for stu in stus]
   iss = [it for subl in iss for it in subl]
   return list(set(iss))
+
+@staff_required
+def start_peer(request):
+  deferred.defer(assign_peer_reviewers, request.semester, request.GET.get('assign', 'proj2'))
+  return HttpTextResponse("OK")
 
 from random import shuffle
 

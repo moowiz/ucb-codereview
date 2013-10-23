@@ -12,6 +12,20 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: Issue
+  properties:
+  - name: semester
+  - name: subject
+  - name: reviewers
+
+- kind: Issue
+  properties:
+  - name: owners
+  - name: semester
+  - name: subject
+  - name: modified
+    direction: desc
+
 - kind: Account
   ancestor: yes
   properties:
@@ -27,6 +41,12 @@ indexes:
 # manually, move them above the marker line.  The index.yaml file is
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
+
+- kind: Account
+  ancestor: yes
+  properties:
+  - name: reader
+  - name: email
 
 - kind: Account
   ancestor: yes

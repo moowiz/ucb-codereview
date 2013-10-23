@@ -101,7 +101,9 @@ class TestCase(_TestCase):
   def make_students(cls, semester, num=20):
     return [cls.make_student(semester) for _ in range(num)]
 
-  def make_issue(self, semester=None, subject='testSubject', owners=[], reviewers=[]):
+  def make_issue(self, semester=None, subject=None, owners=[], reviewers=[]):
+    if not subject:
+      subject = models.VALID_SUBJECTS[0]
     if not semester:
       semester = self.semester
 
@@ -117,7 +119,7 @@ class TestCase(_TestCase):
       semester = self.semester
 
     if not subjects:
-      subjects = ['testSubject' + str(x) for x in range(num)]
+      subjects = [models.VALID_SUBJECTS[0] for x in range(num)]
 
     rval = []
     for i in range(num):
