@@ -684,7 +684,7 @@ class Account(db.Model):
 
   @property
   def is_staff(self):
-    return self.role > 0 
+    return self.role > 0
 
   @property
   def nickname(self):
@@ -942,14 +942,15 @@ class Semester(db.Model):
 
 class Snippet(db.Model):
   """ Stores a user-entered snippet"""
-  MAX_LENGTH = 60
+  MAX_DISPLAY_LENGTH = 60
   text = db.TextProperty()
+  created_by = db.UserProperty(auto_current_user_add=True)
 
   @property
   def label(self):
-    """ If text is above MAX_LENGTH, return a shortened label"""
-    if len(self.text) > Snippet.MAX_LENGTH:
-        return self.text[:Snippet.MAX_LENGTH] + "..."
+    """ If text is above MAX_DISPLAY_LENGTH, return a shortened label"""
+    if len(self.text) > Snippet.MAX_DISPLAY_LENGTH:
+        return self.text[:Snippet.MAX_DISPLAY_LENGTH] + "..."
     return self.text
 
   @property
