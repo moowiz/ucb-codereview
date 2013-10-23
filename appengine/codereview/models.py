@@ -61,6 +61,8 @@ def gql(cls, clause, *args, **kwds):
   query.bind(*args, **kwds)
   return query
 
+VALID_SUBJECTS = ('proj1', 'proj2', 'proj3', 'proj4')
+
 class Issue(db.Model):
   """The major top-level entity.
 
@@ -69,7 +71,7 @@ class Issue(db.Model):
   Child of Semester
   """
 
-  subject = db.StringProperty(required=True)
+  subject = db.StringProperty(required=True, choices=VALID_SUBJECTS)
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)
   owners = db.ListProperty(db.Email)
@@ -911,7 +913,7 @@ def get_accounts_for_reader(reader, semester):
   val = None
   if val:
     return val
-  val = tuple(Account.all().ancestor(semester).filter('reader =', reader))
+  val = Account.all(projection=('email',)).ancestor(semester).filter('reader =', reader)
   # memcache.set(s_key, val)
   return val
 

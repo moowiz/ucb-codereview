@@ -21,9 +21,9 @@ class TestIncomingMail(TestCase):
     self.semester = models.Semester(key_name='<fa13>', name='fa13')
     self.semester.put()
 
-    self.issue = models.Issue(subject='test', parent=self.semester)
+    self.issue = models.Issue(subject=models.VALID_SUBJECTS[0], parent=self.semester)
     self.issue.put()
-    self.issue2 = models.Issue(subject='test2', parent=self.semester)
+    self.issue2 = models.Issue(subject=models.VALID_SUBJECTS[1], parent=self.semester)
     self.issue2.put()
     self.logout()
 

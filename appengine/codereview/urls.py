@@ -79,4 +79,5 @@ urlpatterns = patterns(
     (r'^snippets/delete/(.+)$', 'delete_snippet'),
     (r'^start_balance$', 'start_balance'),
     (r'^start_fix_issues$', 'start_fix_issues'),
+    (r'^start_peer$', 'start_peer'),
 )

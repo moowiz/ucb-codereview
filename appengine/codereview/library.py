@@ -43,19 +43,28 @@ def get_links_for_users(user_emails):
 
   curr_acc = models.Account.get_account_for_user(users.get_current_user())
   accounts = models.Account.get_accounts_for_emails(user_emails)
+  semester = curr_acc.parent().name
 
   for account in accounts:
     if account:
       nick = cgi.escape(account.nickname)
       if curr_acc.is_staff or account.is_staff:
         ret = ('<a href="%s" onMouseOver="M_showUserInfoPopup(this)">%s</a>' %
-              (reverse('codereview.views.show_user', args=[account.parent().name, account.nickname]),
+              (reverse('codereview.views.show_user', args=[semester, account.nickname]),
               nick))
         link_dict[account.email] = ret
       else:
         link_dict[account.email] = get_nickname(account, curr_acc=curr_acc)
 
   return link_dict
+
+def _get_info(email):
+  key = '<%s>:staff'
+  val = memcache.get(key)
+  if not val:
+    val = models.Account.get_account_for_email(email).is_staff
+    memcache.set(key, val, time=21600) # 6 hours
+  return email, val
 
 def get_nickname(email_or_acc_to_show, never_me=False, curr_acc=None):
   """Return a nickname for an email address.
@@ -65,47 +74,46 @@ def get_nickname(email_or_acc_to_show, never_me=False, curr_acc=None):
   """
 
   if not curr_acc:
-    t = models.Account.current_user_account
-    curr_acc = t if t else models.Account.get_account_for_user(users.get_current_user())
+    curr_acc = models.Account.current_user_account
+
+  if not curr_acc:
+    curr_acc_email, curr_staff = _get_info(users.get_current_user().email())
+  else:
+    curr_acc_email, curr_staff = curr_acc.email, curr_acc.is_staff
 
   if isinstance(email_or_acc_to_show, models.Account):
-    email = email_or_acc_to_show.email
-    acc_to_show = email_or_acc_to_show
+    acc_to_show_email = email_or_acc_to_show.email
+    acc_to_show_staff = email_or_acc_to_show.is_staff
   else:
     if isinstance(email_or_acc_to_show, users.User):
       email_or_acc_to_show = email_or_acc_to_show.email()
 
     email = str(email_or_acc_to_show)
-    acc_to_show = models.Account.get_account_for_email(email)
+    acc_to_show_email, acc_to_show_staff = _get_info(email)
     assert type(email) is str, "ERR: type of email is %s" % str(type(email))
 
   if not never_me:
-    if acc_to_show.email == curr_acc.email:
+    if acc_to_show_email == curr_acc_email:
       return 'me'
 
-  if _can_see_other_user(curr_acc, acc_to_show):
-    return acc_to_show.nickname
+  if _can_see_other_user(curr_acc_email, acc_to_show_email, curr_staff, acc_to_show_staff):
+    return acc_to_show_email[:acc_to_show_email.find('@')]
   else:
     return "Anonymous"
 
-def _can_see_other_user(curr_acc, other_acc):
+def _can_see_other_user(curr_email, other_email, curr_staff, other_staff):
   issue = models.Issue.current_issue
 
-  print 'checking {} can see {}'.format(curr_acc.email, other_acc.email)
-
-  if curr_acc.email == other_acc.email:
-    print 'self, see self'
+  if curr_email == other_email:
     return True
-  if curr_acc.is_staff or other_acc.is_staff:
-    print 'staff, true'
+  if curr_staff or other_staff:
     return True
   if not issue:
-    print "no issue, can't see"
     return False
-  other_acc_is_owner = other_acc.email in issue.owners
-  curr_acc_is_owner = curr_acc.email in issue.owners
+  other_acc_is_owner = other_email in issue.owners
+  curr_acc_is_owner = curr_email in issue.owners
   rval = not other_acc_is_owner ^ curr_acc_is_owner
-  print 'returning {} for other {} and curr {} owners {}'.format(rval, other_acc.email, curr_acc.email, issue.owners)
+  # print 'returning {} for other {} and curr {} owners {}'.format(rval, other_email.email, curr_acc.email, issue.owners)
   return rval
 
 def get_link_for_user(email):
