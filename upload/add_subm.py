@@ -224,14 +224,18 @@ def put_in_repo(data):
                 if not data.force:
                     raise SubmissionException(err)
                 else:
-                    print 'ERROR encontered: %s Continuing because force option.' % err
+                    print('ERROR encontered: %s Continuing because force option.' % err)
             with open('commits', 'r') as f:
                 out = f.read().strip()
             last_line = out[out.rfind("\n"):]
             if last_line.find(":") != -1:
                 com_time = last_line[last_line.find(":") + 1:].strip()
                 if timestamp in com_time:
-                    raise SubmissionException("This timestamp ({}) has already been uploaded. Exiting...".format(timestamp))
+                    err = "This timestamp ({}) has already been uploaded. Exiting...".format(timestamp)
+                    if not data.force:
+                        raise SubmissionException(err)
+                    else:
+                        print('ERROR encontered: %s Continuing because force option.' % err)
         os.chdir(original_path)
     copy_important_files(data, path_to_subm, path_to_repo)
     with open(path_to_repo + 'commits', 'a') as f:
