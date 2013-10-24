@@ -285,11 +285,11 @@ class Data:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adds the given login's latest \
             submission for the given assignment to the code review system.")
-    parser.add_argument('-a', '--assign', type=str,
+    parser.add_argument('assign', type=str,
             help='the assignment to look at')
-    parser.add_argument('-l', '--login', type=str,
+    parser.add_argument('login', type=str,
             help='the login to add')
-    parser.add_argument('-s', '--semester', type=str,
+    parser.add_argument('semester', type=str,
             help='the semester to add the issue to')
     parser.add_argument('-f', '--force', type=bool,
             help='whether to force the upload')
