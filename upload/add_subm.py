@@ -220,7 +220,11 @@ def put_in_repo(data):
             return put_in_repo(data)
         else: #we have a partner who submitted (I think)
             if not os.path.exists('commits'):
-                raise SubmissionException("Found a git repository that hasn't been committed to yet. Ignoring...")
+                err = "Found a git repository that hasn't been committed to yet."
+                if not data.force:
+                    raise SubmissionException(err)
+                else:
+                    print 'ERROR encontered: %s Continuing because force option.' % err
             with open('commits', 'r') as f:
                 out = f.read().strip()
             last_line = out[out.rfind("\n"):]
@@ -240,8 +244,8 @@ def put_in_repo(data):
         utils.chown_staff_master(f)
     return path_to_repo, logins
 
-def add(login, assign, semester):
-    data = Data(login, assign, semester)
+def add(login, assign, semester, force=False):
+    data = Data(login, assign, semester, force)
     utils.check_allowed_user()
     print("Adding {} for {}".format(data.assign, data.login))
     original_path = os.getcwd()
@@ -264,10 +268,11 @@ def add(login, assign, semester):
         os.chdir(original_path)
 
 class Data:
-    def __init__(self,login,assign, semester):
+    def __init__(self,login,assign, semester, force):
         self.login = login
         self.assign = assign
         self.semester = semester
+        self.force = force
         if "revision" in self.assign:
             self.git_assign = self.assign[:self.assign.find("revision")]
         else:
@@ -282,5 +287,7 @@ if __name__ == "__main__":
             help='the login to add')
     parser.add_argument('-s', '--semester', type=str,
             help='the semester to add the issue to')
+    parser.add_argument('-f', '--force', type=bool,
+            help='whether to force the upload')
     args = parser.parse_args()
     add(args.login, args.assign, args.semester)
