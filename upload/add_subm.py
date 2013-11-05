@@ -294,4 +294,4 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--force', type=bool,
             help='whether to force the upload')
     args = parser.parse_args()
-    add(args.login, args.assign, args.semester)
+    add(args.login, args.assign, args.semester, bool(args.force))
