@@ -71,7 +71,9 @@ def main(assign, add, first, semester):
                     add_subm.add(login, assign, semester)
                 except Exception as e:
                     print("Exception {}".format(e))
-                    del maxes[assign]
+                    if assign in maxes:
+                        del maxes[assign]
+
         for assign, time in maxes.items():
             model.set_last_uploaded(time, assign)
     else:
