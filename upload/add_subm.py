@@ -231,7 +231,7 @@ def put_in_repo(data):
             if last_line.find(":") != -1:
                 com_time = last_line[last_line.find(":") + 1:].strip()
                 if timestamp in com_time:
-                    err = "This timestamp ({}) has already been uploaded. Exiting...".format(timestamp)
+                    err = "This timestamp ({}) has already been uploaded.".format(timestamp)
                     if not data.force:
                         raise SubmissionException(err)
                     else:
