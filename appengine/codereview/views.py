@@ -914,7 +914,8 @@ def upload(request):
     issue_id = form.cleaned_data['issue']
     if issue_id:
       action = 'updated'
-      issue = models.Issue.get_by_id(issue_id, form.semester)
+      semester_to_use = models.Semester.get_by_key_name('<%s>' % form.cleaned_data.get('semester'))
+      issue = models.Issue.get_by_id(issue_id, semester_to_use.key())
       if issue is None:
         form.errors['issue'] = ['No issue exists with that id (%s)' %
                                 issue_id]
@@ -1926,12 +1927,12 @@ def diff(request):
 
   patchset = request.patchset
   patch = request.patch
-
+  
   patchsets = list(request.issue.patchset_set.order('created'))
 
   snippets, allow_snippets = _get_snippets(request)
   my_email = users.get_current_user().email()
-  my_snippets = [s for s in snippets if s.created_by.email() == my_email]
+  my_snippets = [s for s in snippets if s.created_by and s.created_by.email() == my_email]
 
   context = _get_context_for_user(request)
   column_width = _get_column_width_for_user(request)
