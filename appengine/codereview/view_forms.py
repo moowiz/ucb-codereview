@@ -1,4 +1,13 @@
+from google.appengine.ext import db
 
+from view_mail import _make_message
+
+import models
+import engine
+import utils
+
+class EmptyPatchSet(Exception):
+  """Exception used inside _make_new() to break out of the transaction."""
 
 def _make_new(request, form):
   """Creates new issue and fill relevant fields from given form data.
@@ -97,3 +106,36 @@ def _get_data_url(form):
     data = db.Blob(utils.unify_linebreaks(fetch_result.content))
 
   return data, url, separate_patches
+
+def _get_emails(form, label):
+  """Helper to return the list of reviewers, or None for error."""
+  raw_emails = form.cleaned_data.get(label)
+  if raw_emails:
+    return _get_emails_from_raw(raw_emails.split(','), form=form, label=label)
+  return []
+
+def _get_emails_from_raw(raw_emails, form=None, label=None):
+  emails = []
+  for email in raw_emails:
+    email = email.strip()
+    if email:
+      try:
+        if '@' not in email:
+          account = models.Account.get_account_for_nickname(email)
+          if account is None:
+            raise db.BadValueError('Unknown user: %s' % email)
+          db_email = db.Email(account.user.email().lower())
+        elif email.count('@') != 1:
+          raise db.BadValueError('Invalid email address: %s' % email)
+        else:
+          _, tail = email.split('@')
+          if '.' not in tail:
+            raise db.BadValueError('Invalid email address: %s' % email)
+          db_email = db.Email(email.lower())
+      except db.BadValueError, err:
+        if form:
+          form.errors[label] = [unicode(err)]
+        return None
+      if db_email not in emails:
+        emails.append(db_email)
+  return emails

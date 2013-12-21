@@ -1,5 +1,7 @@
+from view_utils import _can_view_issue, _clean_int, respond
+from view_users import _optimize_draft_counts, _load_users_for_issues
 
-from view_utils import _can_view_issue, _clean_int
+DEFAULT_LIMIT = 50
 
 def _inner_paginate(request, issues, template, extra_template_params):
   """Display paginated list of issues.

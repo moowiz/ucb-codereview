@@ -1,5 +1,9 @@
 import models
 
+from view_decorators import login_required, post_required
+
+from google.appengine.api import memcache
+
 def _get_snippets(request):
   if not models.Account.get_account_for_user(request.user).is_staff:
     # Only staff has access to snippets

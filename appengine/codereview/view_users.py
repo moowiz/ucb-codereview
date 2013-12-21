@@ -1,3 +1,10 @@
+from view_decorators import user_key_required, login_required, xsrf_required
+from view_utils import respond, _can_view_issue, _clean_int
+
+from django.conf import settings as django_settings
+
+import models
+import forms
 
 def _show_user(request):
   user_to_show = request.user_to_show
@@ -192,3 +199,73 @@ def xsrf_token(request):
         '(its content doesn\'t matter).',
         status=400)
   return HttpTextResponse(models.Account.current_user_account.get_xsrf_token())
+
+def _load_users_for_issues(issues):
+  """Load all user links for a list of issues in one go."""
+  if not issues:
+    return
+
+  user_dict = {}
+  for i in issues:
+    for e in i.reviewers:
+      # keeping a count lets you track total vs. distinct if you want
+      user_dict[e] = user_dict.setdefault(e, 0) + 1
+
+
+def _optimize_draft_counts(issues):
+  """Force _num_drafts to zero for issues that are known to have no drafts.
+
+  Args:
+    issues: list of model.Issue instances.
+
+  This inspects the drafts attribute of the current user's Account
+  instance, and forces the draft count to zero of those issues in the
+  list that aren't mentioned there.
+
+  If there is no current user, all draft counts are forced to 0.
+  """
+  if not issues:
+    return
+
+  account = models.Account.current_user_account
+  if account is None:
+    issue_ids = None
+  else:
+    issue_ids = account.drafts
+  for issue in issues:
+    if issue_ids is None or issue.key().id() not in issue_ids:
+      issue._num_drafts = 0
+
+def _get_context_for_user(request):
+  """Returns the context setting for a user.
+
+  The value is validated against models.CONTEXT_CHOICES.
+  If an invalid value is found, the value is overwritten with
+  django_settings.DEFAULT_CONTEXT.
+  """
+  get_param = request.GET.get('context') or None
+  if 'context' in request.GET and get_param is None:
+    # User wants to see whole file. No further processing is needed.
+    return get_param
+  if request.user:
+    account = models.Account.current_user_account
+    default_context = account.default_context
+  else:
+    default_context = django_settings.DEFAULT_CONTEXT
+  context = _clean_int(get_param, default_context)
+  if context is not None and context not in models.CONTEXT_CHOICES:
+    context = django_settings.DEFAULT_CONTEXT
+  return context
+
+def _get_column_width_for_user(request):
+  """Returns the column width setting for a user."""
+  if request.user:
+    account = models.Account.current_user_account
+    default_column_width = account.default_column_width
+  else:
+    default_column_width = django_settings.DEFAULT_COLUMN_WIDTH
+  column_width = _clean_int(request.GET.get('column_width'),
+                            default_column_width,
+                            django_settings.MIN_COLUMN_WIDTH,
+                            django_settings.MAX_COLUMN_WIDTH)
+  return column_width

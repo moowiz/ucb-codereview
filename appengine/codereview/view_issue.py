@@ -1,3 +1,18 @@
+from view_decorators import issue_editor_required, xsrf_required, issue_required, post_required, upload_required, json_response, login_required
+from view_utils import _can_view_issue, _clean_int, respond, reverse
+from view_issue_draft import _get_draft_comments, _get_draft_details
+from view_taskQ import _calculate_delta
+
+import models
+import forms
+
+import logging
+
+from django.http import HttpResponseRedirect
+
+from google.appengine.ext import db
+from google.appengine.runtime import DeadlineExceededError
+
 @issue_editor_required
 @xsrf_required
 def edit(request):
@@ -222,3 +237,142 @@ def unstar(request):
     account.stars[:] = [i for i in account.stars if i != id]
     account.put()
   return respond(request, 'issue_star.html', {'issue': request.issue})
+
+@login_required
+@issue_required
+def show(request, form=None):
+  """/<issue> - Show an issue."""
+  if not _can_view_issue(request, request.issue):
+      return HttpTextResponse(
+          'You cannot view this issue.', status=403)
+  issue, patchsets, response = _get_patchset_info(request, None)
+  if response:
+    return response
+  if not form:
+    form = forms.AddForm(initial={'reviewers': ', '.join(issue.reviewers)})
+  last_patchset = first_patch = None
+  if patchsets:
+    last_patchset = patchsets[-1]
+    if last_patchset.patches:
+      first_patch = last_patchset.patches[0]
+  messages = []
+  has_draft_message = False
+  for msg in issue.message_set.order('date'):
+    if not msg.draft:
+      messages.append(msg)
+    elif msg.draft and request.user and msg.sender == request.user.email():
+      has_draft_message = True
+  num_patchsets = len(patchsets)
+  return respond(request, 'issue.html',
+                 {'issue': issue, 'patchsets': patchsets,
+                  'messages': messages, 'form': form,
+                  'last_patchset': last_patchset,
+                  'num_patchsets': num_patchsets,
+                  'first_patch': first_patch,
+                  'has_draft_message': has_draft_message,
+                  })
+
+def _get_patchset_info(request, patchset_id):
+  """ Returns a list of patchsets for the issue.
+
+  Args:
+    request: Django Request object.
+    patchset_id: The id of the patchset that the caller is interested in.  This
+      is the one that we generate delta links to if they're not available.  We
+      can't generate for all patchsets because it would take too long on issues
+      with many patchsets.  Passing in None is equivalent to doing it for the
+      last patchset.
+
+  Returns:
+    A 3-tuple of (issue, patchsets, HttpResponse).
+    If HttpResponse is not None, further processing should stop and it should be
+    returned.
+  """
+  issue = request.issue
+  patchsets = list(issue.patchset_set.order('created'))
+  response = None
+  if not patchset_id and patchsets:
+    patchset_id = patchsets[-1].key().id()
+
+  if request.user:
+    drafts = list(models.Comment.gql('WHERE ANCESTOR IS :1 AND draft = TRUE'
+                                     '  AND author = :2',
+                                     issue, request.user))
+  else:
+    drafts = []
+  comments = list(models.Comment.gql('WHERE ANCESTOR IS :1 AND draft = FALSE',
+                                     issue))
+  issue.draft_count = len(drafts)
+  for c in drafts:
+    c.ps_key = c.patch.patchset.key()
+  patchset_id_mapping = {}  # Maps from patchset id to its ordering number.
+  for patchset in patchsets:
+    patchset_id_mapping[patchset.key().id()] = len(patchset_id_mapping) + 1
+    patchset.n_drafts = sum(c.ps_key == patchset.key() for c in drafts)
+    patchset.patches = None
+    patchset.parsed_patches = None
+    if patchset_id == patchset.key().id():
+      patchset.patches = list(patchset.patch_set.order('filename'))
+      try:
+        attempt = _clean_int(request.GET.get('attempt'), 0, 0)
+        if attempt < 0:
+          response = HttpTextResponse('Invalid parameter', status=404)
+          break
+        for patch in patchset.patches:
+          pkey = patch.key()
+          patch._num_comments = sum(c.parent_key() == pkey for c in comments)
+          patch._num_drafts = sum(c.parent_key() == pkey for c in drafts)
+          if not patch.delta_calculated:
+            if attempt > 2:
+              # Too many patchsets or files and we're not able to generate the
+              # delta links.  Instead of giving a 500, try to render the page
+              # without them.
+              patch.delta = []
+            else:
+              # Compare each patch to the same file in earlier patchsets to see
+              # if they differ, so that we can generate the delta patch urls.
+              # We do this once and cache it after.  It's specifically not done
+              # on upload because we're already doing too much processing there.
+              # NOTE: this function will clear out patchset.data to reduce
+              # memory so don't ever call patchset.put() after calling it.
+              patch.delta = _calculate_delta(patch, patchset_id, patchsets)
+              patch.delta_calculated = True
+              # A multi-entity put would be quicker, but it fails when the
+              # patches have content that is large.  App Engine throws
+              # RequestTooLarge.  This way, although not as efficient, allows
+              # multiple refreshes on an issue to get things done, as opposed to
+              # an all-or-nothing approach.
+              patch.put()
+          # Reduce memory usage: if this patchset has lots of added/removed
+          # files (i.e. > 100) then we'll get MemoryError when rendering the
+          # response.  Each Patch entity is using a lot of memory if the files
+          # are large, since it holds the entire contents.  Call num_chunks and
+          # num_drafts first though since they depend on text.
+          # These are 'active' properties and have side-effects when looked up.
+          # pylint: disable=W0104
+          patch.num_chunks
+          patch.num_drafts
+          patch.num_added
+          patch.num_removed
+          patch.text = None
+          patch._lines = None
+          patch.parsed_deltas = []
+          for delta in patch.delta:
+            patch.parsed_deltas.append([patchset_id_mapping[delta], delta])
+      except DeadlineExceededError:
+        logging.exception('DeadlineExceededError in _get_patchset_info')
+        if attempt > 2:
+          response = HttpTextResponse(
+              'DeadlineExceededError - create a new issue.')
+        else:
+          response = HttpResponseRedirect('%s?attempt=%d' %
+                                          (request.path, attempt + 1))
+        break
+  # Reduce memory usage (see above comment).
+  for patchset in patchsets:
+    patchset.parsed_patches = None
+  return issue, patchsets, response
+
+#put at the end to avoid a circular dependency
+from view_forms import _get_emails
+from view_mail import _make_message

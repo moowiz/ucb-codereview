@@ -1,8 +1,16 @@
 import os
+import random
 
 import models
+import library
 
+from django.shortcuts import render_to_response
+from django.conf import settings as django_settings
+from django.template import RequestContext
+from django.core.urlresolvers import reverse as _reverse
 from django.http import HttpResponse
+
+from google.appengine.api import users
 
 IS_DEV = os.environ['SERVER_SOFTWARE'].startswith('Dev')  # Development server
 
@@ -117,4 +125,11 @@ class HttpHtmlResponse(HttpResponse):
   def __init__(self, *args, **kwargs):
     kwargs['content_type'] = 'text/html; charset=utf-8'
     super(HttpHtmlResponse, self).__init__(*args, **kwargs)
+
+def _encode_safely(s):
+  """Helper to turn a unicode string into 8-bit bytes."""
+  if isinstance(s, unicode):
+    s = s.encode('utf-8')
+  return s
+
 
