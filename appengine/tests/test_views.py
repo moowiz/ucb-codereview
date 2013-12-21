@@ -25,7 +25,7 @@ from google.appengine.ext import testbed
 
 from utils import TestCase, load_file
 
-from codereview import models, views
+from codereview import models, view_issue_draft
 from codereview import engine  # engine must be imported after models :(
 
 
@@ -66,11 +66,11 @@ class TestViewBase(TestCase):
 class TestStudentUserViewing(TestViewBase):
     def test_basic(self):
         self.login(self.student_acc.email)
-        
+
         resp = self.client.get('/%s/mine' % self.semester.name)
         temp = Template("""
 <tr name="issue">
-  <td class="first" width="14"><img src="/static/closedtriangle.gif" 
+  <td class="first" width="14"><img src="/static/closedtriangle.gif"
     style="visibility: hidden;" width="12" height="9" /></td>
   <td width="34" align="left" style="white-space: nowrap"><span id="issue-star-$issueNum">
       <a href="javascript:M_addIssueStar($issueNum)">
@@ -179,7 +179,7 @@ class TestPublish(TestViewBase):
         self.assertEqual(self.count_num(models.Message) - 1, messages_before) # Only sent 1 message
         self.assertEqual(self.count_num(models.Comment), comments_before)
         messages = self.mail_stub.get_sent_messages()
-        self.assertEqual(1, len(messages)) 
+        self.assertEqual(1, len(messages))
 
         self.logout()
 
@@ -218,10 +218,10 @@ class TestPublish(TestViewBase):
             raise models.FetchError()
         cmt1.patch.get_content = raise_err
         cmt2.patch.get_patched_content = lambda: content2
-        tbd, comments = views._get_draft_comments(request, self.issue)
+        tbd, comments = view_issue_draft._get_draft_comments(request, self.issue)
         self.assertEqual(len(comments), 2)
         # Try to render draft details using the patched Comment
         # instances from here.
-        views._get_draft_details(request, [cmt1, cmt2])
+        view_issue_draft._get_draft_details(request, [cmt1, cmt2])
 
         self.logout()
