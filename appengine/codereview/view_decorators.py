@@ -1,11 +1,11 @@
 import urllib
 
-from views_util import HttpTextResponse
+from view_utils import HttpTextResponse
 import models
 
 from google.appengine.api import users
 
-from django.http import HttpRedirectResponse
+from django.http import HttpResponse, HttpResponseRedirect
 
 def post_required(func):
   """Decorator that returns an error unless request.method == 'POST'."""

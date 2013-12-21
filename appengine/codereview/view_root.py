@@ -1,5 +1,11 @@
-from view_decorators import handle_year
+import models
+
+from view_decorators import handle_year, staff_required, login_required, user_key_required
 from view_paginate import _paginate_issues
+from view_users import _show_user, _optimize_draft_counts
+from view_utils import reverse
+
+from google.appengine.api import memcache
 
 @handle_year
 def index(request):
@@ -8,33 +14,6 @@ def index(request):
     return all(request, index_call=True)
   else:
     return mine(request)
-
-
-DEFAULT_LIMIT = 50
-
-
-def _url(path, **kwargs):
-  """Format parameters for query string.
-
-  Args:
-    path: Path of URL.
-    kwargs: Keyword parameters are treated as values to add to the query
-      parameter of the URL.  If empty no query parameters will be added to
-      path and '?' omitted from the URL.
-  """
-  if kwargs:
-    encoded_parameters = urllib.urlencode(kwargs)
-    if path.endswith('?'):
-      # Trailing ? on path.  Append parameters to end.
-      return '%s%s' % (path, encoded_parameters)
-    elif '?' in path:
-      # Append additional parameters to existing query parameters.
-      return '%s&%s' % (path, encoded_parameters)
-    else:
-      # Add query parameters to path with no query parameters.
-      return '%s?%s' % (path, encoded_parameters)
-  else:
-    return path
 
 
 
@@ -120,29 +99,6 @@ def all(request):
       memcache.set(key, val)
   return val
 
-def _optimize_draft_counts(issues):
-  """Force _num_drafts to zero for issues that are known to have no drafts.
-
-  Args:
-    issues: list of model.Issue instances.
-
-  This inspects the drafts attribute of the current user's Account
-  instance, and forces the draft count to zero of those issues in the
-  list that aren't mentioned there.
-
-  If there is no current user, all draft counts are forced to 0.
-  """
-  if not issues:
-    return
-
-  account = models.Account.current_user_account
-  if account is None:
-    issue_ids = None
-  else:
-    issue_ids = account.drafts
-  for issue in issues:
-    if issue_ids is None or issue.key().id() not in issue_ids:
-      issue._num_drafts = 0
 
 
 @login_required

@@ -1,3 +1,19 @@
+from view_decorators import login_required, issue_required, post_required
+from view_utils import HttpTextResponse, HttpHtmlResponse, _random_bytes, reverse
+from view_diff import diff
+
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+
+import models
+from exceptions import FetchError
+import patching
+
+from google.appengine.ext import db
+
+import logging
+import binascii
+
 @login_required
 @issue_required
 def draft_message(request):
@@ -209,3 +225,63 @@ def _get_draft_comments(request, issue, preview=False):
                                       c.lineno, c.date))
       comments += ps_comments
   return tbd, comments
+
+def _get_draft_details(request, comments):
+  """Helper to display comments with context in the email message."""
+  last_key = None
+  output = []
+  linecache = {}  # Maps (c.patch.key(), c.left) to mapping (lineno, line)
+  modified_patches = []
+
+  for c in comments:
+    if (c.patch.key(), c.left) != last_key:
+      url = request.build_absolute_uri(
+        reverse(request, diff, args=[request.issue.key().id(),
+                            c.patch.patchset.key().id(),
+                            c.patch.filename]))
+      output.append('\n%s\nFile %s (%s):' % (url, c.patch.filename,
+                                             c.left and "left" or "right"))
+      last_key = (c.patch.key(), c.left)
+      patch = c.patch
+      if patch.no_base_file:
+        linecache[last_key] = _patchlines2cache(
+          patching.ParsePatchToLines(patch.lines), c.left)
+      else:
+        try:
+          if c.left:
+            old_lines = patch.get_content().text.splitlines(True)
+            linecache[last_key] = dict(enumerate(old_lines, 1))
+          else:
+            new_lines = patch.get_patched_content().text.splitlines(True)
+            linecache[last_key] = dict(enumerate(new_lines, 1))
+        except FetchError:
+          linecache[last_key] = _patchlines2cache(
+            patching.ParsePatchToLines(patch.lines), c.left)
+    context = linecache[last_key].get(c.lineno, '').strip()
+    url = request.build_absolute_uri(
+      '%s#%scode%d' % (reverse(request, diff, args=[request.issue.key().id(),
+                                           c.patch.patchset.key().id(),
+                                           c.patch.filename]),
+                       c.left and "old" or "new",
+                       c.lineno))
+    output.append('\n%s\n%s:%d: %s\n%s' % (url, c.patch.filename, c.lineno,
+                                           context, c.text.rstrip()))
+  if modified_patches:
+    db.put(modified_patches)
+  return '\n'.join(output)
+
+def _patchlines2cache(patchlines, left):
+  """Helper that converts return value of ParsePatchToLines for caching.
+
+  Each line in patchlines is (old_line_no, new_line_no, line).  When
+  comment is on the left we store the old_line_no, otherwise
+  new_line_no.
+  """
+  if left:
+    it = ((old, line) for old, _, line in patchlines)
+  else:
+    it = ((new, line) for _, new, line in patchlines)
+  return dict(it)
+
+
+

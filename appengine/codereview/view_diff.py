@@ -1,3 +1,16 @@
+import re
+
+from view_decorators import login_required, patch_filename_required, json_response, patch_required, issue_required
+from view_snippets import _get_snippets
+from view_users import _get_context_for_user, _get_column_width_for_user
+from view_utils import respond
+
+from google.appengine.api import users
+
+import patching
+import models
+import engine
+from exceptions import FetchError
 
 @login_required
 @patch_filename_required
@@ -287,3 +300,149 @@ def diff2_skipped_lines(request, ps_left_id, ps_right_id, patch_id,
     return data
   return _get_skipped_lines_response(data["rows"], id_before, id_after,
                                      where, context)
+
+def _add_next_prev(patchset, patch):
+  """Helper to add .next and .prev attributes to a patch object."""
+  patch.prev = patch.next = None
+  patches = models.Patch.all().filter('patchset =', patchset.key()).order(
+      'filename').fetch(1000)
+  patchset.patches = patches  # Required to render the jump to select.
+
+  comments_by_patch, drafts_by_patch = _get_comment_counts(
+     models.Account.current_user_account, patchset)
+
+  last_patch = None
+  next_patch = None
+  last_patch_with_comment = None
+  next_patch_with_comment = None
+
+  found_patch = False
+  for p in patches:
+    if p.filename == patch.filename:
+      found_patch = True
+      continue
+
+    p._num_comments = comments_by_patch.get(p.key(), 0)
+    p._num_drafts = drafts_by_patch.get(p.key(), 0)
+
+    if not found_patch:
+      last_patch = p
+      if p.num_comments > 0 or p.num_drafts > 0:
+        last_patch_with_comment = p
+    else:
+      if next_patch is None:
+        next_patch = p
+      if p.num_comments > 0 or p.num_drafts > 0:
+        next_patch_with_comment = p
+        # safe to stop scanning now because the next with out a comment
+        # will already have been filled in by some earlier patch
+        break
+
+  patch.prev = last_patch
+  patch.next = next_patch
+  patch.prev_with_comment = last_patch_with_comment
+  patch.next_with_comment = next_patch_with_comment
+
+
+def _add_next_prev2(ps_left, ps_right, patch_right):
+  """Helper to add .next and .prev attributes to a patch object."""
+  patch_right.prev = patch_right.next = None
+  patches = list(models.Patch.gql("WHERE patchset = :1 ORDER BY filename",
+                                  ps_right))
+  ps_right.patches = patches  # Required to render the jump to select.
+
+  n_comments, n_drafts = _get_comment_counts(
+    models.Account.current_user_account, ps_right)
+
+  last_patch = None
+  next_patch = None
+  last_patch_with_comment = None
+  next_patch_with_comment = None
+
+  found_patch = False
+  for p in patches:
+    if p.filename == patch_right.filename:
+      found_patch = True
+      continue
+
+    p._num_comments = n_comments.get(p.key(), 0)
+    p._num_drafts = n_drafts.get(p.key(), 0)
+
+    if not found_patch:
+      last_patch = p
+      if ((p.num_comments > 0 or p.num_drafts > 0) and
+          ps_left.key().id() in p.delta):
+        last_patch_with_comment = p
+    else:
+      if next_patch is None:
+        next_patch = p
+      if ((p.num_comments > 0 or p.num_drafts > 0) and
+          ps_left.key().id() in p.delta):
+        next_patch_with_comment = p
+        # safe to stop scanning now because the next with out a comment
+        # will already have been filled in by some earlier patch
+        break
+
+  patch_right.prev = last_patch
+  patch_right.next = next_patch
+  patch_right.prev_with_comment = last_patch_with_comment
+  patch_right.next_with_comment = next_patch_with_comment
+
+def _get_comment_counts(account, patchset):
+  """Helper to get comment counts for all patches in a single query.
+
+  The helper returns two dictionaries comments_by_patch and
+  drafts_by_patch with patch key as key and comment count as
+  value. Patches without comments or drafts are not present in those
+  dictionaries.
+  """
+  # A key-only query won't work because we need to fetch the patch key
+  # in the for loop further down.
+  comment_query = models.Comment.all()
+  comment_query.ancestor(patchset)
+
+  # Get all comment counts with one query rather than one per patch.
+  comments_by_patch = {}
+  drafts_by_patch = {}
+  for c in comment_query:
+    pkey = models.Comment.patch.get_value_for_datastore(c)
+    if not c.draft:
+      comments_by_patch[pkey] = comments_by_patch.setdefault(pkey, 0) + 1
+    elif account and c.author == account.user:
+      drafts_by_patch[pkey] = drafts_by_patch.setdefault(pkey, 0) + 1
+
+  return comments_by_patch, drafts_by_patch
+
+
+
+def _get_affected_files(issue, full_diff=False):
+  """Helper to return a list of affected files from the latest patchset.
+
+  Args:
+    issue: Issue instance.
+    full_diff: If true, include the entire diff even if it exceeds 100 lines.
+
+  Returns:
+    2-tuple containing a list of affected files, and the diff contents if it
+    is less than 100 lines (otherwise the second item is an empty string).
+  """
+  files = []
+  modified_count = 0
+  diff = ''
+  patchsets = list(issue.patchset_set.order('created'))
+  if len(patchsets):
+    patchset = patchsets[-1]
+    for patch in patchset.patch_set.order('filename'):
+      file_str = ''
+      if patch.status:
+        file_str += patch.status + ' '
+      file_str += patch.filename
+      files.append(file_str)
+      # No point in loading patches if the patchset is too large for email.
+      if full_diff or modified_count < 100:
+        modified_count += patch.num_added + patch.num_removed
+
+    if full_diff or modified_count < 100:
+      diff = patchset.data
+
+  return files, diff

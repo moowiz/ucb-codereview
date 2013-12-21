@@ -1,4 +1,13 @@
 import models
+import engine
+import logging
+
+from django.http import HttpResponse
+
+from google.appengine.ext import db
+from google.appengine.ext import deferred
+
+from view_decorators import staff_required, post_required, handle_year
 
 @post_required
 def calculate_delta(request):
@@ -34,6 +43,72 @@ def calculate_delta(request):
     patch.delta_calculated = True
     patch.put()
   return HttpResponse()
+
+@handle_year
+def _calculate_delta(patch, patchset_id, patchsets):
+  """Calculates which files in earlier patchsets this file differs from.
+
+  Args:
+    patch: The file to compare.
+    patchset_id: The file's patchset's key id.
+    patchsets: A list of existing patchsets.
+
+  Returns:
+    A list of patchset ids.
+  """
+  delta = []
+  if patch.no_base_file:
+    return delta
+  for other in patchsets:
+    if patchset_id == other.key().id():
+      break
+    if not hasattr(other, 'parsed_patches'):
+      other.parsed_patches = None  # cache variable for already parsed patches
+    if other.data or other.parsed_patches:
+      # Loading all the Patch entities in every PatchSet takes too long
+      # (DeadLineExceeded) and consumes a lot of memory (MemoryError) so instead
+      # just parse the patchset's data.  Note we can only do this if the
+      # patchset was small enough to fit in the data property.
+      if other.parsed_patches is None:
+        # PatchSet.data is stored as db.Blob (str). Try to convert it
+        # to unicode so that Python doesn't need to do this conversion
+        # when comparing text and patch.text, which is db.Text
+        # (unicode).
+        try:
+          other.parsed_patches = engine.SplitPatch(other.data.decode('utf-8'))
+        except UnicodeDecodeError:  # Fallback to str - unicode comparison.
+          other.parsed_patches = engine.SplitPatch(other.data)
+        other.data = None  # Reduce memory usage.
+      for filename, text in other.parsed_patches:
+        if filename == patch.filename:
+          if text != patch.text:
+            delta.append(other.key().id())
+          break
+      else:
+        # We could not find the file in the previous patchset. It must
+        # be new wrt that patchset.
+        delta.append(other.key().id())
+    else:
+      # other (patchset) is too big to hold all the patches inside itself, so
+      # we need to go to the datastore.  Use the index to see if there's a
+      # patch against our current file in other.
+      query = models.Patch.all()
+      query.filter("filename =", patch.filename)
+      query.filter("patchset =", other.key())
+      other_patches = query.fetch(100)
+      if other_patches and len(other_patches) > 1:
+        logging.info("Got %s patches with the same filename for a patchset",
+                     len(other_patches))
+      for op in other_patches:
+        if op.text != patch.text:
+          delta.append(other.key().id())
+          break
+      else:
+        # We could not find the file in the previous patchset. It must
+        # be new wrt that patchset.
+        delta.append(other.key().id())
+
+  return delta
 
 ASSIGN_READER_BATCH_SIZE = 100
 def assign_readers(semester, cursor=None, readers=None, reader_index=0, num_updated=0):

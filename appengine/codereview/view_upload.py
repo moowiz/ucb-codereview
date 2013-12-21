@@ -1,3 +1,24 @@
+from view_decorators import post_required, login_required, xsrf_required, upload_required, handle_year, \
+      patch_required, patchset_required, issue_required
+from view_utils import reverse, respond, HttpTextResponse
+from view_mail import _make_message
+from view_forms import _make_new
+from view_issue import show
+from view_taskQ import calculate_delta
+
+import models
+import forms
+import engine
+import utils
+
+from google.appengine.api import users
+from google.appengine.api import taskqueue
+from google.appengine.ext import db
+
+from django.http import HttpResponse
+
+import hashlib
+
 @login_required
 @xsrf_required
 def use_uploadpy(request):
@@ -55,7 +76,7 @@ def upload(request):
     msg = ('Issue %s. URL: %s' %
            (action,
             request.build_absolute_uri(
-              _reverse(show, args=[django_settings.CURRENT_SEMESTER, issue.key().id()]))))
+              reverse(request, show, args=[issue.key().id()]))))
     if (form.cleaned_data.get('content_upload') or
         form.cleaned_data.get('separate_patches')):
       # Extend the response message: 2nd line is patchset id.
@@ -112,6 +133,34 @@ def upload(request):
           msg += "\n%s %s" % (id_string, patch.filename)
         db.put(patches)
   return HttpTextResponse(msg)
+
+def _add_patchset_from_form(request, issue, form, message_key='message',
+                            emails_add_only=False):
+  """Helper for add() and upload()."""
+  # TODO(guido): use a transaction like in _make_new(); may be share more code?
+  if form.is_valid():
+    data_url = _get_data_url(form)
+  if not form.is_valid():
+    return None
+  data, url, separate_patches = data_url
+  message = form.cleaned_data[message_key]
+  patchset = models.PatchSet(issue=issue, message=message, data=data, url=url,
+                             parent=issue)
+  patchset.put()
+
+  if not separate_patches:
+    patches = engine.ParsePatchSet(patchset)
+    if not patches:
+      patchset.delete()
+      errkey = url and 'url' or 'data'
+      form.errors[errkey] = ['Patch set contains no recognizable patches']
+      return None
+    db.put(patches)
+
+  if form.cleaned_data.get('send_mail'):
+    msg = _make_message(request, issue, message, '', True)
+    msg.put()
+  return patchset
 
 
 @handle_year
