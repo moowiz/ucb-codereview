@@ -1,5 +1,5 @@
 import base
-parser = argparse.ArgumentParser(description="Upgrade old schema to add a semester field")
+parser = argparse.ArgumentParser(description="Finds all issues where there are duplicate sections in it. I don't think this should happen anymore...")
 args = base.init(parser)
 
 from codereview.models import Issue, Account
@@ -10,7 +10,7 @@ def find_all(assign):
         for iss in issues:
             #print iss.reviewers
             acc = [Account.get_account_for_email(stu) for stu in iss.reviewers]
-            #print acc
+            #print accs
             acc = [a for a in acc if len(str(a)) > 4]
             #print [a.email for a in acc]
             sections = [a.sections for a in acc]
@@ -24,7 +24,7 @@ def find_all(assign):
             else:
                 print 'uhoh'
                 print iss.sections
-        
+
 
 def main(assign):
     find_all(assign)

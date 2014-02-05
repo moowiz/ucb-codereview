@@ -1,7 +1,7 @@
 import base
-import argparse 
+import argparse
 
-parser = argparse.ArgumentParser(description="Upgrade old schema to add a semester field")
+parser = argparse.ArgumentParser(description="Find duplicate accounts and prints it to the screen. Should find none...")
 args = base.init(parser)
 
 from codereview.models import Issue, Account
@@ -16,8 +16,6 @@ def find_all():
             print count
         count += 1
     print [(k, v) for k,v in seen.items() if len(v) > 1]
-
-        
 
 def main():
     find_all()

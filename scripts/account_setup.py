@@ -1,5 +1,5 @@
 import base
-import argparse 
+import argparse
 import os
 
 
@@ -33,7 +33,8 @@ def main(filename, staff=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
     parser.add_argument('mapping', type=str,
-                        help='the path to the csv file containing email to section mappings')
+                        help='the path to the csv file containing email to section mappings. \
+                             The email should be in the first column, and the section number should be in the second column')
     args = base.init(parser)
-    
+
     main(os.path.expanduser(args.mapping))

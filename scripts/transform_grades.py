@@ -3,9 +3,9 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser(description="Transforms raw grades into grades that can be put into glookup")
-parser.add_argument('file', type=str)
-parser.add_argument('out_file', type=str)
-parser.add_argument('assignment', type=str)
+parser.add_argument('file', type=str, help="The file with raw grades")
+parser.add_argument('out_file', type=str, help="The file to write the resulting grades to")
+parser.add_argument('assignment', type=str, help="The assignment you're grading")
 args = parser.parse_args()
 
 if __name__ == "__main__":
