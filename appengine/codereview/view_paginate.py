@@ -1,5 +1,6 @@
 from view_utils import _can_view_issue, _clean_int, respond
 from view_users import _optimize_draft_counts, _load_users_for_issues
+x = 3
 
 DEFAULT_LIMIT = 50
 

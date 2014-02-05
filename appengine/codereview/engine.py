@@ -18,6 +18,9 @@ import cgi
 import difflib
 import re
 
+import sys
+print(sys.path)
+
 from google.appengine.api import users
 
 from django.conf import settings
@@ -627,7 +630,7 @@ def RenderUnifiedTableRows(request, parsed_lines):
       style = 'udiffremove'
     else:
       style = ''
-    
+
     rows.append('<tr><td class="udiff %s" %s>%s</td></tr>' %
                 (style, row1_id, cgi.escape(line_text)))
 
