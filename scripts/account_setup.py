@@ -5,17 +5,13 @@ import os
 
 from codereview.models import Account
 from google.appengine.api import users
-CURRENT_SEMESTER = "fa13"
+CURRENT_SEMESTER = "sp14"
 
-def make_acc(email, section, staff):
-    acc = Account.get_or_insert('<%s>' % email, user=users.User(email), email=email)
-    section = int(section)
+def make_acc(email, role, staff):
+    acc = Account.get_account_for_user(users.User(email))
+    role = int(role)
     if staff:
-        acc.is_staff = True
-    if section not in acc.sections:
-        acc.sections.append(section)
-    if CURRENT_SEMESTER not in acc.semesters:
-        acc.semesters.append(CURRENT_SEMESTER)
+        acc.role = role
     acc.put()
 
 def main(filename, staff=False):
@@ -30,10 +26,12 @@ def main(filename, staff=False):
         make_acc(it[0], it[1], staff)
         count += 1
 
+
+# TODO: add support for different semesters
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Creates the email->section mappings for accounts")
     parser.add_argument('mapping', type=str,
-                        help='the path to the csv file containing email to section mappings. \
+                        help='the path to the csv file containing email to role mappings, where 1 corresponds to a reader, and 2 to a TA \
                              The email should be in the first column, and the section number should be in the second column')
     args = base.init(parser)
 
