@@ -1,6 +1,7 @@
 *.pyc
 *.sqlite
 MY.*
+*.csv
 
 upload/out
 
