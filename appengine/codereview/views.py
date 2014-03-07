@@ -770,8 +770,8 @@ def show_user(request):
 
 def _show_user(request):
   user_to_show = request.user_to_show
-  acc = models.Account.get_account_for_user(request.user)
-  acc_to_show = models.Account.get_account_for_user(user_to_show)
+  acc = models.Account.get_account_for_user(request.user, semester=request.semester)
+  acc_to_show = models.Account.get_account_for_user(user_to_show, semester=request.semester)
   if not acc.is_staff:
     if user_to_show != request.user:
       return HttpTextResponse("You do not have permission to view this user", status=403)
@@ -805,7 +805,7 @@ def _show_user(request):
       all_queries = tuple(it for subl in all_queries for it in subl)
 
       mapping = collections.defaultdict(dict)
-      for (email, subj), query in all_queries:  
+      for (email, subj), query in all_queries:
         if email not in mapping[subj]:
           to_add = tuple(query)
           for iss in to_add:
@@ -1927,7 +1927,7 @@ def diff(request):
 
   patchset = request.patchset
   patch = request.patch
-  
+
   patchsets = list(request.issue.patchset_set.order('created'))
 
   snippets, allow_snippets = _get_snippets(request)
