@@ -18,9 +18,6 @@ import cgi
 import difflib
 import re
 
-import sys
-print(sys.path)
-
 from google.appengine.api import users
 
 from django.conf import settings
