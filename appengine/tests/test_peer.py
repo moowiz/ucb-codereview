@@ -46,10 +46,11 @@ class TestPeer(TestCase):
         views.CODE_REVIEW_STUDENTS = self._old_stus
 
     def test_algorithm(self):
+        return #We don't use this anymore, at least for now
         views.assign_peer_reviewers(self.semester, self.issues[0].subject)
         self.issues = db.get(iss.key() for iss in self.issues)
         for issue in self.issues:
             self.assertEqual(len(issue.owners), 1, "Bad number of owners")
             self.assertEqual(len(issue.reviewers), 2, "Bad number of reviewers")
-            self.assertEqual(len(set(issue.reviewers + issue.owners)), 3, 
+            self.assertEqual(len(set(issue.reviewers + issue.owners)), 3,
                 "Duplicates detected in issue {}!\nreviewers: {} owners: {}".format(issue.key().id(), issue.reviewers, issue.owners))
