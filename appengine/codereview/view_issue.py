@@ -242,8 +242,6 @@ def unstar(request):
 @issue_required
 def show(request, form=None):
   """/<issue> - Show an issue."""
-  import sys
-  print (sys.path)
   if not _can_view_issue(request, request.issue):
       return HttpTextResponse(
           'You cannot view this issue.', status=403)
