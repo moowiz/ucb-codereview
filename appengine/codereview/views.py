@@ -1535,9 +1535,10 @@ def account(request):
     limit = _clean_int(request.GET.get('limit'), 10, 10, 100)
 
     accounts = models.Account.all().ancestor(request.semester)
-    accounts.filter("lower_%s >= " % property, query)
-    accounts.filter("lower_%s < " % property, query + u"\ufffd")
-    accounts.order("lower_%s" % property)
+    # No more lower
+    # accounts.filter("lower_%s >= " % property, query)
+    # accounts.filter("lower_%s < " % property, query + u"\ufffd")
+    # accounts.order("lower_%s" % property)
     for account in accounts:
       if account.key() in added:
         continue
