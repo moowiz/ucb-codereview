@@ -37,12 +37,12 @@ class MockRequest(HttpRequest):
         self.META['HTTP_HOST'] = 'testserver'
         self.user = user
         self.issue = issue
-        self.semester = models.Semester.get_by_key_name('<fa13>') # Chosen arbitrarily
+        self.semester = models.Semester.get_by_key_name('<sp14>') # Chosen arbitrarily
 
 class TestViewBase(TestCase):
     def setUp(self):
         super(TestViewBase, self).setUp()
-        self.semester = models.Semester.get_or_insert('<fa13>', name='fa13')
+        self.semester = models.Semester.get_or_insert('<sp14>', name='sp14')
 
         self.ta_acc = self.make_ta(self.semester)
         self.student_acc = self.make_student(self.semester)
@@ -66,11 +66,11 @@ class TestViewBase(TestCase):
 class TestStudentUserViewing(TestViewBase):
     def test_basic(self):
         self.login(self.student_acc.email)
-        
+
         resp = self.client.get('/%s/mine' % self.semester.name)
         temp = Template("""
 <tr name="issue">
-  <td class="first" width="14"><img src="/static/closedtriangle.gif" 
+  <td class="first" width="14"><img src="/static/closedtriangle.gif"
     style="visibility: hidden;" width="12" height="9" /></td>
   <td width="34" align="left" style="white-space: nowrap"><span id="issue-star-$issueNum">
       <a href="javascript:M_addIssueStar($issueNum)">
@@ -179,7 +179,7 @@ class TestPublish(TestViewBase):
         self.assertEqual(self.count_num(models.Message) - 1, messages_before) # Only sent 1 message
         self.assertEqual(self.count_num(models.Comment), comments_before)
         messages = self.mail_stub.get_sent_messages()
-        self.assertEqual(1, len(messages)) 
+        self.assertEqual(1, len(messages))
 
         self.logout()
 

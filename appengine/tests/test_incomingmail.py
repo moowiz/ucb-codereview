@@ -18,7 +18,7 @@ class TestIncomingMail(TestCase):
     super(TestIncomingMail, self).setUp()
     self.login('foo@example.com')
     self.user = User('foo@example.com')
-    self.semester = models.Semester(key_name='<fa13>', name='fa13')
+    self.semester = models.Semester(key_name='<sp14>', name='sp14')
     self.semester.put()
 
     self.issue = models.Issue(subject=models.VALID_SUBJECTS[0], parent=self.semester)

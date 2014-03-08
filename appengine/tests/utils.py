@@ -57,7 +57,7 @@ class TestCase(_TestCase):
     self.testbed.init_logservice_stub()
     self.testbed.init_memcache_stub()
 
-    self.semester = models.Semester.get_or_insert('<fa13>', name='fa13')
+    self.semester = models.Semester.get_or_insert('<sp14>', name='sp14')
 
   def tearDown(self):
     self.testbed.deactivate()
@@ -123,7 +123,7 @@ class TestCase(_TestCase):
 
     rval = []
     for i in range(num):
-      rval.append(self.make_issue(semester, subjects[i], 
+      rval.append(self.make_issue(semester, subjects[i],
           (owners_lst[i] if owners_lst else []), (reviewers_lst[i] if reviewers_lst else [])))
 
     return rval
