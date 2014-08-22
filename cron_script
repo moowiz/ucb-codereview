@@ -1,9 +1,0 @@
-#!/bin/bash
-
-PATH=/usr/sww/bin:/home/ff/cs61a/autograder/bin:/share/b/grading/sbin:/home/ff/cs61a/bin:/home/ff/cs61a/bin/arch/sun4v:/home/ff/cs61a/sbin:/home/ff/cs61a/sbin/arch/sun4v:/home/ff/cs61a/projects/hadoop/hadoop/bin:/usr/openwin/bin:/usr/dt/bin:/usr/sww/opt/java/bin:/usr/local/bin:/usr/sww/bin:/usr/bin:/bin:/usr/ucb:/usr/sfw/bin:/share/b/grading/bin:/share/b/grading/sbin:/share/b/runas/sun4v:/share/b/bin:/home/aa/projects/scheme/bin:/usr/ccs/bin:/share/b/grading/bin
-export MASTERDIR=/home/ff/cs61a/
-export MASTER=cs61a
-echo "Running"
-ASSIGN="proj2"
-echo "Running" >> ~/tmp/crontab
-python3 "$MASTERDIR"grading/codereview/61a-codereview/upload/sweep.py -a $ASSIGN >> "$MASTERDIR"grading/codereview/logs/"$ASSIGN"

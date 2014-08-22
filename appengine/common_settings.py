@@ -1,1 +1,0 @@
-CURRENT_SEMESTER = 'sp14'
